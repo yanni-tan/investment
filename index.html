@@ -520,14 +520,32 @@
             color: var(--label2);
             margin-top: 4px;
         }
-        /* ── Market breakdown row ── */
-        .mkt-grid { display: contents; }
+        /* ── Top section layout ── */
+        .top-section {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            margin-bottom: 24px;
+            align-items: start;
+        }
+        .top-left {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-width: 0;
+        }
+        .top-left .kpi-grid,
+        .top-left .second-row { margin-bottom: 0; }
+        .top-right { overflow-y: auto; }
+
         .second-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
-            margin-bottom: 24px;
         }
+
+        /* ── Market breakdown row ── */
+        .mkt-grid { display: contents; }
 
         /* ── Filter chips ── */
         .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
@@ -842,8 +860,8 @@
 
         /* ── Responsive ── */
         @media (max-width: 1100px) {
-            .content-grid { grid-template-columns: 1fr; }
-            .right-col { display: none; }
+            .top-section { grid-template-columns: 1fr; }
+            .top-right { display: none; }
         }
         @media (max-width: 900px) {
             .kpi-grid { grid-template-columns: 1fr 1fr; }
@@ -925,44 +943,40 @@
         </div>
     </div>
 
-    <!-- KPI -->
-    <div class="kpi-grid" id="kpi-grid"></div>
-
-    <!-- Second row: US + SG -->
-    <div class="second-row">
-        <div id="mkt-grid" style="display:contents"></div>
+    <!-- Top section: [KPI + market cards] | [Breakdown panel] -->
+    <div class="top-section">
+        <div class="top-left">
+            <div class="kpi-grid" id="kpi-grid"></div>
+            <div class="second-row">
+                <div id="mkt-grid" style="display:contents"></div>
+            </div>
+        </div>
+        <div class="card top-right">
+            <div style="padding:20px 22px 12px" id="holdings-top"></div>
+            <div style="border-top:1px solid var(--sep);padding:14px 22px 4px">
+                <div style="font-size:13px;font-weight:600">Breakdown</div>
+            </div>
+            <div class="breakdown-tabs" id="bk-tabs">
+                <button class="bk-tab active" data-bk="type">Type</button>
+                <button class="bk-tab" data-bk="market">Market</button>
+                <button class="bk-tab" data-bk="sector">Sector</button>
+                <button class="bk-tab" data-bk="alloc">Allocation</button>
+            </div>
+            <div id="bk-body"></div>
+            <div class="fx-note" id="fx-note" style="display:none"></div>
+        </div>
     </div>
 
-    <!-- Content -->
-    <div class="content-grid">
-        <div class="card">
-            <div class="card-header">
-                <h2 id="table-title">All Holdings</h2>
-                <div class="card-header-right">
-                    <span class="count-badge" id="count"></span>
-                    <div class="filter-chips" id="type-chips"></div>
-                </div>
-            </div>
-            <div id="table-body"></div>
-        </div>
-        <div class="right-col">
-            <div class="card">
-                <div style="padding:20px 22px 14px">
-                    <div id="holdings-top"></div>
-                </div>
-                <div style="border-top:1px solid var(--sep);padding:14px 22px 6px">
-                    <div style="font-size:13px;font-weight:600;margin-bottom:2px">Breakdown</div>
-                </div>
-                <div class="breakdown-tabs" id="bk-tabs">
-                    <button class="bk-tab active" data-bk="type">Type</button>
-                    <button class="bk-tab" data-bk="market">Market</button>
-                    <button class="bk-tab" data-bk="sector">Sector</button>
-                    <button class="bk-tab" data-bk="alloc">Allocation</button>
-                </div>
-                <div id="bk-body"></div>
-                <div class="fx-note" id="fx-note" style="display:none"></div>
+    <!-- Full-width holdings table -->
+    <div class="card">
+        <div class="card-header">
+            <h2 id="table-title">All Holdings</h2>
+            <div class="card-header-right">
+                <span class="count-badge" id="count"></span>
+                <div class="filter-chips" id="type-chips"></div>
             </div>
         </div>
+        <div id="table-body"></div>
     </div>
 
 </main>
