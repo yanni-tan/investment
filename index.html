@@ -896,8 +896,11 @@
 <!-- ── Sidebar ── -->
 <aside class="sidebar">
     <div class="sidebar-brand">
-        <div class="brand-icon">$</div>
-        <span class="brand-name">Investment Portfolio</span>
+        <img src="avatar.webp" alt="YT" style="width:34px;height:34px;border-radius:10px;object-fit:cover;flex-shrink:0">
+        <div>
+            <div class="brand-name">Yanni Tan</div>
+            <div style="font-size:11px;color:var(--sidebar-text);font-weight:400;margin-top:1px">Investment Portfolio</div>
+        </div>
     </div>
     <nav class="sidebar-nav">
         <div class="nav-section">Markets</div>
@@ -970,9 +973,11 @@
     <!-- Full-width holdings table -->
     <div class="card">
         <div class="card-header">
-            <h2 id="table-title">All Holdings</h2>
-            <div class="card-header-right">
+            <div style="display:flex;align-items:center;gap:10px">
+                <h2 id="table-title">All Holdings</h2>
                 <span class="count-badge" id="count"></span>
+            </div>
+            <div class="card-header-right">
                 <div class="filter-chips" id="type-chips"></div>
             </div>
         </div>
@@ -1148,11 +1153,11 @@ function uid()  { return Math.random().toString(36).slice(2) + Date.now().toStri
 
 // ── Greeting ──
 function setGreeting() {
-    const h = new Date().getHours();
-    const g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+    const now  = new Date();
+    const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     document.getElementById('greeting').innerHTML =
-        `<span style="display:block;font-size:13px;font-weight:400;color:var(--label3);letter-spacing:0;margin-bottom:2px">${g}</span>Investment Portfolio`;
-    const d = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+        `<span style="display:block;font-size:13px;font-weight:400;color:var(--label3);letter-spacing:0;margin-bottom:2px">${time}, Yanni Tan</span>Investment Portfolio`;
+    const d = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     document.getElementById('greeting-sub').textContent = d;
 }
 
@@ -1222,6 +1227,7 @@ async function fetchPrices() {
     } finally {
         fetching = false;
         icon.classList.remove('spinning');
+        saveSnapshot();
         render();
     }
 }
@@ -1302,7 +1308,6 @@ function render() {
     renderTypeChips(all);
     renderTable(filtered, tot);
     renderChart(all, tot);
-    renderPerformance(all);
     renderBreakdown(all);
     renderHoldingsTop(all);
 }
@@ -1312,14 +1317,15 @@ function loadSnapshots() {
     try { return JSON.parse(localStorage.getItem('portfolio_snapshots') || '[]'); } catch { return []; }
 }
 function saveSnapshot() {
-    if (!holdings.length) return;
+    if (!holdings.length || !Object.keys(prices).length) return;
     const month = new Date().toISOString().slice(0, 7);
     const snaps = loadSnapshots();
-    if (snaps.find(s => s.month === month)) return;
     const all = holdings.map(enrich);
     const s = calcSummary(all);
-    snaps.push({ month, gainUSD: s.totalGain, totalUSD: s.totalUSD });
-    if (snaps.length > 12) snaps.shift();
+    const idx = snaps.findIndex(snap => snap.month === month);
+    const entry = { month, gainUSD: s.totalGain, totalUSD: s.totalUSD };
+    if (idx >= 0) { snaps[idx] = entry; }
+    else { snaps.push(entry); if (snaps.length > 12) snaps.shift(); }
     localStorage.setItem('portfolio_snapshots', JSON.stringify(snaps));
 }
 
@@ -2042,7 +2048,6 @@ function init() {
     setGreeting();
     render();
     fetchPrices();
-    saveSnapshot();
     setInterval(fetchPrices, 60_000);
 }
 
