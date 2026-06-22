@@ -2444,16 +2444,35 @@ document.getElementById('sync-connect-btn').addEventListener('click', async () =
     if (!token) return;
     ghToken = token;
     localStorage.setItem(SYNC_TOKEN_KEY, token);
-    document.getElementById('sync-modal-status').textContent = 'Connecting…';
-    const ok = await syncLoad();
-    if (ok || document.getElementById('sync-label').textContent.includes('new')) {
-        render();
-        fetchPrices();
+    const statusEl = document.getElementById('sync-modal-status');
+    statusEl.textContent = 'Connecting…';
+
+    // First check if GitHub already has data
+    const res = await ghRequest('GET', SYNC_FILE);
+    if (res.status === 404) {
+        // No remote data — push local data up
+        statusEl.textContent = 'No remote data found — uploading local data…';
+        await syncSave();
+        statusEl.textContent = '';
         closeSyncModal();
-        toast('Sync connected ✓');
+        toast('Sync connected — local data uploaded ✓');
         document.getElementById('sync-setup-btn').textContent = 'Manage sync';
+    } else if (res.ok) {
+        // Remote has data — pull it
+        statusEl.textContent = 'Remote data found — loading…';
+        const loaded = await syncLoad();
+        if (loaded) {
+            render();
+            fetchPrices();
+            statusEl.textContent = '';
+            closeSyncModal();
+            toast('Sync connected — data loaded ✓');
+            document.getElementById('sync-setup-btn').textContent = 'Manage sync';
+        } else {
+            statusEl.textContent = 'Could not connect — check token has repo scope.';
+        }
     } else {
-        document.getElementById('sync-modal-status').textContent = 'Could not connect — check token and repo scope.';
+        statusEl.textContent = `Error ${res.status} — check token has repo scope.`;
     }
 });
 
