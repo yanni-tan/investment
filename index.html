@@ -1264,7 +1264,7 @@ function load() {
     try { holdings = JSON.parse(localStorage.getItem(KEY) || '[]'); }
     catch { holdings = []; }
 }
-function save() { localStorage.setItem(KEY, JSON.stringify(holdings)); }
+function save() { localStorage.setItem(KEY, JSON.stringify(holdings)); syncSave(); }
 function uid()  { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
 
 // ── Greeting ──
@@ -2233,7 +2233,7 @@ let showingWatchlist = false;
 function loadWatchlist() {
     try { watchlist = JSON.parse(localStorage.getItem(WATCH_KEY) || '[]'); } catch { watchlist = []; }
 }
-function saveWatchlist() { localStorage.setItem(WATCH_KEY, JSON.stringify(watchlist)); }
+function saveWatchlist() { localStorage.setItem(WATCH_KEY, JSON.stringify(watchlist)); syncSave(); }
 
 function showPanel(which) {
     showingWatchlist = which === 'watchlist';
@@ -2427,12 +2427,6 @@ async function syncSave() {
         syncBusy = false;
     }
 }
-
-// Patch save/saveWatchlist to also push to GitHub
-const _origSave = save;
-function save() { _origSave(); syncSave(); }
-const _origSaveWatchlist = saveWatchlist;
-function saveWatchlist() { _origSaveWatchlist(); syncSave(); }
 
 // Sync setup modal
 document.getElementById('sync-setup-btn').addEventListener('click', () => {
