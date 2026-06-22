@@ -443,6 +443,25 @@
         .mkt-sg  { background: rgba(245,158,11,0.1);  color: #d97706; }
         .mkt-uk  { background: rgba(139,92,246,0.1);  color: #7c3aed; }
 
+        .price-cell { cursor: pointer; }
+        .price-cell:hover { text-decoration: underline dotted var(--label3); }
+
+        .manual-tag {
+            display: inline-block;
+            font-size: 9px; font-weight: 700;
+            background: rgba(245,158,11,0.15); color: #d97706;
+            border-radius: 4px; padding: 1px 4px;
+            margin-left: 3px; vertical-align: middle;
+        }
+
+        .price-inline-input {
+            width: 80px; padding: 3px 7px;
+            font-size: 13px; font-family: inherit;
+            border: 1.5px solid var(--accent); border-radius: 6px;
+            background: var(--surface); color: var(--label);
+            text-align: right; outline: none;
+        }
+
         .change-pill {
             display: inline-flex; align-items: center; gap: 3px;
             padding: 3px 8px; border-radius: 6px;
@@ -478,8 +497,16 @@
 
         .row-btn:hover { color: var(--label); border-color: var(--label3); }
         .row-btn.del:hover { color: var(--red); border-color: var(--red); background: var(--red-bg); }
+        .row-btn.buy:hover { color: var(--green); border-color: var(--green); background: var(--green-bg); }
 
-        /* ── Skeleton ── */
+        .buy-preview {
+            background: var(--surface2);
+            border-radius: 10px;
+            padding: 11px 14px;
+            font-size: 12px;
+            color: var(--label2);
+            margin-top: 4px;
+        }
         .skel {
             display: inline-block; border-radius: 4px;
             background: linear-gradient(90deg, var(--surface2) 25%, var(--sep) 50%, var(--surface2) 75%);
@@ -901,6 +928,34 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- ── Buy More Modal ── -->
+<div class="overlay" id="buy-overlay">
+    <div class="modal">
+        <div class="modal-hdr">
+            <h2 id="buy-modal-title">Buy More</h2>
+            <button class="modal-x" id="buy-modal-close">×</button>
+        </div>
+        <form id="buy-form" autocomplete="off">
+            <div id="buy-holding-info" style="font-size:13px;color:var(--label2);margin-bottom:16px;padding:10px 13px;background:var(--surface2);border-radius:var(--radius-sm)"></div>
+            <div class="frow">
+                <div class="fg">
+                    <label>New Shares</label>
+                    <input class="finput" id="buy-shares" type="number" step="any" min="0" placeholder="0" required>
+                </div>
+                <div class="fg">
+                    <label>Buy Price / Share</label>
+                    <input class="finput" id="buy-price" type="number" step="any" min="0" placeholder="0.00" required>
+                </div>
+            </div>
+            <div id="buy-preview"></div>
+            <div class="modal-foot">
+                <button type="button" class="btn btn-secondary" id="buy-cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add Shares</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 // ── Auth ──
 const PWD_HASH = '729d868e3527e325418372aa1ccf25065973902dd6f3e782d6d54106454ad9ee';
@@ -1032,13 +1087,13 @@ async function fetchPrices() {
 // ── Calculations ──
 function enrich(h) {
     const p         = prices[h.ticker];
-    const price     = p?.price     ?? null;
-    const changePct = p?.changePct ?? null;
+    const price     = h.manualPrice != null ? h.manualPrice : (p?.price ?? null);
+    const changePct = h.manualPrice != null ? null : (p?.changePct ?? null);
     const costBasis = h.avgCost * h.shares;
     const value     = price !== null ? price * h.shares : null;
     const gainLoss  = value !== null ? value - costBasis : null;
     const gainPct   = gainLoss !== null && costBasis > 0 ? (gainLoss / costBasis) * 100 : null;
-    const dayChange = p?.change != null ? p.change * h.shares : null;
+    const dayChange = h.manualPrice != null ? null : (p?.change != null ? p.change * h.shares : null);
     return { ...h, price, changePct, costBasis, value, gainLoss, gainPct, dayChange };
 }
 
@@ -1124,16 +1179,16 @@ function renderKPI(rows) {
         kpiCard('total', '💼', 'Total Portfolio',
             money(s.totalUSD, 'USD'),
             { cls: badgeClass(s.totalGain), text: `${s.totalGain >= 0 ? '▲' : '▼'} ${pct(s.totalGainPct)}` },
-            `Cost basis: ${money(s.totalCostUSD, 'USD')}`) +
-
-        kpiCard('green', '📈', 'Today\'s P&L',
-            signed(s.dayUSD, 'USD'),
-            { cls: badgeClass(s.dayUSD), text: s.dayUSD >= 0 ? 'Positive day' : 'Negative day' },
-            null) +
+            `${money(s.totalUSD / fxSGDUSD, 'SGD')} · Cost: ${money(s.totalCostUSD, 'USD')}`) +
 
         kpiCard('blue', '💰', 'Unrealised Gain',
             signed(s.totalGain, 'USD'),
             { cls: badgeClass(s.totalGainPct), text: pct(s.totalGainPct) },
+            `${signed(s.totalGain / fxSGDUSD, 'SGD')}`) +
+
+        kpiCard('green', '📈', 'Today\'s P&L',
+            signed(s.dayUSD, 'USD'),
+            { cls: badgeClass(s.dayUSD), text: s.dayUSD >= 0 ? 'Positive day' : 'Negative day' },
             null) +
 
         `<div class="kpi-card">
@@ -1190,9 +1245,10 @@ function tableRow(r, tot) {
     const wt = tot > 0 ? (valueUSD / tot) * 100 : 0;
     const short = r.ticker.replace('.SI','').replace('.L','');
 
+    const isManual  = r.manualPrice != null;
     const priceCell = r.price != null
-        ? money(r.price, r.currency)
-        : `<span class="skel" style="width:54px;height:13px;display:inline-block"></span>`;
+        ? `<span class="price-cell" data-id="${r.id}">${money(r.price, r.currency)}${isManual ? '<span class="manual-tag">M</span>' : ''}</span>`
+        : `<span class="price-cell" data-id="${r.id}"><span class="skel" style="width:54px;height:13px;display:inline-block"></span></span>`;
 
     const valueCell = r.value != null
         ? money(r.value, r.currency)
@@ -1233,6 +1289,7 @@ function tableRow(r, tot) {
             </td>
             <td>
                 <div class="row-actions">
+                    <button class="row-btn buy" onclick="openBuyModal('${r.id}')">Buy</button>
                     <button class="row-btn" onclick="openModal('${r.id}')">Edit</button>
                     <button class="row-btn del" onclick="del('${r.id}')">Remove</button>
                 </div>
@@ -1434,6 +1491,112 @@ document.getElementById('import-file').addEventListener('change', e => {
     reader.readAsText(file);
     e.target.value = '';
 });
+
+// ── Inline Price Editing ──
+document.getElementById('table-body').addEventListener('click', e => {
+    const cell = e.target.closest('.price-cell');
+    if (!cell) return;
+    const id = cell.dataset.id;
+    const h = holdings.find(x => x.id === id);
+    if (!h) return;
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.step = 'any';
+    input.value = h.manualPrice ?? '';
+    input.placeholder = 'price';
+    input.className = 'price-inline-input';
+    cell.innerHTML = '';
+    cell.appendChild(input);
+    input.focus();
+    input.select();
+
+    let committed = false;
+    const commit = () => {
+        if (committed) return;
+        committed = true;
+        const i = holdings.findIndex(x => x.id === id);
+        if (i === -1) { render(); return; }
+        const val = parseFloat(input.value);
+        if (!isNaN(val) && val > 0) {
+            holdings[i] = { ...holdings[i], manualPrice: val };
+            save();
+            toast('Price updated');
+        } else if (input.value.trim() === '') {
+            holdings[i] = { ...holdings[i], manualPrice: null };
+            save();
+        }
+        render();
+    };
+    input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') commit();
+        if (e.key === 'Escape') { committed = true; render(); }
+    });
+    input.addEventListener('blur', commit);
+});
+
+// ── Buy More ──
+let buyId = null;
+
+function openBuyModal(id) {
+    buyId = id;
+    const h = holdings.find(x => x.id === id);
+    if (!h) return;
+    document.getElementById('buy-modal-title').textContent = `Buy More · ${h.name}`;
+    document.getElementById('buy-holding-info').innerHTML =
+        `<strong>${h.ticker}</strong> &nbsp;·&nbsp; ${Number(h.shares).toLocaleString()} shares &nbsp;·&nbsp; avg cost ${money(h.avgCost, h.currency)}`;
+    document.getElementById('buy-shares').value = '';
+    document.getElementById('buy-price').value = '';
+    document.getElementById('buy-preview').innerHTML = '';
+    document.getElementById('buy-overlay').classList.add('open');
+    setTimeout(() => document.getElementById('buy-shares').focus(), 50);
+}
+
+function updateBuyPreview() {
+    if (!buyId) return;
+    const h = holdings.find(x => x.id === buyId);
+    const newShares = parseFloat(document.getElementById('buy-shares').value);
+    const newPrice  = parseFloat(document.getElementById('buy-price').value);
+    if (!h || isNaN(newShares) || isNaN(newPrice) || newShares <= 0 || newPrice <= 0) {
+        document.getElementById('buy-preview').innerHTML = '';
+        return;
+    }
+    const totalShares = h.shares + newShares;
+    const newAvgCost  = (h.shares * h.avgCost + newShares * newPrice) / totalShares;
+    document.getElementById('buy-preview').innerHTML = `
+        <div class="buy-preview">
+            New total: <strong style="color:var(--label)">${totalShares.toLocaleString('en-US', { maximumFractionDigits: 4 })} shares</strong>
+            &nbsp;·&nbsp; New avg cost: <strong style="color:var(--label)">${money(newAvgCost, h.currency)}</strong>
+        </div>`;
+}
+
+document.getElementById('buy-shares').addEventListener('input', updateBuyPreview);
+document.getElementById('buy-price').addEventListener('input', updateBuyPreview);
+
+document.getElementById('buy-form').addEventListener('submit', e => {
+    e.preventDefault();
+    if (!buyId) return;
+    const i = holdings.findIndex(x => x.id === buyId);
+    if (i === -1) return;
+    const h = holdings[i];
+    const newShares = parseFloat(document.getElementById('buy-shares').value);
+    const newPrice  = parseFloat(document.getElementById('buy-price').value);
+    if (isNaN(newShares) || isNaN(newPrice)) return;
+    const totalShares = h.shares + newShares;
+    const newAvgCost  = (h.shares * h.avgCost + newShares * newPrice) / totalShares;
+    holdings[i] = { ...h, shares: totalShares, avgCost: newAvgCost };
+    save();
+    document.getElementById('buy-overlay').classList.remove('open');
+    buyId = null;
+    render();
+    fetchPrices();
+    toast('Position updated');
+});
+
+const closeBuyModal = () => { document.getElementById('buy-overlay').classList.remove('open'); buyId = null; };
+document.getElementById('buy-modal-close').addEventListener('click', closeBuyModal);
+document.getElementById('buy-cancel').addEventListener('click', closeBuyModal);
+document.getElementById('buy-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeBuyModal(); });
 
 // ── Init ──
 function init() {
