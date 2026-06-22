@@ -287,12 +287,12 @@
         }
 
         .kpi-card.total {
-            background: #111827;
+            background: linear-gradient(135deg, #111827 0%, #1c2600 100%);
             color: #fff;
         }
 
         @media (prefers-color-scheme: dark) {
-            .kpi-card.total { background: #0a0f1a; }
+            .kpi-card.total { background: linear-gradient(135deg, #0a0f00 0%, #111800 100%); }
         }
 
         .kpi-icon {
@@ -960,10 +960,10 @@
                 <h2>Breakdown</h2>
             </div>
             <div class="breakdown-tabs" id="bk-tabs">
-                <button class="bk-tab active" data-bk="type">Type</button>
-                <button class="bk-tab" data-bk="market">Market</button>
+                <button class="bk-tab active" data-bk="market">Market</button>
                 <button class="bk-tab" data-bk="perf">Performance</button>
                 <button class="bk-tab" data-bk="alloc">Allocation</button>
+                <button class="bk-tab" data-bk="type">Type</button>
             </div>
             <div id="bk-body"></div>
             <div class="fx-note" id="fx-note" style="display:none"></div>
@@ -1357,7 +1357,7 @@ function svgLine(points, { h = 52, color = '#22c55e', showLabels = true } = {}) 
         const anchor = i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle';
         return `<text x="${x.toFixed(1)}" y="${h + 11}" font-size="8" fill="var(--label3)" text-anchor="${anchor}" font-family="inherit">${points[i].label || ''}</text>`;
     }).join('') : '';
-    return `<svg width="100%" height="${h + labelH}" viewBox="0 0 ${VW} ${h + labelH}" preserveAspectRatio="none" style="display:block;margin-top:12px;overflow:visible">
+    return `<svg width="100%" height="${h + labelH}" viewBox="0 0 ${VW} ${h + labelH}" preserveAspectRatio="none" style="display:block;overflow:visible">
         <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="${color}" stop-opacity="0.25"/>
             <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
@@ -1386,26 +1386,30 @@ function renderKPI(rows) {
     );
 
     el.innerHTML =
-        `<div class="kpi-card total">
-            <div class="kpi-icon total">💼</div>
-            <div class="kpi-label">Total Portfolio</div>
-            <div class="kpi-value">${money(s.totalUSD, 'USD')}</div>
-            <div>
-                <span class="kpi-badge ${badgeClass(s.totalGain)}">${s.totalGain >= 0 ? '▲' : '▼'} ${pct(s.totalGainPct)}</span>
-                <div class="kpi-sub">${money(s.totalUSD / fxSGDUSD, 'SGD')} · Cost: ${money(s.totalCostUSD, 'USD')}</div>
+        `<div class="kpi-card total" style="display:flex;gap:16px;align-items:center">
+            <div style="flex:1;min-width:0">
+                <div class="kpi-icon total">💼</div>
+                <div class="kpi-label">Total Portfolio</div>
+                <div class="kpi-value">${money(s.totalUSD, 'USD')}</div>
+                <div>
+                    <span class="kpi-badge ${badgeClass(s.totalGain)}">${s.totalGain >= 0 ? '▲' : '▼'} ${pct(s.totalGainPct)}</span>
+                    <div class="kpi-sub">${money(s.totalUSD / fxSGDUSD, 'SGD')} · Cost: ${money(s.totalCostUSD, 'USD')}</div>
+                </div>
             </div>
-            ${totalChart}
+            <div style="flex:1;min-width:0">${totalChart}</div>
         </div>` +
 
-        `<div class="kpi-card">
-            <div class="kpi-icon blue">💰</div>
-            <div class="kpi-label">Unrealised Gain</div>
-            <div class="kpi-value">${signed(s.totalGain, 'USD')}</div>
-            <div>
-                <span class="kpi-badge ${badgeClass(s.totalGainPct)}">${pct(s.totalGainPct)}</span>
-                <div class="kpi-sub">${signed(s.totalGain / fxSGDUSD, 'SGD')}</div>
+        `<div class="kpi-card" style="display:flex;gap:16px;align-items:center">
+            <div style="flex:1;min-width:0">
+                <div class="kpi-icon blue">💰</div>
+                <div class="kpi-label">Unrealised Gain</div>
+                <div class="kpi-value">${signed(s.totalGain, 'USD')}</div>
+                <div>
+                    <span class="kpi-badge ${badgeClass(s.totalGainPct)}">${pct(s.totalGainPct)}</span>
+                    <div class="kpi-sub">${signed(s.totalGain / fxSGDUSD, 'SGD')}</div>
+                </div>
             </div>
-            ${gainChart}
+            <div style="flex:1;min-width:0">${gainChart}</div>
         </div>`;
 }
 
@@ -1649,20 +1653,22 @@ function renderMarkets(rows) {
         );
 
         return `
-        <div class="kpi-card">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-                <div class="kpi-icon" style="background:${col}18;margin-bottom:0">
-                    <span class="mkt-pill mkt-${mkt.toLowerCase()}">${mkt}</span>
+        <div class="kpi-card" style="display:flex;gap:16px;align-items:center">
+            <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+                    <div class="kpi-icon" style="background:${col}18;margin-bottom:0">
+                        <span class="mkt-pill mkt-${mkt.toLowerCase()}">${mkt}</span>
+                    </div>
+                    <span style="font-size:20px">${flag}</span>
                 </div>
-                <span style="font-size:22px">${flag}</span>
+                <div class="kpi-label">${mkt} Holdings</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">
+                    <div class="kpi-value" style="font-size:22px;margin-bottom:0">${money(val, cur)}</div>
+                    <span class="kpi-badge ${badgeClass(gain)}" style="white-space:nowrap;flex-shrink:0">${signed(gain, cur)} · ${pct(gPct)}</span>
+                </div>
+                <div class="kpi-sub">Cost: ${money(cost, cur)}</div>
             </div>
-            <div class="kpi-label">${mkt} Holdings</div>
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">
-                <div class="kpi-value" style="font-size:22px;margin-bottom:0">${money(val, cur)}</div>
-                <span class="kpi-badge ${badgeClass(gain)}" style="white-space:nowrap;flex-shrink:0">${signed(gain, cur)} · ${pct(gPct)}</span>
-            </div>
-            <div class="kpi-sub">Cost: ${money(cost, cur)}</div>
-            ${mktChart}
+            <div style="flex:1;min-width:0">${mktChart}</div>
         </div>`;
     }).join('');
 }
