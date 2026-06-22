@@ -1,0 +1,155 @@
+{
+  "holdings": [
+    {
+      "id": "rhinml0lo3fmqovitd2",
+      "ticker": "MU",
+      "market": "US",
+      "name": "Micron Technology Inc",
+      "type": "Stock",
+      "currency": "USD",
+      "shares": 4,
+      "avgCost": 405,
+      "notes": "",
+      "manualPrice": 1171.39
+    },
+    {
+      "id": "m331x1l1l8mqovkw3s",
+      "ticker": "SMH",
+      "market": "US",
+      "name": "Vaneck Semiconductor ETF",
+      "type": "ETF",
+      "currency": "USD",
+      "shares": 3,
+      "avgCost": 394.83,
+      "notes": "",
+      "manualPrice": 663.62
+    },
+    {
+      "id": "rfwf8osbny9mqovmc03",
+      "ticker": "QQQM",
+      "market": "US",
+      "name": "Invesco Nasdaq 100 ETF",
+      "type": "ETF",
+      "currency": "USD",
+      "shares": 2,
+      "avgCost": 251,
+      "notes": "",
+      "manualPrice": 305.04
+    },
+    {
+      "id": "jvr6bn5csgcmqovmw7m",
+      "ticker": "NBIS",
+      "market": "US",
+      "name": "Nebius Group NV",
+      "type": "Stock",
+      "currency": "USD",
+      "shares": 4,
+      "avgCost": 97.88,
+      "notes": "",
+      "manualPrice": 286.15
+    },
+    {
+      "id": "saqo5hfcdllmqovo48o",
+      "ticker": "VOO",
+      "market": "US",
+      "name": "Vanguard S&P 500 ETF",
+      "type": "ETF",
+      "currency": "USD",
+      "shares": 2,
+      "avgCost": 628,
+      "notes": "",
+      "manualPrice": 688.4
+    },
+    {
+      "id": "ohv9vplhy6lmqovoz97",
+      "ticker": "AMZN",
+      "market": "US",
+      "name": "Amazon.com INC",
+      "type": "Stock",
+      "currency": "USD",
+      "shares": 4,
+      "avgCost": 235.88,
+      "notes": "",
+      "manualPrice": 242.81
+    },
+    {
+      "id": "9h2pd5ui8lqmqovpxnd",
+      "ticker": "GOOG",
+      "market": "US",
+      "name": "Google Inc",
+      "type": "Stock",
+      "currency": "USD",
+      "shares": 5,
+      "avgCost": 328.8,
+      "notes": "",
+      "manualPrice": 363.38
+    },
+    {
+      "id": "wkk7vtoidbmqovrsxc",
+      "ticker": "D05.SI",
+      "market": "SG",
+      "name": "DBS",
+      "type": "Stock",
+      "currency": "SGD",
+      "shares": 100,
+      "avgCost": 57.53,
+      "notes": "",
+      "manualPrice": 65.91
+    },
+    {
+      "id": "npcpo1kt4ikmqovskq8",
+      "ticker": "O39.SI",
+      "market": "SG",
+      "name": "OCBC",
+      "type": "Stock",
+      "currency": "SGD",
+      "shares": 100,
+      "avgCost": 20.62,
+      "notes": "",
+      "manualPrice": 25.88
+    },
+    {
+      "id": "y7me9s1gjdmqovubw7",
+      "ticker": "U11.SI",
+      "market": "SG",
+      "name": "UOB",
+      "type": "Stock",
+      "currency": "SGD",
+      "shares": 100,
+      "avgCost": 37.64,
+      "notes": "",
+      "manualPrice": 39.33
+    },
+    {
+      "id": "my9v538pf78mqovuzr3",
+      "ticker": "ES3.SI",
+      "market": "SG",
+      "name": "SS SPDR STI ETF",
+      "type": "ETF",
+      "currency": "SGD",
+      "shares": 100,
+      "avgCost": 4.969,
+      "notes": "",
+      "manualPrice": 5.279
+    }
+  ],
+  "watchlist": [],
+  "snapshots": [
+    {
+      "month": "2026-06",
+      "gainUSD": 6263.7948,
+      "totalUSD": 23142.41068,
+      "byMkt": {
+        "US": 12596.039999999999,
+        "SG": 10546.37068,
+        "UK": 0
+      },
+      "costByMkt": {
+        "US": 7541.530000000001,
+        "SG": 9337.08588,
+        "UK": 0
+      }
+    }
+  ],
+  "updatedAt": "2026-06-22T18:22:26.398Z"
+}
