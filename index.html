@@ -960,6 +960,26 @@ function setGreeting() {
 }
 
 // ── Price Fetching ──
+const PROXIES = [
+    u => u,
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+];
+
+async function fetchSymbol(symbol) {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
+    for (const proxy of PROXIES) {
+        try {
+            const res = await fetch(proxy(url), { credentials: 'include', headers: { Accept: 'application/json' } });
+            if (!res.ok) continue;
+            const data = await res.json();
+            const meta = data?.chart?.result?.[0]?.meta;
+            if (meta?.regularMarketPrice) return { symbol, meta };
+        } catch {}
+    }
+    return null;
+}
+
 async function fetchPrices() {
     if (!holdings.length || fetching) return;
     fetching = true;
@@ -967,64 +987,32 @@ async function fetchPrices() {
     icon.classList.add('spinning');
     document.getElementById('last-updated').textContent = 'Updating…';
 
-    const tickers  = [...new Set(holdings.map(h => h.ticker))];
-    const symbols  = [...tickers, 'SGDUSD=X', 'GBPUSD=X'].join(',');
-    const fields   = 'regularMarketPrice,regularMarketChange,regularMarketChangePercent,shortName,currency,marketState';
-    const yahooUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols)}&fields=${fields}`;
+    const tickers    = [...new Set(holdings.map(h => h.ticker))];
+    const allSymbols = [...tickers, 'SGDUSD=X', 'GBPUSD=X'];
 
     try {
-        let data = null;
+        const results = await Promise.all(allSymbols.map(fetchSymbol));
 
-        // 1. Try direct request (works when a Yahoo session cookie exists)
-        let crumb = '';
-        try {
-            const cr = await fetch('https://query1.finance.yahoo.com/v1/test/getcrumb', { credentials: 'include' });
-            if (cr.ok) crumb = (await cr.text()).trim();
-        } catch {}
-
-        for (const base of ['https://query1.finance.yahoo.com', 'https://query2.finance.yahoo.com']) {
-            if (data) break;
-            try {
-                const url = `${base}/v7/finance/quote?symbols=${encodeURIComponent(symbols)}&fields=${fields}${crumb ? '&crumb=' + encodeURIComponent(crumb) : ''}`;
-                const res = await fetch(url, { credentials: 'include', headers: { Accept: 'application/json' } });
-                if (res.ok) data = await res.json();
-            } catch {}
-        }
-
-        // 2. Fall back through CORS proxies
-        if (!data) {
-            const proxies = [
-                u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-                u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-            ];
-            for (const proxy of proxies) {
-                if (data) break;
-                try {
-                    const res = await fetch(proxy(yahooUrl), { headers: { Accept: 'application/json' } });
-                    if (res.ok) data = await res.json();
-                } catch {}
-            }
-        }
-
-        if (!data) throw new Error('no data');
-
-        const results = data?.quoteResponse?.result || [];
-        results.forEach(q => {
-            if (q.symbol === 'SGDUSD=X') {
-                fxSGDUSD = q.regularMarketPrice || fxSGDUSD;
-            } else if (q.symbol === 'GBPUSD=X') {
-                fxGBPUSD = q.regularMarketPrice || fxGBPUSD;
+        results.forEach(r => {
+            if (!r) return;
+            const { symbol, meta } = r;
+            if (symbol === 'SGDUSD=X') {
+                fxSGDUSD = meta.regularMarketPrice || fxSGDUSD;
+            } else if (symbol === 'GBPUSD=X') {
+                fxGBPUSD = meta.regularMarketPrice || fxGBPUSD;
             } else {
-                const isPence = q.currency === 'GBp';
-                prices[q.symbol] = {
-                    price:     isPence ? q.regularMarketPrice / 100 : q.regularMarketPrice,
-                    change:    isPence ? q.regularMarketChange / 100 : q.regularMarketChange,
-                    changePct: q.regularMarketChangePercent,
-                    currency:  isPence ? 'GBP' : q.currency,
-                    state:     q.marketState,
+                const isPence = meta.currency === 'GBp';
+                prices[symbol] = {
+                    price:     isPence ? meta.regularMarketPrice / 100 : meta.regularMarketPrice,
+                    change:    isPence ? (meta.regularMarketChange ?? 0) / 100 : (meta.regularMarketChange ?? 0),
+                    changePct: meta.regularMarketChangePercent ?? null,
+                    currency:  isPence ? 'GBP' : meta.currency,
+                    state:     meta.marketState,
                 };
             }
         });
+
+        if (!Object.keys(prices).length) throw new Error('no prices');
 
         const t = new Date();
         document.getElementById('last-updated').textContent =
