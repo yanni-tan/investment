@@ -577,7 +577,7 @@
         .perf-pct { font-size: 11px; font-weight: 600; min-width: 56px; text-align: right; flex-shrink: 0; }
 
         /* ── Breakdown (Top Categories) ── */
-        .breakdown-tabs { display: flex; gap: 4px; padding: 14px 16px 0; }
+        .breakdown-tabs { display: flex; gap: 4px; padding: 14px 16px 8px; }
         .bk-tab {
             padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
             border: none; background: transparent; color: var(--label2);
@@ -1152,12 +1152,12 @@ function uid()  { return Math.random().toString(36).slice(2) + Date.now().toStri
 
 // ── Greeting ──
 function setGreeting() {
-    const now  = new Date();
-    const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const h    = now.getHours();
-    const g    = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+    const now = new Date();
+    const h   = now.getHours();
+    const g   = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+    const fmt = (d) => `Last updated on ${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}, ${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
     document.getElementById('greeting').innerHTML =
-        `<span style="display:block;font-size:13px;font-weight:400;color:var(--label3);letter-spacing:0;margin-bottom:2px">${time}, ${g}</span>${g}, Yanni Tan`;
+        `<span id="greeting-time" style="display:block;font-size:13px;font-weight:400;color:var(--label3);letter-spacing:0;margin-bottom:2px">${fmt(now)}</span>${g}, Yanni Tan`;
     document.getElementById('greeting-sub').textContent =
         now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 }
@@ -1218,8 +1218,10 @@ async function fetchPrices() {
         if (!Object.keys(prices).length) throw new Error('no prices');
 
         const t = new Date();
-        document.getElementById('last-updated').textContent =
-            `Last updated ${t.toLocaleDateString('en-US',{month:'short',day:'numeric'})} · ${t.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
+        const fmtTime = `Last updated on ${t.toLocaleDateString('en-US',{month:'short',day:'numeric'})}, ${t.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
+        document.getElementById('last-updated').textContent = fmtTime;
+        const gt = document.getElementById('greeting-time');
+        if (gt) gt.textContent = fmtTime;
         document.getElementById('fx-note').textContent =
             `1 SGD = ${fxSGDUSD.toFixed(4)} USD · 1 GBP = ${fxGBPUSD.toFixed(4)} USD`;
 
@@ -1322,11 +1324,47 @@ function saveSnapshot() {
     const snaps = loadSnapshots();
     const all = holdings.map(enrich);
     const s = calcSummary(all);
+    const entry = { month, gainUSD: s.totalGain, totalUSD: s.totalUSD, byMkt: { ...s.byMkt }, costByMkt: { ...s.costByMkt } };
     const idx = snaps.findIndex(snap => snap.month === month);
-    const entry = { month, gainUSD: s.totalGain, totalUSD: s.totalUSD };
     if (idx >= 0) { snaps[idx] = entry; }
     else { snaps.push(entry); if (snaps.length > 12) snaps.shift(); }
     localStorage.setItem('portfolio_snapshots', JSON.stringify(snaps));
+}
+
+// ── SVG Line Chart ──
+function svgLine(points, { h = 52, color = '#22c55e', showLabels = true } = {}) {
+    if (points.length < 2) return `<div style="font-size:10px;color:var(--label3);margin-top:12px;opacity:0.6">More data builds up over time</div>`;
+    const VW = 300, PAD = 10;
+    const vals = points.map(p => p.v);
+    const minV = Math.min(...vals), maxV = Math.max(...vals);
+    const range = Math.max(maxV - minV, 0.01);
+    const xs = points.map((_, i) => PAD + (i / (points.length - 1)) * (VW - PAD * 2));
+    const ys = vals.map(v => PAD + (1 - (v - minV) / range) * (h - PAD * 2));
+    const pts  = xs.map((x, i) => `${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
+    const area = `${xs[0].toFixed(1)},${h} ${pts} ${xs[xs.length-1].toFixed(1)},${h}`;
+    const gid  = `gl${color.replace(/[^0-9a-z]/gi,'')}`;
+    const labelH = showLabels ? 14 : 0;
+    const dots = xs.map((x, i) => {
+        const tip = (points[i].tip || '').replace(/'/g,'&#39;');
+        return `<g onmouseenter="showTooltip(event,'${tip}')" onmousemove="moveTooltip(event)" onmouseleave="hideTooltip()" style="cursor:default">
+            <circle cx="${x.toFixed(1)}" cy="${ys[i].toFixed(1)}" r="3" fill="${color}"/>
+            <rect x="${(x-10).toFixed(1)}" y="${(ys[i]-10).toFixed(1)}" width="20" height="20" fill="transparent"/>
+        </g>`;
+    }).join('');
+    const labels = showLabels ? xs.map((x, i) => {
+        if (points.length > 4 && i > 0 && i < points.length - 1) return '';
+        const anchor = i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle';
+        return `<text x="${x.toFixed(1)}" y="${h + 11}" font-size="8" fill="var(--label3)" text-anchor="${anchor}" font-family="inherit">${points[i].label || ''}</text>`;
+    }).join('') : '';
+    return `<svg width="100%" height="${h + labelH}" viewBox="0 0 ${VW} ${h + labelH}" preserveAspectRatio="none" style="display:block;margin-top:12px;overflow:visible">
+        <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${color}" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+        </linearGradient></defs>
+        <polygon points="${area}" fill="url(#${gid})"/>
+        <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        ${dots}${labels}
+    </svg>`;
 }
 
 function renderKPI(rows) {
@@ -1335,29 +1373,16 @@ function renderKPI(rows) {
     const s = calcSummary(rows);
     const snaps = loadSnapshots();
 
-    // Monthly gain bar chart for Unrealised Gain card
-    let monthChart = '';
-    if (snaps.length >= 1) {
-        const chartH = 44, VW = 200;
-        const n = snaps.length;
-        const barW = Math.min(Math.max(Math.floor((VW - (n - 1) * 4) / n), 6), 32);
-        const maxG = Math.max(...snaps.map(s => Math.abs(s.gainUSD)), 1);
-        const bars = snaps.map((snap, i) => {
-            const barH = Math.max(Math.round((Math.abs(snap.gainUSD) / maxG) * chartH), 3);
-            const col = snap.gainUSD >= 0 ? '#22c55e' : '#ef4444';
-            const x = i * (barW + 4);
-            const mo = new Date(snap.month + '-01').toLocaleString('default', { month: 'short' });
-            const tip = `${mo}: ${signed(snap.gainUSD, 'USD')}`.replace(/'/g, '&#39;');
-            return `<g onmouseenter="showTooltip(event,'${tip}')" onmousemove="moveTooltip(event)" onmouseleave="hideTooltip()" style="cursor:default">
-                <rect x="${x}" y="${chartH - barH}" width="${barW}" height="${barH}" rx="2" fill="${col}" opacity="0.75"/>
-                <rect x="${x}" y="0" width="${barW}" height="${chartH}" fill="transparent"/>
-            </g>`;
-        }).join('');
-        monthChart = `<svg width="100%" height="${chartH}" viewBox="0 0 ${VW} ${chartH}" preserveAspectRatio="none" style="margin-top:14px;display:block">${bars}</svg>
-            <div style="font-size:10px;color:var(--label3);margin-top:4px">Monthly gain snapshot · hover to inspect</div>`;
-    } else {
-        monthChart = `<div style="font-size:10px;color:var(--label3);margin-top:14px">Monthly chart builds up over time</div>`;
-    }
+    // Line charts from monthly snapshots
+    const mkMonth = (s) => new Date(s.month + '-01').toLocaleString('default', { month: 'short' });
+    const totalChart = svgLine(
+        snaps.map(s => ({ v: s.totalUSD, label: mkMonth(s), tip: `${s.month}<br>${money(s.totalUSD,'USD')}` })),
+        { color: '#c8ff00', h: 44 }
+    );
+    const gainChart = svgLine(
+        snaps.map(s => ({ v: s.gainUSD, label: mkMonth(s), tip: `${s.month}<br>${signed(s.gainUSD,'USD')}` })),
+        { color: '#22c55e', h: 44 }
+    );
 
     el.innerHTML =
         `<div class="kpi-card total">
@@ -1368,6 +1393,7 @@ function renderKPI(rows) {
                 <span class="kpi-badge ${badgeClass(s.totalGain)}">${s.totalGain >= 0 ? '▲' : '▼'} ${pct(s.totalGainPct)}</span>
                 <div class="kpi-sub">${money(s.totalUSD / fxSGDUSD, 'SGD')} · Cost: ${money(s.totalCostUSD, 'USD')}</div>
             </div>
+            ${totalChart}
         </div>` +
 
         `<div class="kpi-card">
@@ -1378,7 +1404,7 @@ function renderKPI(rows) {
                 <span class="kpi-badge ${badgeClass(s.totalGainPct)}">${pct(s.totalGainPct)}</span>
                 <div class="kpi-sub">${signed(s.totalGain / fxSGDUSD, 'SGD')}</div>
             </div>
-            ${monthChart}
+            ${gainChart}
         </div>`;
 }
 
@@ -1604,6 +1630,7 @@ function renderMarkets(rows) {
     const el = document.getElementById('mkt-grid');
     if (!rows.length) { el.innerHTML = ''; return; }
     const s = calcSummary(rows);
+    const snaps = loadSnapshots();
     const mkts = [['US','USD',1], ['SG','SGD',1/fxSGDUSD]];
     el.innerHTML = mkts.map(([mkt, cur, fx]) => {
         const val  = (s.byMkt[mkt]  || 0) * fx;
@@ -1613,23 +1640,12 @@ function renderMarkets(rows) {
         const col  = MARKET_COLORS[mkt];
         const flag = MKT_FLAGS[mkt] || '';
 
-        const mktRows = rows.filter(r => r.market === mkt);
-        const maxV = Math.max(...mktRows.map(r => r.value ?? r.costBasis), 0.01);
-        const chartH = 36, VW = 200;
-        const n = mktRows.length || 1;
-        const barW = Math.max(Math.floor((VW - (n - 1) * 4) / n), 4);
-        const bars = mktRows.map((r, i) => {
-            const v = r.value ?? r.costBasis;
-            const barH = Math.max(Math.round((v / maxV) * chartH), 2);
-            const barCol = (r.gainLoss ?? 0) > 0 ? '#22c55e' : (r.gainLoss ?? 0) < 0 ? '#ef4444' : '#94a3b8';
-            const x = i * (barW + 4);
-            const short = r.ticker.replace('.SI','').replace('.L','');
-            const tip = `<strong>${short}</strong><br>${money(v, r.currency)}<br>${r.gainLoss != null ? signed(r.gainLoss, r.currency) + ' (' + pct(r.gainPct) + ')' : 'No live price'}`.replace(/'/g, '&#39;');
-            return `<g onmouseenter="showTooltip(event,'${tip}')" onmousemove="moveTooltip(event)" onmouseleave="hideTooltip()" style="cursor:default">
-                <rect x="${x}" y="${chartH - barH}" width="${barW}" height="${barH}" rx="2" fill="${barCol}" opacity="0.8"/>
-                <rect x="${x}" y="0" width="${barW}" height="${chartH}" fill="transparent"/>
-            </g>`;
-        }).join('');
+        const mkMonth = (s) => new Date(s.month + '-01').toLocaleString('default', { month: 'short' });
+        const mktSnaps = snaps.filter(s => s.byMkt && s.byMkt[mkt] != null);
+        const mktChart = svgLine(
+            mktSnaps.map(s => ({ v: (s.byMkt[mkt] || 0) * fx, label: mkMonth(s), tip: `${s.month}<br>${money((s.byMkt[mkt]||0)*fx,cur)}` })),
+            { color: col, h: 40 }
+        );
 
         return `
         <div class="kpi-card">
@@ -1645,7 +1661,7 @@ function renderMarkets(rows) {
                 <span class="kpi-badge ${badgeClass(gain)}" style="white-space:nowrap;flex-shrink:0">${signed(gain, cur)} · ${pct(gPct)}</span>
             </div>
             <div class="kpi-sub">Cost: ${money(cost, cur)}</div>
-            <svg width="100%" height="${chartH}" viewBox="0 0 ${VW} ${chartH}" preserveAspectRatio="none" style="margin-top:12px;display:block">${bars}</svg>
+            ${mktChart}
         </div>`;
     }).join('');
 }
@@ -1765,7 +1781,16 @@ function renderBreakdown(rows) {
             const w = (Math.abs(r.gainPct) / maxA * 100).toFixed(1);
             const cls = r.gainPct >= 0 ? 'pos' : 'neg';
             const short = r.ticker.replace('.SI','').replace('.L','');
-            return `<div class="perf-row">
+            const tip = [
+                `<strong>${r.name}</strong>`,
+                `Value: ${money(r.value ?? r.costBasis, r.currency)}`,
+                `Gain: ${signed(r.gainLoss, r.currency)} (${pct(r.gainPct)})`,
+                `Cost: ${money(r.costBasis, r.currency)}`,
+            ].join('<br>').replace(/'/g, '&#39;');
+            return `<div class="perf-row" style="cursor:default"
+                onmouseenter="showTooltip(event,'${tip}')"
+                onmousemove="moveTooltip(event)"
+                onmouseleave="hideTooltip()">
                 <span class="perf-ticker">${short.slice(0,5)}</span>
                 <div class="perf-bar-wrap"><div class="perf-bar ${cls}" style="width:${w}%"></div></div>
                 <span class="perf-pct ${cls}">${pct(r.gainPct)}</span>
