@@ -151,6 +151,15 @@
       "targetPrice": "802.85",
       "qty": "1",
       "notes": "Replaces VOO"
+    },
+    {
+      "id": "w859fl0q37hmqpju4e3",
+      "ticker": "VWRA",
+      "action": "Buy",
+      "name": "VWRA LONDON",
+      "targetPrice": "189",
+      "qty": "1",
+      "notes": ""
     }
   ],
   "snapshots": [
@@ -170,5 +179,5 @@
       }
     }
   ],
-  "updatedAt": "2026-06-22T18:27:57.027Z"
+  "updatedAt": "2026-06-22T18:28:43.324Z"
 }
