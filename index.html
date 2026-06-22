@@ -1535,11 +1535,15 @@ function renderBreakdown(rows) {
     const groups = {};
     rows.forEach(r => {
         const key = bkTab === 'type' ? r.type : r.market;
-        if (!groups[key]) groups[key] = { val: 0, cost: 0, cur: bkTab === 'type' ? 'USD' : (r.market === 'SG' ? 'SGD' : r.market === 'UK' ? 'GBP' : 'USD') };
-        const fx = bkTab === 'market' && r.market === 'SG' ? 1/fxSGDUSD : bkTab === 'market' && r.market === 'UK' ? 1/fxGBPUSD : 1;
-        const v = (r.value ?? r.costBasis);
-        groups[key].val  += bkTab === 'type' ? toUSD(v, r.currency) : v * fx;
-        groups[key].cost += bkTab === 'type' ? toUSD(r.costBasis, r.currency) : r.costBasis * fx;
+        // Type view: convert all to USD for fair comparison
+        // Market view: sum native currency values (US→USD, SG→SGD, UK→GBP)
+        const v    = r.value ?? r.costBasis;
+        const val  = bkTab === 'type' ? toUSD(v, r.currency)         : v;
+        const cost = bkTab === 'type' ? toUSD(r.costBasis, r.currency) : r.costBasis;
+        const cur  = bkTab === 'type' ? 'USD' : r.currency;
+        if (!groups[key]) groups[key] = { val: 0, cost: 0, cur };
+        groups[key].val  += val;
+        groups[key].cost += cost;
     });
 
     const entries = Object.entries(groups).sort((a, b) => b[1].val - a[1].val);
