@@ -1405,7 +1405,7 @@ function renderKPI(rows) {
                 <div class="kpi-label">Unrealised Gain</div>
                 <div class="kpi-value">${signed(s.totalGain, 'USD')}</div>
                 <div>
-                    <span class="kpi-badge ${badgeClass(s.totalGainPct)}">${pct(s.totalGainPct)}</span>
+                    <span class="kpi-badge ${badgeClass(s.totalGainPct)}">${s.totalGain >= 0 ? '▲' : '▼'} ${pct(s.totalGainPct)}</span>
                     <div class="kpi-sub">${signed(s.totalGain / fxSGDUSD, 'SGD')}</div>
                 </div>
             </div>
@@ -1622,6 +1622,16 @@ function renderChart(rows, tot) {
         </div>`;
 }
 
+// ── Set market tab (used by clickable market cards) ──
+function setMarketTab(mkt) {
+    tab = (tab === mkt) ? 'all' : mkt;
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelector(`.nav-item[data-tab="${tab}"]`)?.classList.add('active');
+    document.getElementById('table-title').textContent =
+        ({ all:'All Holdings', US:'US Holdings', SG:'SG Holdings', UK:'UK Holdings' })[tab];
+    render();
+}
+
 // ── Tooltip ──
 const ttEl = () => document.getElementById('chart-tooltip');
 function showTooltip(e, html) { const t = ttEl(); t.innerHTML = html; t.classList.add('show'); moveTooltip(e); }
@@ -1653,7 +1663,7 @@ function renderMarkets(rows) {
         );
 
         return `
-        <div class="kpi-card" style="display:flex;gap:16px;align-items:center">
+        <div class="kpi-card" style="display:flex;gap:16px;align-items:center;cursor:pointer" onclick="setMarketTab('${mkt}')">
             <div style="flex:1;min-width:0">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
                     <div class="kpi-icon" style="background:${col}18;margin-bottom:0">
@@ -1663,8 +1673,9 @@ function renderMarkets(rows) {
                 </div>
                 <div class="kpi-label">${mkt} Holdings</div>
                 <div class="kpi-value" style="font-size:22px">${money(val, cur)}</div>
-                <div style="margin-bottom:6px">
-                    <span class="kpi-badge ${badgeClass(gain)}">${signed(gain, cur)} · ${pct(gPct)}</span>
+                <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+                    <span class="kpi-badge ${badgeClass(gain)}">${gain >= 0 ? '▲' : '▼'} ${signed(gain, cur)}</span>
+                    <span class="kpi-badge ${badgeClass(gPct)}">${gain >= 0 ? '▲' : '▼'} ${pct(gPct)}</span>
                 </div>
                 <div class="kpi-sub">Cost: ${money(cost, cur)}</div>
             </div>
@@ -1762,10 +1773,12 @@ function renderBreakdown(rows) {
         const gradient = stops.length > 1 ? `conic-gradient(${stops.join(', ')})` : `conic-gradient(${MARKET_COLORS[markets[0][0]]} 0deg 360deg)`;
         const allocRows = markets.map(([mkt, v]) => {
             const p = (v / total) * 100;
-            return `<div class="alloc-row">
-                <div class="alloc-left"><div class="alloc-dot" style="background:${MARKET_COLORS[mkt]||'#94a3b8'}"></div><span class="alloc-market">${MKT_FLAGS[mkt]||''} ${mkt}</span></div>
-                <div class="alloc-bar-wrap"><div class="alloc-bar" style="width:${p.toFixed(1)}%;background:${MARKET_COLORS[mkt]||'#94a3b8'}"></div></div>
-                <span class="alloc-pct">${p.toFixed(1)}%</span>
+            return `<div class="alloc-row" style="flex-direction:column;align-items:stretch;gap:5px">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <div class="alloc-left"><div class="alloc-dot" style="background:${MARKET_COLORS[mkt]||'#94a3b8'}"></div><span class="alloc-market">${MKT_FLAGS[mkt]||''} ${mkt}</span></div>
+                    <span class="alloc-pct">${p.toFixed(1)}%</span>
+                </div>
+                <div class="alloc-bar-wrap" style="margin:0;flex:none;width:100%"><div class="alloc-bar" style="width:${p.toFixed(1)}%;background:${MARKET_COLORS[mkt]||'#94a3b8'}"></div></div>
             </div>`;
         }).join('');
         el.innerHTML = `<div class="chart-inner">
