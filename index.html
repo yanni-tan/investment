@@ -6,7 +6,7 @@
     <title>Investment Portfolio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;0,9..40,900&display=swap" rel="stylesheet">
     <style>
         /* ── Variables ── */
         :root {
@@ -14,7 +14,7 @@
             --sidebar-border: rgba(0,0,0,0.07);
             --sidebar-text: #9ca3af;
             --sidebar-text-active: #111827;
-            --bg: #f0f0eb;
+            --bg: #ebebe6;
             --surface: #ffffff;
             --surface2: #f5f5f1;
             --label: #111827;
@@ -56,7 +56,7 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'Space Grotesk', -apple-system, "SF Pro Text", "Inter", sans-serif;
+            font-family: 'DM Sans', -apple-system, "Helvetica Neue", sans-serif;
             background: var(--bg);
             color: var(--label);
             -webkit-font-smoothing: antialiased;
@@ -226,16 +226,18 @@
         }
 
         .greeting {
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            line-height: 1.2;
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            line-height: 1.1;
         }
 
         .greeting-sub {
-            font-size: 13px;
-            color: var(--label2);
-            margin-top: 3px;
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--label3);
+            margin-top: 4px;
+            letter-spacing: 0;
         }
 
         .header-right {
@@ -277,51 +279,51 @@
         .kpi-card {
             background: var(--surface);
             border-radius: var(--radius);
-            padding: 22px 24px;
+            padding: 24px 26px 22px;
             box-shadow: var(--shadow);
             position: relative;
             overflow: hidden;
         }
 
         .kpi-card.total {
-            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+            background: #111827;
             color: #fff;
         }
 
         @media (prefers-color-scheme: dark) {
-            .kpi-card.total { background: linear-gradient(135deg, #0a1628 0%, #0f2a45 100%); }
+            .kpi-card.total { background: #0a0f1a; }
         }
 
         .kpi-icon {
-            width: 36px; height: 36px;
-            border-radius: 10px;
+            width: 32px; height: 32px;
+            border-radius: 9px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 16px;
-            margin-bottom: 14px;
+            font-size: 14px;
+            margin-bottom: 18px;
         }
 
         .kpi-icon.green  { background: var(--accent-dim); }
-        .kpi-icon.blue   { background: rgba(59,130,246,0.12); }
-        .kpi-icon.red    { background: rgba(239,68,68,0.12); }
-        .kpi-icon.total  { background: rgba(255,255,255,0.12); }
+        .kpi-icon.blue   { background: rgba(59,130,246,0.1); }
+        .kpi-icon.red    { background: rgba(239,68,68,0.1); }
+        .kpi-icon.total  { background: rgba(255,255,255,0.1); }
 
         .kpi-label {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
-            color: var(--label2);
+            color: var(--label3);
             text-transform: uppercase;
-            letter-spacing: 0.6px;
-            margin-bottom: 6px;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
         }
 
-        .kpi-card.total .kpi-label { color: rgba(255,255,255,0.55); }
+        .kpi-card.total .kpi-label { color: rgba(255,255,255,0.4); }
 
         .kpi-value {
-            font-size: 26px;
-            font-weight: 700;
-            letter-spacing: -1px;
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -1.5px;
             line-height: 1;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
         }
 
         .kpi-card.total .kpi-value { color: #fff; }
@@ -330,10 +332,10 @@
             display: inline-flex;
             align-items: center;
             gap: 3px;
-            padding: 3px 9px;
+            padding: 4px 10px;
             border-radius: 20px;
             font-size: 11px;
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .kpi-badge.up   { background: var(--green-bg); color: var(--green); }
@@ -346,9 +348,9 @@
         .kpi-sub {
             font-size: 11px;
             color: var(--label3);
-            margin-top: 4px;
+            margin-top: 5px;
         }
-        .kpi-card.total .kpi-sub { color: rgba(255,255,255,0.35); }
+        .kpi-card.total .kpi-sub { color: rgba(255,255,255,0.3); }
 
         /* ── Content Grid ── */
         .content-grid {
@@ -533,8 +535,8 @@
             color: var(--label2); cursor: pointer; font-family: inherit;
             transition: all .15s;
         }
-        .chip.active { background: var(--label); color: var(--bg); border-color: var(--label); }
-        .chip:hover:not(.active) { border-color: var(--label3); color: var(--label); }
+        .chip.active { background: #111827; color: #fff; border-color: #111827; font-weight: 700; }
+        .chip:hover:not(.active) { border-color: var(--label3); color: var(--label); background: var(--surface); }
 
         /* ── Performance bars ── */
         .perf-list { padding: 14px 20px 20px; display: flex; flex-direction: column; gap: 9px; }
@@ -1095,7 +1097,8 @@ function uid()  { return Math.random().toString(36).slice(2) + Date.now().toStri
 function setGreeting() {
     const h = new Date().getHours();
     const g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-    document.getElementById('greeting').textContent = `${g}, Yanni`;
+    document.getElementById('greeting').innerHTML =
+        `<span style="display:block;font-size:13px;font-weight:400;color:var(--label3);letter-spacing:0;margin-bottom:2px">${g}</span>Investment Portfolio`;
     const d = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     document.getElementById('greeting-sub').textContent = d;
 }
