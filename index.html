@@ -582,6 +582,18 @@
         .bk-right { margin-left: auto; text-align: right; }
         .bk-gain  { font-size: 12px; font-weight: 600; }
 
+        /* ── Chart tooltip ── */
+        .chart-tooltip {
+            position: fixed; pointer-events: none; z-index: 500;
+            background: #111827; color: #fff;
+            padding: 8px 12px; border-radius: 10px;
+            font-size: 12px; line-height: 1.6;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+            display: none; max-width: 180px;
+        }
+        .chart-tooltip.show { display: block; }
+        .chart-tooltip strong { font-weight: 600; font-size: 13px; }
+
         /* ── Right column ── */
         .right-col { display: flex; flex-direction: column; gap: 20px; }
 
@@ -926,8 +938,11 @@
             <div class="breakdown-tabs" id="bk-tabs">
                 <button class="bk-tab active" data-bk="type">Type</button>
                 <button class="bk-tab" data-bk="market">Market</button>
+                <button class="bk-tab" data-bk="sector">Sector</button>
+                <button class="bk-tab" data-bk="alloc">Allocation</button>
             </div>
             <div id="bk-body"></div>
+            <div class="fx-note" id="fx-note" style="display:none"></div>
         </div>
     </div>
 
@@ -944,11 +959,6 @@
             <div id="table-body"></div>
         </div>
         <div class="right-col">
-            <div class="card chart-card">
-                <div class="card-header"><h2>Allocation</h2></div>
-                <div id="chart-body"></div>
-                <div class="fx-note" id="fx-note"></div>
-            </div>
             <div class="card chart-card">
                 <div class="card-header"><h2>Performance</h2></div>
                 <div id="perf-body"></div>
@@ -994,6 +1004,21 @@
                     </select>
                 </div>
                 <div class="fg">
+                    <label>Sector</label>
+                    <select class="finput" id="f-sector">
+                        <option value="">— None —</option>
+                        <option value="Tech">Tech</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Healthcare">Healthcare</option>
+                        <option value="Consumer">Consumer</option>
+                        <option value="Energy">Energy</option>
+                        <option value="Industrials">Industrials</option>
+                        <option value="Real Estate">Real Estate</option>
+                        <option value="Utilities">Utilities</option>
+                        <option value="Broad Market">Broad Market</option>
+                    </select>
+                </div>
+                <div class="fg">
                     <label>Currency</label>
                     <select class="finput" id="f-currency">
                         <option value="USD">USD</option>
@@ -1025,6 +1050,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="chart-tooltip" id="chart-tooltip"></div>
 
 <!-- ── Buy More Modal ── -->
 <div class="overlay" id="buy-overlay">
@@ -1435,7 +1461,7 @@ function tableRow(r, tot) {
 
 function renderChart(rows, tot) {
     const body = document.getElementById('chart-body');
-    if (!rows.length) { body.innerHTML = '<div class="chart-inner"><div class="empty"><div class="empty-icon">🥧</div><p>Add holdings to see allocation</p></div></div>'; return; }
+    if (!body) return;  // allocation now handled inside renderBreakdown
 
     const byMkt = {};
     rows.forEach(r => {
@@ -1488,6 +1514,12 @@ function renderChart(rows, tot) {
         </div>`;
 }
 
+// ── Tooltip ──
+const ttEl = () => document.getElementById('chart-tooltip');
+function showTooltip(e, html) { const t = ttEl(); t.innerHTML = html; t.classList.add('show'); moveTooltip(e); }
+function moveTooltip(e) { const t = ttEl(); t.style.left = (e.clientX + 14) + 'px'; t.style.top = (e.clientY - 10) + 'px'; }
+function hideTooltip() { ttEl().classList.remove('show'); }
+
 // ── Market KPI breakdown ──
 const MKT_FLAGS = { US: '🇺🇸', SG: '🇸🇬', UK: '🇬🇧' };
 
@@ -1514,7 +1546,12 @@ function renderMarkets(rows) {
             const barH = Math.max(Math.round((v / maxV) * chartH), 2);
             const barCol = (r.gainLoss ?? 0) > 0 ? '#22c55e' : (r.gainLoss ?? 0) < 0 ? '#ef4444' : '#94a3b8';
             const x = i * (barW + 4);
-            return `<rect x="${x}" y="${chartH - barH}" width="${barW}" height="${barH}" rx="2" fill="${barCol}" opacity="0.8"/>`;
+            const short = r.ticker.replace('.SI','').replace('.L','');
+            const tip = `<strong>${short}</strong><br>${money(v, r.currency)}<br>${r.gainLoss != null ? signed(r.gainLoss, r.currency) + ' (' + pct(r.gainPct) + ')' : 'No live price'}`.replace(/'/g, '&#39;');
+            return `<g onmouseenter="showTooltip(event,'${tip}')" onmousemove="moveTooltip(event)" onmouseleave="hideTooltip()" style="cursor:default">
+                <rect x="${x}" y="${chartH - barH}" width="${barW}" height="${barH}" rx="2" fill="${barCol}" opacity="0.8"/>
+                <rect x="${x}" y="0" width="${barW}" height="${chartH}" fill="transparent"/>
+            </g>`;
         }).join('');
 
         return `
@@ -1581,29 +1618,75 @@ function renderPerformance(rows) {
     }).join('')}</div>`;
 }
 
-// ── Breakdown by type / market ──
+// ── Breakdown by type / market / sector / allocation ──
 const BK_ICONS = {
-    Stock: { icon: '📈', bg: 'rgba(59,130,246,0.1)' },
-    ETF:   { icon: '🗂', bg: 'rgba(34,197,94,0.1)' },
-    REIT:  { icon: '🏢', bg: 'rgba(245,158,11,0.1)' },
-    US:    { icon: '🇺🇸', bg: 'rgba(59,130,246,0.1)' },
-    SG:    { icon: '🇸🇬', bg: 'rgba(245,158,11,0.1)' },
-    UK:    { icon: '🇬🇧', bg: 'rgba(139,92,246,0.1)' },
+    Stock:       { icon: '📈', bg: 'rgba(59,130,246,0.1)' },
+    ETF:         { icon: '🗂', bg: 'rgba(34,197,94,0.1)' },
+    REIT:        { icon: '🏢', bg: 'rgba(245,158,11,0.1)' },
+    US:          { icon: '🇺🇸', bg: 'rgba(59,130,246,0.1)' },
+    SG:          { icon: '🇸🇬', bg: 'rgba(245,158,11,0.1)' },
+    UK:          { icon: '🇬🇧', bg: 'rgba(139,92,246,0.1)' },
+    Tech:        { icon: '💻', bg: 'rgba(99,102,241,0.1)' },
+    Finance:     { icon: '🏦', bg: 'rgba(59,130,246,0.1)' },
+    Healthcare:  { icon: '🏥', bg: 'rgba(34,197,94,0.1)' },
+    Consumer:    { icon: '🛍', bg: 'rgba(245,158,11,0.1)' },
+    Energy:      { icon: '⚡', bg: 'rgba(234,179,8,0.1)' },
+    Industrials: { icon: '🏭', bg: 'rgba(107,114,128,0.1)' },
+    'Real Estate':{ icon: '🏘', bg: 'rgba(245,158,11,0.1)' },
+    Utilities:   { icon: '💡', bg: 'rgba(16,185,129,0.1)' },
+    'Broad Market':{ icon: '🌐', bg: 'rgba(59,130,246,0.1)' },
 };
 
 function renderBreakdown(rows) {
     const el = document.getElementById('bk-body');
+    const fxNote = document.getElementById('fx-note');
     if (!rows.length) { el.innerHTML = ''; return; }
+
+    // Allocation tab — render donut chart
+    if (bkTab === 'alloc') {
+        fxNote.style.display = 'block';
+        fxNote.textContent = `1 SGD = ${fxSGDUSD.toFixed(4)} USD · 1 GBP = ${fxGBPUSD.toFixed(4)} USD`;
+        const byMkt = {};
+        rows.forEach(r => {
+            const v = toUSD(r.value ?? r.costBasis, r.currency);
+            byMkt[r.market] = (byMkt[r.market] || 0) + v;
+        });
+        const markets = Object.entries(byMkt).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+        const total = markets.reduce((s, [, v]) => s + v, 0);
+        let angle = 0;
+        const stops = markets.map(([mkt, v]) => {
+            const deg = (v / total) * 360;
+            const stop = `${MARKET_COLORS[mkt] || '#94a3b8'} ${angle.toFixed(1)}deg ${(angle + deg).toFixed(1)}deg`;
+            angle += deg; return stop;
+        });
+        const gradient = stops.length > 1 ? `conic-gradient(${stops.join(', ')})` : `conic-gradient(${MARKET_COLORS[markets[0][0]]} 0deg 360deg)`;
+        const allocRows = markets.map(([mkt, v]) => {
+            const p = (v / total) * 100;
+            return `<div class="alloc-row">
+                <div class="alloc-left"><div class="alloc-dot" style="background:${MARKET_COLORS[mkt]||'#94a3b8'}"></div><span class="alloc-market">${MKT_FLAGS[mkt]||''} ${mkt}</span></div>
+                <div class="alloc-bar-wrap"><div class="alloc-bar" style="width:${p.toFixed(1)}%;background:${MARKET_COLORS[mkt]||'#94a3b8'}"></div></div>
+                <span class="alloc-pct">${p.toFixed(1)}%</span>
+            </div>`;
+        }).join('');
+        el.innerHTML = `<div class="chart-inner">
+            <div class="donut-wrap">
+                <div class="donut-ring" style="background:${gradient}"></div>
+                <div class="donut-hole"><div class="donut-total">${money(total,'USD')}</div><div class="donut-label">Total USD</div></div>
+            </div>
+            <div class="alloc-list">${allocRows}</div>
+        </div>`;
+        return;
+    }
+
+    fxNote.style.display = 'none';
 
     const groups = {};
     rows.forEach(r => {
-        const key = bkTab === 'type' ? r.type : r.market;
-        // Type view: convert all to USD for fair comparison
-        // Market view: sum native currency values (US→USD, SG→SGD, UK→GBP)
+        const key = bkTab === 'type' ? r.type : bkTab === 'sector' ? (r.sector || 'Other') : r.market;
         const v    = r.value ?? r.costBasis;
-        const val  = bkTab === 'type' ? toUSD(v, r.currency)         : v;
-        const cost = bkTab === 'type' ? toUSD(r.costBasis, r.currency) : r.costBasis;
-        const cur  = bkTab === 'type' ? 'USD' : r.currency;
+        const val  = bkTab === 'market' ? v : toUSD(v, r.currency);
+        const cost = bkTab === 'market' ? r.costBasis : toUSD(r.costBasis, r.currency);
+        const cur  = bkTab === 'market' ? r.currency : 'USD';
         if (!groups[key]) groups[key] = { val: 0, cost: 0, cur };
         groups[key].val  += val;
         groups[key].cost += cost;
@@ -1614,13 +1697,9 @@ function renderBreakdown(rows) {
         const gain = g.val - g.cost;
         const gPct = g.cost > 0 ? (gain / g.cost) * 100 : 0;
         const meta = BK_ICONS[key] || { icon: '📊', bg: 'rgba(148,163,184,0.1)' };
-        return `
-        <div class="bk-row">
+        return `<div class="bk-row">
             <div class="bk-icon" style="background:${meta.bg}">${meta.icon}</div>
-            <div>
-                <div class="bk-label">${key}</div>
-                <div class="bk-value">${money(g.val, g.cur)}</div>
-            </div>
+            <div><div class="bk-label">${key}</div><div class="bk-value">${money(g.val, g.cur)}</div></div>
             <div class="bk-right">
                 <div class="bk-gain ${cc(gain)}">${signed(gain, g.cur)}</div>
                 <div style="font-size:11px;color:var(--label3)">${pct(gPct)}</div>
@@ -1642,6 +1721,7 @@ function openModal(id = null) {
         document.getElementById('f-market').value   = h.market;
         document.getElementById('f-name').value     = h.name;
         document.getElementById('f-type').value     = h.type;
+        document.getElementById('f-sector').value   = h.sector || '';
         document.getElementById('f-currency').value = h.currency;
         document.getElementById('f-shares').value   = h.shares;
         document.getElementById('f-avgcost').value  = h.avgCost;
@@ -1672,6 +1752,7 @@ document.getElementById('hform').addEventListener('submit', e => {
     const market   = document.getElementById('f-market').value;
     const name     = document.getElementById('f-name').value.trim();
     const type     = document.getElementById('f-type').value;
+    const sector   = document.getElementById('f-sector').value;
     const currency = document.getElementById('f-currency').value;
     const shares   = parseFloat(document.getElementById('f-shares').value);
     const avgCost  = parseFloat(document.getElementById('f-avgcost').value);
@@ -1684,10 +1765,10 @@ document.getElementById('hform').addEventListener('submit', e => {
 
     if (editId) {
         const i = holdings.findIndex(h => h.id === editId);
-        if (i !== -1) holdings[i] = { ...holdings[i], ticker, market, name, type, currency, shares, avgCost, notes };
+        if (i !== -1) holdings[i] = { ...holdings[i], ticker, market, name, type, sector, currency, shares, avgCost, notes };
         toast('Holding updated');
     } else {
-        holdings.push({ id: uid(), ticker, market, name, type, currency, shares, avgCost, notes });
+        holdings.push({ id: uid(), ticker, market, name, type, sector, currency, shares, avgCost, notes });
         toast('Holding added');
     }
 
