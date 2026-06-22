@@ -947,7 +947,7 @@
     </div>
 
     <!-- Content -->
-    <div class="content-grid">
+    <div class="content-grid" style="grid-template-columns:1fr">
         <div class="card">
             <div class="card-header">
                 <h2 id="table-title">All Holdings</h2>
@@ -957,12 +957,6 @@
                 </div>
             </div>
             <div id="table-body"></div>
-        </div>
-        <div class="right-col">
-            <div class="card chart-card">
-                <div class="card-header"><h2>Performance</h2></div>
-                <div id="perf-body"></div>
-            </div>
         </div>
     </div>
 
@@ -1320,15 +1314,29 @@ function renderKPI(rows) {
             { cls: badgeClass(s.totalGainPct), text: pct(s.totalGainPct) },
             `${signed(s.totalGain / fxSGDUSD, 'SGD')}`) +
 
-        `<div class="kpi-card">
+        `<div class="kpi-card" style="overflow:visible">
             <div class="kpi-icon green">🗂</div>
             <div class="kpi-label">Holdings</div>
             <div class="kpi-value">${rows.length}</div>
-            <div>
+            <div style="margin-bottom:16px">
                 ${[...new Set(rows.map(r=>r.market))].map(m =>
-                    `<span class="mkt-pill mkt-${m.toLowerCase()}">${m}</span>`
+                    `<span class="mkt-pill mkt-${m.toLowerCase()}">${MKT_FLAGS[m]||''} ${m}</span>`
                 ).join(' ')}
             </div>
+            ${(() => {
+                const sorted = [...rows].filter(r => r.gainPct != null).sort((a,b) => b.gainPct - a.gainPct);
+                const maxA = Math.max(...sorted.map(r => Math.abs(r.gainPct)), 1);
+                return sorted.map(r => {
+                    const w = (Math.abs(r.gainPct) / maxA * 100).toFixed(1);
+                    const cls = r.gainPct >= 0 ? 'pos' : 'neg';
+                    const short = r.ticker.replace('.SI','').replace('.L','');
+                    return `<div class="perf-row">
+                        <span class="perf-ticker">${short.slice(0,5)}</span>
+                        <div class="perf-bar-wrap"><div class="perf-bar ${cls}" style="width:${w}%"></div></div>
+                        <span class="perf-pct ${cls}">${pct(r.gainPct)}</span>
+                    </div>`;
+                }).join('');
+            })()}
         </div>`;
 }
 
