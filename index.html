@@ -1456,11 +1456,14 @@ function renderKPI(rows) {
         `<div class="kpi-card total" style="display:flex;gap:16px;align-items:center">
             <div style="flex:1;min-width:0">
                 <div class="kpi-icon total">💼</div>
-                <div class="kpi-label">Total Portfolio</div>
+                <div class="kpi-label">Total Portfolio (USD)</div>
                 <div class="kpi-value">${money(s.totalUSD, 'USD')}</div>
                 <div>
                     <span class="kpi-badge ${badgeClass(s.totalGain)}">${s.totalGain >= 0 ? '▲' : '▼'} ${pct(s.totalGainPct)}</span>
-                    <div class="kpi-sub">${money(s.totalUSD / fxSGDUSD, 'SGD')} · Cost: ${money(s.totalCostUSD, 'USD')}</div>
+                    <div class="kpi-sub" style="margin-top:6px">
+                        🇺🇸 ${money(s.byMkt.US || 0, 'USD')} &nbsp;+&nbsp; 🇸🇬 ~${money(s.byMkt.SG || 0, 'USD')}
+                    </div>
+                    <div class="kpi-sub">Cost: ${money(s.totalCostUSD, 'USD')} · 1 SGD = ${fxSGDUSD.toFixed(4)} USD</div>
                 </div>
             </div>
             <div style="flex:1;min-width:0">${totalChart}</div>
