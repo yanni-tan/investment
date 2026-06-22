@@ -521,23 +521,32 @@
             margin-top: 4px;
         }
         /* ── Market breakdown row ── */
-        .mkt-grid {
+        .mkt-grid { display: contents; }
+        .second-row {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 16px;
             margin-bottom: 24px;
         }
 
         /* ── Filter chips ── */
-        .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+        .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
         .chip {
-            padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+            padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
             border: 1.5px solid var(--sep); background: var(--surface2);
             color: var(--label2); cursor: pointer; font-family: inherit;
             transition: all .15s;
         }
-        .chip.active { background: #111827; color: #fff; border-color: #111827; font-weight: 700; }
+        .chip.active { background: #111827; color: #fff; border-color: #111827; font-weight: 600; }
         .chip:hover:not(.active) { border-color: var(--label3); color: var(--label); background: var(--surface); }
+        .chip-sep { width: 1px; height: 18px; background: var(--sep); margin: 0 4px; flex-shrink: 0; }
+
+        /* ── Sortable th ── */
+        thead th.sortable { cursor: pointer; user-select: none; }
+        thead th.sortable:hover { color: var(--label2); }
+        thead th.sortable.sorted { color: var(--label); }
+        .sort-icon { margin-left: 3px; opacity: 0.5; font-style: normal; }
+        th.sorted .sort-icon { opacity: 1; }
 
         /* ── Performance bars ── */
         .perf-list { padding: 14px 20px 20px; display: flex; flex-direction: column; gap: 9px; }
@@ -907,8 +916,20 @@
     <!-- KPI -->
     <div class="kpi-grid" id="kpi-grid"></div>
 
-    <!-- Market breakdown -->
-    <div class="mkt-grid" id="mkt-grid"></div>
+    <!-- Second row: US + SG cards + Breakdown -->
+    <div class="second-row">
+        <div id="mkt-grid" style="display:contents"></div>
+        <div class="card">
+            <div class="card-header">
+                <h2>Breakdown</h2>
+            </div>
+            <div class="breakdown-tabs" id="bk-tabs">
+                <button class="bk-tab active" data-bk="type">Type</button>
+                <button class="bk-tab" data-bk="market">Market</button>
+            </div>
+            <div id="bk-body"></div>
+        </div>
+    </div>
 
     <!-- Content -->
     <div class="content-grid">
@@ -931,16 +952,6 @@
             <div class="card chart-card">
                 <div class="card-header"><h2>Performance</h2></div>
                 <div id="perf-body"></div>
-            </div>
-            <div class="card chart-card">
-                <div class="card-header">
-                    <h2>Breakdown</h2>
-                </div>
-                <div class="breakdown-tabs" id="bk-tabs">
-                    <button class="bk-tab active" data-bk="type">Type</button>
-                    <button class="bk-tab" data-bk="market">Market</button>
-                </div>
-                <div id="bk-body"></div>
             </div>
         </div>
     </div>
@@ -1083,6 +1094,8 @@ let fxGBPUSD = 1.27;
 let editId   = null;
 let tab      = 'all';
 let typeFilter = 'all';
+let sortCol  = null;
+let sortDir  = 'desc';
 let bkTab    = 'type';
 let fetching = false;
 
@@ -1310,25 +1323,58 @@ function renderTable(rows, tot) {
         return;
     }
 
+    // Sort
+    const sortedRows = sortCol ? [...rows].sort((a, b) => {
+        const vals = {
+            name:    r => r.name,
+            market:  r => r.market,
+            shares:  r => r.shares,
+            avgCost: r => r.avgCost,
+            price:   r => r.price ?? 0,
+            value:   r => r.value ?? r.costBasis,
+            gain:    r => r.gainLoss ?? 0,
+            weight:  r => toUSD(r.value ?? r.costBasis, r.currency),
+        };
+        const fn = vals[sortCol] || (r => 0);
+        const av = fn(a), bv = fn(b);
+        const cmp = typeof av === 'string' ? av.localeCompare(bv) : av - bv;
+        return sortDir === 'asc' ? cmp : -cmp;
+    }) : rows;
+
+    const thSort = (col, label) => {
+        const active = sortCol === col;
+        const icon = active ? (sortDir === 'asc' ? '↑' : '↓') : '↕';
+        return `<th class="r sortable${active ? ' sorted' : ''}" data-col="${col}">${label} <i class="sort-icon">${icon}</i></th>`;
+    };
+
     body.innerHTML = `
         <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
         <table>
             <thead>
                 <tr>
-                    <th>Holding</th>
-                    <th>Market</th>
-                    <th class="r">Shares</th>
-                    <th class="r">Avg Cost</th>
-                    <th class="r">Price</th>
-                    <th class="r">Value</th>
-                    <th class="r">Gain / Loss</th>
-                    <th class="r">Weight</th>
+                    <th class="sortable${sortCol==='name'?' sorted':''}" data-col="name">Holding <i class="sort-icon">${sortCol==='name'?(sortDir==='asc'?'↑':'↓'):'↕'}</i></th>
+                    <th class="sortable${sortCol==='market'?' sorted':''}" data-col="market">Market <i class="sort-icon">${sortCol==='market'?(sortDir==='asc'?'↑':'↓'):'↕'}</i></th>
+                    ${thSort('shares','Shares')}
+                    ${thSort('avgCost','Avg Cost')}
+                    ${thSort('price','Price')}
+                    ${thSort('value','Value')}
+                    ${thSort('gain','Gain / Loss')}
+                    ${thSort('weight','Weight')}
                     <th></th>
                 </tr>
             </thead>
-            <tbody>${rows.map(r => tableRow(r, tot)).join('')}</tbody>
+            <tbody>${sortedRows.map(r => tableRow(r, tot)).join('')}</tbody>
         </table>
         </div>`;
+
+    body.querySelectorAll('th.sortable').forEach(th => {
+        th.addEventListener('click', () => {
+            const col = th.dataset.col;
+            if (sortCol === col) { sortDir = sortDir === 'asc' ? 'desc' : 'asc'; }
+            else { sortCol = col; sortDir = 'desc'; }
+            render();
+        });
+    });
 }
 
 function tableRow(r, tot) {
@@ -1443,6 +1489,8 @@ function renderChart(rows, tot) {
 }
 
 // ── Market KPI breakdown ──
+const MKT_FLAGS = { US: '🇺🇸', SG: '🇸🇬', UK: '🇬🇧' };
+
 function renderMarkets(rows) {
     const el = document.getElementById('mkt-grid');
     if (!rows.length) { el.innerHTML = ''; return; }
@@ -1454,24 +1502,28 @@ function renderMarkets(rows) {
         const gain = val - cost;
         const gPct = cost > 0 ? (gain / cost) * 100 : 0;
         const col  = MARKET_COLORS[mkt];
+        const flag = MKT_FLAGS[mkt] || '';
 
         const mktRows = rows.filter(r => r.market === mkt);
         const maxV = Math.max(...mktRows.map(r => r.value ?? r.costBasis), 0.01);
-        const barW = 10, gap = 5, chartH = 40;
+        const chartH = 36, VW = 200;
+        const n = mktRows.length || 1;
+        const barW = Math.max(Math.floor((VW - (n - 1) * 4) / n), 4);
         const bars = mktRows.map((r, i) => {
             const v = r.value ?? r.costBasis;
-            const barH = Math.max(Math.round((v / maxV) * chartH), 3);
-            const barCol = (r.gainLoss ?? 0) >= 0 ? '#22c55e' : '#ef4444';
-            const x = i * (barW + gap);
-            const short = r.ticker.replace('.SI','').replace('.L','');
-            return `<g><rect x="${x}" y="${chartH - barH}" width="${barW}" height="${barH}" rx="2" fill="${barCol}" opacity="0.8"/><title>${short}: ${money(r.value ?? r.costBasis, r.currency)}</title></g>`;
+            const barH = Math.max(Math.round((v / maxV) * chartH), 2);
+            const barCol = (r.gainLoss ?? 0) > 0 ? '#22c55e' : (r.gainLoss ?? 0) < 0 ? '#ef4444' : '#94a3b8';
+            const x = i * (barW + 4);
+            return `<rect x="${x}" y="${chartH - barH}" width="${barW}" height="${barH}" rx="2" fill="${barCol}" opacity="0.8"/>`;
         }).join('');
-        const svgW = Math.max(mktRows.length * (barW + gap) - gap, 10);
 
         return `
         <div class="kpi-card">
-            <div class="kpi-icon" style="background:${col}18">
-                <span class="mkt-pill mkt-${mkt.toLowerCase()}">${mkt}</span>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+                <div class="kpi-icon" style="background:${col}18;margin-bottom:0">
+                    <span class="mkt-pill mkt-${mkt.toLowerCase()}">${mkt}</span>
+                </div>
+                <span style="font-size:22px">${flag}</span>
             </div>
             <div class="kpi-label">${mkt} Holdings</div>
             <div class="kpi-value" style="font-size:22px">${money(val, cur)}</div>
@@ -1479,22 +1531,32 @@ function renderMarkets(rows) {
                 <span class="kpi-badge ${badgeClass(gain)}">${signed(gain, cur)} · ${pct(gPct)}</span>
                 <div class="kpi-sub">Cost: ${money(cost, cur)}</div>
             </div>
-            ${mktRows.length ? `<svg width="${svgW}" height="${chartH}" viewBox="0 0 ${svgW} ${chartH}" style="margin-top:14px;display:block">${bars}</svg>` : ''}
+            <svg width="100%" height="${chartH}" viewBox="0 0 ${VW} ${chartH}" preserveAspectRatio="none" style="margin-top:12px;display:block">${bars}</svg>
         </div>`;
     }).join('');
 }
 
-// ── Type filter chips ──
+// ── Type + Market filter chips ──
 function renderTypeChips(rows) {
-    const types = ['all', ...new Set(rows.map(r => r.type))].filter(Boolean);
     const el = document.getElementById('type-chips');
-    el.innerHTML = types.map(t => `
-        <button class="chip ${typeFilter === t ? 'active' : ''}" data-type="${t}">
-            ${t === 'all' ? 'All' : t}
-        </button>`).join('');
-    el.querySelectorAll('.chip').forEach(btn => {
+    const types   = ['all', ...new Set(holdings.map(r => r.type))].filter(Boolean);
+    const markets = [...new Set(holdings.map(r => r.market))].filter(Boolean).sort();
+
+    el.innerHTML =
+        types.map(t => `<button class="chip ${typeFilter === t ? 'active' : ''}" data-type="${t}">${t === 'all' ? 'All' : t}</button>`).join('') +
+        `<span class="chip-sep"></span>` +
+        markets.map(m => `<button class="chip ${tab === m ? 'active' : ''}" data-market="${m}">${MKT_FLAGS[m] || ''} ${m}</button>`).join('');
+
+    el.querySelectorAll('[data-type]').forEach(btn => {
+        btn.addEventListener('click', () => { typeFilter = btn.dataset.type; render(); });
+    });
+    el.querySelectorAll('[data-market]').forEach(btn => {
         btn.addEventListener('click', () => {
-            typeFilter = btn.dataset.type;
+            tab = (tab === btn.dataset.market) ? 'all' : btn.dataset.market;
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelector(`.nav-item[data-tab="${tab}"]`)?.classList.add('active');
+            document.getElementById('table-title').textContent =
+                ({ all:'All Holdings', US:'US Holdings', SG:'SG Holdings', UK:'UK Holdings' })[tab];
             render();
         });
     });
