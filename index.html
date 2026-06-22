@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portfolio</title>
+    <title>Investment Portfolio</title>
     <style>
         /* ── Variables ── */
         :root {
@@ -472,6 +472,10 @@
         .change-down { background: var(--red-bg); color: var(--red); }
         .change-neu  { background: var(--surface2); color: var(--label2); }
 
+        .pos { color: var(--green); }
+        .neg { color: var(--red); }
+        .neu { color: var(--label2); }
+
         .weight-bar {
             display: flex; align-items: center; gap: 8px;
         }
@@ -507,6 +511,62 @@
             color: var(--label2);
             margin-top: 4px;
         }
+        /* ── Market breakdown row ── */
+        .mkt-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        /* ── Filter chips ── */
+        .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+        .chip {
+            padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+            border: 1.5px solid var(--sep); background: var(--surface2);
+            color: var(--label2); cursor: pointer; font-family: inherit;
+            transition: all .15s;
+        }
+        .chip.active { background: var(--label); color: var(--bg); border-color: var(--label); }
+        .chip:hover:not(.active) { border-color: var(--label3); color: var(--label); }
+
+        /* ── Performance bars ── */
+        .perf-list { padding: 14px 20px 20px; display: flex; flex-direction: column; gap: 9px; }
+        .perf-row  { display: flex; align-items: center; gap: 8px; }
+        .perf-ticker { font-size: 11px; font-weight: 700; width: 42px; flex-shrink: 0; color: var(--label2); }
+        .perf-bar-wrap { flex: 1; height: 5px; background: var(--sep); border-radius: 3px; overflow: hidden; }
+        .perf-bar { height: 100%; border-radius: 3px; transition: width .4s; }
+        .perf-bar.pos { background: var(--green); }
+        .perf-bar.neg { background: var(--red); }
+        .perf-pct { font-size: 11px; font-weight: 600; min-width: 56px; text-align: right; flex-shrink: 0; }
+
+        /* ── Breakdown (Top Categories) ── */
+        .breakdown-tabs { display: flex; gap: 4px; padding: 14px 16px 0; }
+        .bk-tab {
+            padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+            border: none; background: transparent; color: var(--label2);
+            cursor: pointer; font-family: inherit; transition: all .15s;
+        }
+        .bk-tab.active { background: var(--surface2); color: var(--label); }
+        .breakdown-list { padding: 4px 0 8px; }
+        .bk-row {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 16px; border-bottom: 1px solid var(--sep);
+        }
+        .bk-row:last-child { border-bottom: none; }
+        .bk-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px; flex-shrink: 0;
+        }
+        .bk-label { font-size: 11px; color: var(--label2); margin-bottom: 1px; }
+        .bk-value { font-size: 14px; font-weight: 700; }
+        .bk-right { margin-left: auto; text-align: right; }
+        .bk-gain  { font-size: 12px; font-weight: 600; }
+
+        /* ── Right column ── */
+        .right-col { display: flex; flex-direction: column; gap: 20px; }
+
         .skel {
             display: inline-block; border-radius: 4px;
             background: linear-gradient(90deg, var(--surface2) 25%, var(--sep) 50%, var(--surface2) 75%);
@@ -753,7 +813,7 @@
         /* ── Responsive ── */
         @media (max-width: 1100px) {
             .content-grid { grid-template-columns: 1fr; }
-            .chart-card { display: none; }
+            .right-col { display: none; }
         }
         @media (max-width: 900px) {
             .kpi-grid { grid-template-columns: 1fr 1fr; }
@@ -775,7 +835,7 @@
 <div class="lock-screen" id="lock-screen">
     <div class="lock-card">
         <div class="lock-brand">$</div>
-        <h2>Portfolio</h2>
+        <h2>Investment Portfolio</h2>
         <p>Enter your password to continue</p>
         <form id="lock-form">
             <input class="lock-input" id="lock-pwd" type="password" placeholder="Password" autocomplete="current-password">
@@ -789,7 +849,7 @@
 <aside class="sidebar">
     <div class="sidebar-brand">
         <div class="brand-icon">$</div>
-        <span class="brand-name">Portfolio</span>
+        <span class="brand-name">Investment Portfolio</span>
     </div>
     <nav class="sidebar-nav">
         <div class="nav-section">Markets</div>
@@ -838,6 +898,9 @@
     <!-- KPI -->
     <div class="kpi-grid" id="kpi-grid"></div>
 
+    <!-- Market breakdown -->
+    <div class="mkt-grid" id="mkt-grid"></div>
+
     <!-- Content -->
     <div class="content-grid">
         <div class="card">
@@ -845,16 +908,31 @@
                 <h2 id="table-title">All Holdings</h2>
                 <div class="card-header-right">
                     <span class="count-badge" id="count"></span>
+                    <div class="filter-chips" id="type-chips"></div>
                 </div>
             </div>
             <div id="table-body"></div>
         </div>
-        <div class="card chart-card">
-            <div class="card-header">
-                <h2>Allocation</h2>
+        <div class="right-col">
+            <div class="card chart-card">
+                <div class="card-header"><h2>Allocation</h2></div>
+                <div id="chart-body"></div>
+                <div class="fx-note" id="fx-note"></div>
             </div>
-            <div id="chart-body"></div>
-            <div class="fx-note" id="fx-note"></div>
+            <div class="card chart-card">
+                <div class="card-header"><h2>Performance</h2></div>
+                <div id="perf-body"></div>
+            </div>
+            <div class="card chart-card">
+                <div class="card-header">
+                    <h2>Breakdown</h2>
+                </div>
+                <div class="breakdown-tabs" id="bk-tabs">
+                    <button class="bk-tab active" data-bk="type">Type</button>
+                    <button class="bk-tab" data-bk="market">Market</button>
+                </div>
+                <div id="bk-body"></div>
+            </div>
         </div>
     </div>
 
@@ -995,6 +1073,8 @@ let fxSGDUSD = 0.74;
 let fxGBPUSD = 1.27;
 let editId   = null;
 let tab      = 'all';
+let typeFilter = 'all';
+let bkTab    = 'type';
 let fetching = false;
 
 // ── Storage ──
@@ -1151,12 +1231,17 @@ function badgeClass(v) { return v == null ? 'neu' : v > 0 ? 'up' : v < 0 ? 'down
 // ── Render ──
 function render() {
     const all      = holdings.map(enrich);
-    const filtered = tab === 'all' ? all : all.filter(r => r.market === tab);
+    const byTab    = tab === 'all' ? all : all.filter(r => r.market === tab);
+    const filtered = typeFilter === 'all' ? byTab : byTab.filter(r => r.type === typeFilter);
     const tot      = totalUSDof(all);
 
     renderKPI(all);
+    renderMarkets(all);
+    renderTypeChips(all);
     renderTable(filtered, tot);
     renderChart(all, tot);
+    renderPerformance(all);
+    renderBreakdown(all);
 }
 
 function renderKPI(rows) {
@@ -1221,6 +1306,7 @@ function renderTable(rows, tot) {
     }
 
     body.innerHTML = `
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
         <table>
             <thead>
                 <tr>
@@ -1237,7 +1323,8 @@ function renderTable(rows, tot) {
                 </tr>
             </thead>
             <tbody>${rows.map(r => tableRow(r, tot)).join('')}</tbody>
-        </table>`;
+        </table>
+        </div>`;
 }
 
 function tableRow(r, tot) {
@@ -1352,6 +1439,117 @@ function renderChart(rows, tot) {
         </div>`;
 }
 
+            </div>
+            <div class="alloc-list">${allocationRows}</div>
+        </div>`;
+}
+
+// ── Market KPI breakdown ──
+function renderMarkets(rows) {
+    const el = document.getElementById('mkt-grid');
+    if (!rows.length) { el.innerHTML = ''; return; }
+    const s = calcSummary(rows);
+    const mkts = [['US','USD',1], ['SG','SGD',1/fxSGDUSD]];
+    el.innerHTML = mkts.map(([mkt, cur, fx]) => {
+        const val  = (s.byMkt[mkt]  || 0) * fx;
+        const cost = (s.costByMkt[mkt] || 0) * fx;
+        const gain = val - cost;
+        const gPct = cost > 0 ? (gain / cost) * 100 : 0;
+        const col  = MARKET_COLORS[mkt];
+        return `
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:${col}18">
+                <span class="mkt-pill mkt-${mkt.toLowerCase()}">${mkt}</span>
+            </div>
+            <div class="kpi-label">${mkt} Holdings</div>
+            <div class="kpi-value" style="font-size:20px">${money(val, cur)}</div>
+            <div>
+                <span class="kpi-badge ${badgeClass(gain)}">${signed(gain, cur)} · ${pct(gPct)}</span>
+                <div class="kpi-sub">Cost: ${money(cost, cur)}</div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ── Type filter chips ──
+function renderTypeChips(rows) {
+    const types = ['all', ...new Set(rows.map(r => r.type))].filter(Boolean);
+    const el = document.getElementById('type-chips');
+    el.innerHTML = types.map(t => `
+        <button class="chip ${typeFilter === t ? 'active' : ''}" data-type="${t}">
+            ${t === 'all' ? 'All' : t}
+        </button>`).join('');
+    el.querySelectorAll('.chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+            typeFilter = btn.dataset.type;
+            render();
+        });
+    });
+}
+
+// ── Performance bars ──
+function renderPerformance(rows) {
+    const el = document.getElementById('perf-body');
+    if (!rows.length) { el.innerHTML = '<div class="chart-inner"><div class="empty"><div class="empty-icon">📉</div><p>No data yet</p></div></div>'; return; }
+    const sorted = [...rows].filter(r => r.gainPct != null).sort((a, b) => b.gainPct - a.gainPct);
+    const maxAbs = Math.max(...sorted.map(r => Math.abs(r.gainPct)), 1);
+    el.innerHTML = `<div class="perf-list">${sorted.map(r => {
+        const w = (Math.abs(r.gainPct) / maxAbs * 100).toFixed(1);
+        const cls = r.gainPct >= 0 ? 'pos' : 'neg';
+        const short = r.ticker.replace('.SI','').replace('.L','');
+        return `
+        <div class="perf-row">
+            <span class="perf-ticker">${short.slice(0,5)}</span>
+            <div class="perf-bar-wrap"><div class="perf-bar ${cls}" style="width:${w}%"></div></div>
+            <span class="perf-pct ${cls}">${pct(r.gainPct)}</span>
+        </div>`;
+    }).join('')}</div>`;
+}
+
+// ── Breakdown by type / market ──
+const BK_ICONS = {
+    Stock: { icon: '📈', bg: 'rgba(59,130,246,0.1)' },
+    ETF:   { icon: '🗂', bg: 'rgba(34,197,94,0.1)' },
+    REIT:  { icon: '🏢', bg: 'rgba(245,158,11,0.1)' },
+    US:    { icon: '🇺🇸', bg: 'rgba(59,130,246,0.1)' },
+    SG:    { icon: '🇸🇬', bg: 'rgba(245,158,11,0.1)' },
+    UK:    { icon: '🇬🇧', bg: 'rgba(139,92,246,0.1)' },
+};
+
+function renderBreakdown(rows) {
+    const el = document.getElementById('bk-body');
+    if (!rows.length) { el.innerHTML = ''; return; }
+
+    const groups = {};
+    rows.forEach(r => {
+        const key = bkTab === 'type' ? r.type : r.market;
+        if (!groups[key]) groups[key] = { val: 0, cost: 0, cur: bkTab === 'type' ? 'USD' : (r.market === 'SG' ? 'SGD' : r.market === 'UK' ? 'GBP' : 'USD') };
+        const fx = bkTab === 'market' && r.market === 'SG' ? 1/fxSGDUSD : bkTab === 'market' && r.market === 'UK' ? 1/fxGBPUSD : 1;
+        const v = (r.value ?? r.costBasis);
+        groups[key].val  += bkTab === 'type' ? toUSD(v, r.currency) : v * fx;
+        groups[key].cost += bkTab === 'type' ? toUSD(r.costBasis, r.currency) : r.costBasis * fx;
+    });
+
+    const entries = Object.entries(groups).sort((a, b) => b[1].val - a[1].val);
+    el.innerHTML = `<div class="breakdown-list">${entries.map(([key, g]) => {
+        const gain = g.val - g.cost;
+        const gPct = g.cost > 0 ? (gain / g.cost) * 100 : 0;
+        const meta = BK_ICONS[key] || { icon: '📊', bg: 'rgba(148,163,184,0.1)' };
+        return `
+        <div class="bk-row">
+            <div class="bk-icon" style="background:${meta.bg}">${meta.icon}</div>
+            <div>
+                <div class="bk-label">${key}</div>
+                <div class="bk-value">${money(g.val, g.cur)}</div>
+            </div>
+            <div class="bk-right">
+                <div class="bk-gain ${cc(gain)}">${signed(gain, g.cur)}</div>
+                <div style="font-size:11px;color:var(--label3)">${pct(gPct)}</div>
+            </div>
+        </div>`;
+    }).join('')}</div>`;
+}
+
 // ── Modal ──
 function openModal(id = null) {
     editId = id;
@@ -1433,6 +1631,15 @@ document.getElementById('f-ticker').addEventListener('input', e => {
     const s = e.target.selectionStart;
     e.target.value = e.target.value.toUpperCase();
     e.target.setSelectionRange(s, s);
+});
+
+document.getElementById('bk-tabs').addEventListener('click', e => {
+    const btn = e.target.closest('.bk-tab');
+    if (!btn) return;
+    document.querySelectorAll('.bk-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    bkTab = btn.dataset.bk;
+    render();
 });
 
 document.querySelectorAll('.nav-item').forEach(btn => {
