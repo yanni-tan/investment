@@ -1662,9 +1662,9 @@ function renderMarkets(rows) {
                     <span style="font-size:20px">${flag}</span>
                 </div>
                 <div class="kpi-label">${mkt} Holdings</div>
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">
-                    <div class="kpi-value" style="font-size:22px;margin-bottom:0">${money(val, cur)}</div>
-                    <span class="kpi-badge ${badgeClass(gain)}" style="white-space:nowrap;flex-shrink:0">${signed(gain, cur)} · ${pct(gPct)}</span>
+                <div class="kpi-value" style="font-size:22px">${money(val, cur)}</div>
+                <div style="margin-bottom:6px">
+                    <span class="kpi-badge ${badgeClass(gain)}">${signed(gain, cur)} · ${pct(gPct)}</span>
                 </div>
                 <div class="kpi-sub">Cost: ${money(cost, cur)}</div>
             </div>
