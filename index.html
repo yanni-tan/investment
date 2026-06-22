@@ -1340,7 +1340,7 @@ function renderKPI(rows) {
     if (snaps.length >= 1) {
         const chartH = 44, VW = 200;
         const n = snaps.length;
-        const barW = Math.max(Math.floor((VW - (n - 1) * 4) / n), 6);
+        const barW = Math.min(Math.max(Math.floor((VW - (n - 1) * 4) / n), 6), 32);
         const maxG = Math.max(...snaps.map(s => Math.abs(s.gainUSD)), 1);
         const bars = snaps.map((snap, i) => {
             const barH = Math.max(Math.round((Math.abs(snap.gainUSD) / maxG) * chartH), 3);
@@ -1773,6 +1773,8 @@ function renderBreakdown(rows) {
         }).join('')}</div>`;
         return;
     }
+
+    const groups = {};
     rows.forEach(r => {
         const key = bkTab === 'type' ? r.type : bkTab === 'sector' ? (r.sector || 'Other') : r.market;
         const v    = r.value ?? r.costBasis;
