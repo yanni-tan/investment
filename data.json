@@ -160,6 +160,15 @@
       "targetPrice": "189",
       "qty": "1",
       "notes": ""
+    },
+    {
+      "id": "vca2o3dkjiimqpjv08f",
+      "ticker": "AWCD",
+      "action": "Buy",
+      "name": "AWCD",
+      "targetPrice": "322",
+      "qty": "1",
+      "notes": ""
     }
   ],
   "snapshots": [
@@ -179,5 +188,5 @@
       }
     }
   ],
-  "updatedAt": "2026-06-22T18:28:43.324Z"
+  "updatedAt": "2026-06-22T18:29:24.591Z"
 }
