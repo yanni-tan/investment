@@ -1275,9 +1275,10 @@ function setGreeting() {
     const now = new Date();
     const h   = now.getHours();
     const g   = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+    const emoji = h < 6 ? '🌙' : h < 12 ? '🌅' : h < 17 ? '☀️' : h < 20 ? '🌆' : '🌙';
     const fmt = (d) => `Last updated on ${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}, ${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
     document.getElementById('greeting').innerHTML =
-        `<span id="greeting-time" style="display:block;font-size:13px;font-weight:400;color:var(--label3);letter-spacing:0;margin-bottom:2px">${fmt(now)}</span>${g}, Yanni Tan`;
+        `<span id="greeting-time" style="display:block;font-size:13px;font-weight:400;color:var(--label3);letter-spacing:0;margin-bottom:2px">${fmt(now)}</span>${emoji} ${g}, Yanni Tan`;
     document.getElementById('greeting-sub').textContent =
         now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 }
