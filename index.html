@@ -955,14 +955,13 @@
             </div>
         </div>
         <div class="card top-right">
-            <div style="padding:20px 22px 12px" id="holdings-top"></div>
-            <div style="border-top:1px solid var(--sep);padding:14px 22px 4px">
-                <div style="font-size:13px;font-weight:600">Breakdown</div>
+            <div class="card-header" style="border-bottom:none;padding-bottom:4px">
+                <h2>Breakdown</h2>
             </div>
             <div class="breakdown-tabs" id="bk-tabs">
                 <button class="bk-tab active" data-bk="type">Type</button>
                 <button class="bk-tab" data-bk="market">Market</button>
-                <button class="bk-tab" data-bk="sector">Sector</button>
+                <button class="bk-tab" data-bk="perf">Performance</button>
                 <button class="bk-tab" data-bk="alloc">Allocation</button>
             </div>
             <div id="bk-body"></div>
@@ -1155,10 +1154,12 @@ function uid()  { return Math.random().toString(36).slice(2) + Date.now().toStri
 function setGreeting() {
     const now  = new Date();
     const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const h    = now.getHours();
+    const g    = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
     document.getElementById('greeting').innerHTML =
-        `<span style="display:block;font-size:13px;font-weight:400;color:var(--label3);letter-spacing:0;margin-bottom:2px">${time}, Yanni Tan</span>Investment Portfolio`;
-    const d = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-    document.getElementById('greeting-sub').textContent = d;
+        `<span style="display:block;font-size:13px;font-weight:400;color:var(--label3);letter-spacing:0;margin-bottom:2px">${time}, ${g}</span>${g}, Yanni Tan`;
+    document.getElementById('greeting-sub').textContent =
+        now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 }
 
 // ── Price Fetching ──
@@ -1218,7 +1219,7 @@ async function fetchPrices() {
 
         const t = new Date();
         document.getElementById('last-updated').textContent =
-            `Updated ${t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+            `Last updated ${t.toLocaleDateString('en-US',{month:'short',day:'numeric'})} · ${t.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
         document.getElementById('fx-note').textContent =
             `1 SGD = ${fxSGDUSD.toFixed(4)} USD · 1 GBP = ${fxGBPUSD.toFixed(4)} USD`;
 
@@ -1309,7 +1310,6 @@ function render() {
     renderTable(filtered, tot);
     renderChart(all, tot);
     renderBreakdown(all);
-    renderHoldingsTop(all);
 }
 
 // ── Monthly snapshots ──
@@ -1757,7 +1757,22 @@ function renderBreakdown(rows) {
 
     fxNote.style.display = 'none';
 
-    const groups = {};
+    // Performance tab
+    if (bkTab === 'perf') {
+        const sorted = [...rows].filter(r => r.gainPct != null).sort((a, b) => b.gainPct - a.gainPct);
+        const maxA = Math.max(...sorted.map(r => Math.abs(r.gainPct)), 1);
+        el.innerHTML = `<div class="perf-list">${sorted.map(r => {
+            const w = (Math.abs(r.gainPct) / maxA * 100).toFixed(1);
+            const cls = r.gainPct >= 0 ? 'pos' : 'neg';
+            const short = r.ticker.replace('.SI','').replace('.L','');
+            return `<div class="perf-row">
+                <span class="perf-ticker">${short.slice(0,5)}</span>
+                <div class="perf-bar-wrap"><div class="perf-bar ${cls}" style="width:${w}%"></div></div>
+                <span class="perf-pct ${cls}">${pct(r.gainPct)}</span>
+            </div>`;
+        }).join('')}</div>`;
+        return;
+    }
     rows.forEach(r => {
         const key = bkTab === 'type' ? r.type : bkTab === 'sector' ? (r.sector || 'Other') : r.market;
         const v    = r.value ?? r.costBasis;
