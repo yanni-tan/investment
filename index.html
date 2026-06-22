@@ -182,6 +182,27 @@
         .sidebar-add:hover { opacity: 0.88; }
         .sidebar-add:active { opacity: 0.75; }
 
+        .sidebar-utils {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .util-btn {
+            flex: 1;
+            padding: 7px;
+            background: transparent;
+            border: 1px solid var(--sidebar-border);
+            border-radius: var(--radius-sm);
+            color: var(--sidebar-text);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.15s;
+        }
+        .util-btn:hover { background: rgba(255,255,255,0.06); color: var(--sidebar-text-active); }
+
         /* ── Main ── */
         .main {
             margin-left: var(--sidebar-w);
@@ -760,6 +781,11 @@
     </nav>
     <div class="sidebar-footer">
         <button class="sidebar-add" id="add-btn">+ Add Holding</button>
+        <div class="sidebar-utils">
+            <button class="util-btn" id="export-btn">↑ Export</button>
+            <button class="util-btn" id="import-btn">↓ Import</button>
+            <input type="file" id="import-file" accept=".json" style="display:none">
+        </div>
     </div>
 </aside>
 
@@ -937,19 +963,52 @@ function setGreeting() {
 async function fetchPrices() {
     if (!holdings.length || fetching) return;
     fetching = true;
-    document.getElementById('refresh-icon').classList.add('spinning');
+    const icon = document.getElementById('refresh-icon');
+    icon.classList.add('spinning');
+    document.getElementById('last-updated').textContent = 'Updating…';
 
-    const tickers = [...new Set(holdings.map(h => h.ticker))];
-    const symbols = [...tickers, 'SGDUSD=X', 'GBPUSD=X'].join(',');
-    const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}` +
-        `&fields=regularMarketPrice,regularMarketChange,regularMarketChangePercent,shortName,currency,marketState`;
+    const tickers  = [...new Set(holdings.map(h => h.ticker))];
+    const symbols  = [...tickers, 'SGDUSD=X', 'GBPUSD=X'].join(',');
+    const fields   = 'regularMarketPrice,regularMarketChange,regularMarketChangePercent,shortName,currency,marketState';
+    const yahooUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols)}&fields=${fields}`;
 
     try {
-        const res = await fetch(url, { headers: { Accept: 'application/json' } });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const results = data?.quoteResponse?.result || [];
+        let data = null;
 
+        // 1. Try direct request (works when a Yahoo session cookie exists)
+        let crumb = '';
+        try {
+            const cr = await fetch('https://query1.finance.yahoo.com/v1/test/getcrumb', { credentials: 'include' });
+            if (cr.ok) crumb = (await cr.text()).trim();
+        } catch {}
+
+        for (const base of ['https://query1.finance.yahoo.com', 'https://query2.finance.yahoo.com']) {
+            if (data) break;
+            try {
+                const url = `${base}/v7/finance/quote?symbols=${encodeURIComponent(symbols)}&fields=${fields}${crumb ? '&crumb=' + encodeURIComponent(crumb) : ''}`;
+                const res = await fetch(url, { credentials: 'include', headers: { Accept: 'application/json' } });
+                if (res.ok) data = await res.json();
+            } catch {}
+        }
+
+        // 2. Fall back through CORS proxies
+        if (!data) {
+            const proxies = [
+                u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+                u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+            ];
+            for (const proxy of proxies) {
+                if (data) break;
+                try {
+                    const res = await fetch(proxy(yahooUrl), { headers: { Accept: 'application/json' } });
+                    if (res.ok) data = await res.json();
+                } catch {}
+            }
+        }
+
+        if (!data) throw new Error('no data');
+
+        const results = data?.quoteResponse?.result || [];
         results.forEach(q => {
             if (q.symbol === 'SGDUSD=X') {
                 fxSGDUSD = q.regularMarketPrice || fxSGDUSD;
@@ -977,7 +1036,7 @@ async function fetchPrices() {
         document.getElementById('last-updated').textContent = 'Price update failed';
     } finally {
         fetching = false;
-        document.getElementById('refresh-icon').classList.remove('spinning');
+        icon.classList.remove('spinning');
         render();
     }
 }
@@ -1351,6 +1410,42 @@ function toast(msg) {
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
 }
+
+// ── Export / Import ──
+document.getElementById('export-btn').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(holdings, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'portfolio.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast('Holdings exported');
+});
+
+document.getElementById('import-btn').addEventListener('click', () => {
+    document.getElementById('import-file').click();
+});
+
+document.getElementById('import-file').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+        try {
+            const data = JSON.parse(ev.target.result);
+            if (!Array.isArray(data)) throw new Error('invalid');
+            holdings = data;
+            save();
+            render();
+            fetchPrices();
+            toast(`Imported ${holdings.length} holdings`);
+        } catch {
+            toast('Invalid file — expected portfolio.json');
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+});
 
 // ── Init ──
 function init() {
