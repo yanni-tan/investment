@@ -198,6 +198,7 @@
         }
         .mkt-us { background: rgba(0,113,227,0.1); color: var(--accent); }
         .mkt-sg { background: rgba(255,59,48,0.1); color: var(--red); }
+        .mkt-uk { background: rgba(48,209,88,0.1); color: var(--green); }
 
         .day-badge {
             display: inline-flex; align-items: center; gap: 3px;
@@ -345,6 +346,7 @@
             <button class="tab active" data-tab="all">All</button>
             <button class="tab" data-tab="US">US</button>
             <button class="tab" data-tab="SG">SG</button>
+            <button class="tab" data-tab="UK">UK</button>
         </div>
     </div>
 
@@ -377,6 +379,7 @@
                     <select class="finput" id="f-market">
                         <option value="US">US (NYSE / NASDAQ)</option>
                         <option value="SG">SG (SGX)</option>
+                        <option value="UK">UK (LSE)</option>
                     </select>
                 </div>
             </div>
@@ -398,6 +401,7 @@
                     <select class="finput" id="f-currency">
                         <option value="USD">USD</option>
                         <option value="SGD">SGD</option>
+                        <option value="GBP">GBP</option>
                     </select>
                 </div>
             </div>
@@ -434,6 +438,7 @@ const KEY = 'portfolio_v1';
 let holdings = [];
 let prices = {};           // { ticker: { price, change, changePct, currency } }
 let fxSGDUSD = 0.74;       // fallback
+let fxGBPUSD = 1.27;       // fallback
 let editId = null;
 let tab = 'all';
 let fetching = false;
@@ -454,7 +459,7 @@ async function fetchPrices() {
     document.getElementById('refresh-icon').classList.add('spinning');
 
     const tickers = [...new Set(holdings.map(h => h.ticker))];
-    const symbols = [...tickers, 'SGDUSD=X'].join(',');
+    const symbols = [...tickers, 'SGDUSD=X', 'GBPUSD=X'].join(',');
     const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}` +
         `&fields=regularMarketPrice,regularMarketChange,regularMarketChangePercent,regularMarketPreviousClose,shortName,currency,marketState`;
 
@@ -467,12 +472,16 @@ async function fetchPrices() {
         results.forEach(q => {
             if (q.symbol === 'SGDUSD=X') {
                 fxSGDUSD = q.regularMarketPrice || fxSGDUSD;
+            } else if (q.symbol === 'GBPUSD=X') {
+                fxGBPUSD = q.regularMarketPrice || fxGBPUSD;
             } else {
+                // Normalize GBp (pence) → GBP by dividing by 100
+                const isPence = q.currency === 'GBp';
                 prices[q.symbol] = {
-                    price:     q.regularMarketPrice,
-                    change:    q.regularMarketChange,
+                    price:     isPence ? q.regularMarketPrice / 100 : q.regularMarketPrice,
+                    change:    isPence ? q.regularMarketChange / 100 : q.regularMarketChange,
                     changePct: q.regularMarketChangePercent,
-                    currency:  q.currency,
+                    currency:  isPence ? 'GBP' : q.currency,
                     state:     q.marketState,
                 };
             }
@@ -480,7 +489,7 @@ async function fetchPrices() {
 
         const t = new Date();
         document.getElementById('last-updated').textContent =
-            `Updated ${t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · 1 SGD = ${fxSGDUSD.toFixed(4)} USD`;
+            `Updated ${t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · 1 SGD = ${fxSGDUSD.toFixed(4)} USD · 1 GBP = ${fxGBPUSD.toFixed(4)} USD`;
 
     } catch {
         document.getElementById('last-updated').textContent = 'Could not fetch live prices — check your connection';
@@ -509,29 +518,34 @@ function enrich(h) {
 function summary(rows) {
     const usd = rows.filter(r => r.currency === 'USD');
     const sgd = rows.filter(r => r.currency === 'SGD');
+    const gbp = rows.filter(r => r.currency === 'GBP');
     const val = r => r.value ?? r.costBasis;
 
     const usdVal  = usd.reduce((s, r) => s + val(r), 0);
     const sgdVal  = sgd.reduce((s, r) => s + val(r), 0);
+    const gbpVal  = gbp.reduce((s, r) => s + val(r), 0);
     const usdCost = usd.reduce((s, r) => s + r.costBasis, 0);
     const sgdCost = sgd.reduce((s, r) => s + r.costBasis, 0);
+    const gbpCost = gbp.reduce((s, r) => s + r.costBasis, 0);
 
-    const totalUSD     = usdVal + sgdVal * fxSGDUSD;
-    const totalCostUSD = usdCost + sgdCost * fxSGDUSD;
+    const totalUSD     = usdVal + sgdVal * fxSGDUSD + gbpVal * fxGBPUSD;
+    const totalCostUSD = usdCost + sgdCost * fxSGDUSD + gbpCost * fxGBPUSD;
     const totalGain    = totalUSD - totalCostUSD;
     const totalGainPct = totalCostUSD > 0 ? (totalGain / totalCostUSD) * 100 : 0;
     const dayUSD       = rows.reduce((s, r) => {
         if (r.dayChange == null) return s;
-        return s + (r.currency === 'SGD' ? r.dayChange * fxSGDUSD : r.dayChange);
+        const fx = r.currency === 'SGD' ? fxSGDUSD : r.currency === 'GBP' ? fxGBPUSD : 1;
+        return s + r.dayChange * fx;
     }, 0);
 
-    return { usdVal, sgdVal, usdCost, sgdCost, totalUSD, totalGain, totalGainPct, dayUSD };
+    return { usdVal, sgdVal, gbpVal, usdCost, sgdCost, gbpCost, totalUSD, totalCostUSD, totalGain, totalGainPct, dayUSD };
 }
 
 function totalUSDof(rows) {
     return rows.reduce((s, r) => {
         const v = r.value ?? r.costBasis;
-        return s + (r.currency === 'SGD' ? v * fxSGDUSD : v);
+        const fx = r.currency === 'SGD' ? fxSGDUSD : r.currency === 'GBP' ? fxGBPUSD : 1;
+        return s + v * fx;
     }, 0);
 }
 
@@ -541,7 +555,9 @@ function totalUSDof(rows) {
 function money(v, cur) {
     if (v == null) return '—';
     const n = Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    return cur === 'SGD' ? `S$${n}` : `$${n}`;
+    if (cur === 'SGD') return `S$${n}`;
+    if (cur === 'GBP') return `£${n}`;
+    return `$${n}`;
 }
 function signed(v, cur) {
     if (v == null) return '—';
@@ -579,9 +595,10 @@ function renderSummary(rows) {
         </div>`;
 
     el.innerHTML =
-        card('Total (USD)', money(s.totalUSD, 'USD'), `Cost: ${money(s.totalCostUSD ?? (s.usdCost + s.sgdCost * fxSGDUSD), 'USD')}`) +
+        card('Total (USD)', money(s.totalUSD, 'USD'), `Cost: ${money(s.totalCostUSD, 'USD')}`) +
         card('US Portfolio', money(s.usdVal, 'USD'), `Cost: ${money(s.usdCost, 'USD')}`) +
         card('SG Portfolio', money(s.sgdVal, 'SGD'), `Cost: ${money(s.sgdCost, 'SGD')}`) +
+        card('UK Portfolio', money(s.gbpVal, 'GBP'), `Cost: ${money(s.gbpCost, 'GBP')}`) +
         card('Day P&amp;L', signed(s.dayUSD, 'USD'), 'Today\'s change', cc(s.dayUSD)) +
         card('Total Gain / Loss', signed(s.totalGain, 'USD'),
             `<span class="${cc(s.totalGainPct)}">${pct(s.totalGainPct)}</span>`, cc(s.totalGain));
@@ -654,7 +671,7 @@ function row(r, tot) {
         <tr>
             <td>
                 <div class="ticker-cell">
-                    <span class="ticker-badge">${r.ticker.replace('.SI','')}</span>
+                    <span class="ticker-badge">${r.ticker.replace('.SI','').replace('.L','')}</span>
                     <div>
                         <div class="ticker-name">${r.name}</div>
                         <div class="ticker-meta">${r.type}${r.notes ? ' · ' + r.notes : ''}</div>
@@ -739,8 +756,9 @@ document.getElementById('hform').addEventListener('submit', e => {
     const avgCost  = parseFloat(document.getElementById('f-avgcost').value);
     const notes    = document.getElementById('f-notes').value.trim();
 
-    // Auto-append .SI for SG tickers
+    // Auto-append .SI for SG tickers, .L for UK tickers
     if (market === 'SG' && !ticker.endsWith('.SI')) ticker += '.SI';
+    if (market === 'UK' && !ticker.endsWith('.L')) ticker += '.L';
 
     if (!ticker || !name || isNaN(shares) || isNaN(avgCost)) return;
 
@@ -769,7 +787,8 @@ document.getElementById('overlay').addEventListener('click', e => { if (e.target
 
 // Auto-set currency when market changes
 document.getElementById('f-market').addEventListener('change', e => {
-    document.getElementById('f-currency').value = e.target.value === 'SG' ? 'SGD' : 'USD';
+    const cur = { SG: 'SGD', UK: 'GBP', US: 'USD' };
+    document.getElementById('f-currency').value = cur[e.target.value] || 'USD';
 });
 
 // Uppercase ticker
@@ -786,7 +805,7 @@ document.querySelectorAll('.tab').forEach(btn => {
         btn.classList.add('active');
         tab = btn.dataset.tab;
         document.getElementById('table-title').textContent =
-            tab === 'all' ? 'All Holdings' : tab === 'US' ? 'US Holdings' : 'SG Holdings';
+            { all: 'All Holdings', US: 'US Holdings', SG: 'SG Holdings', UK: 'UK Holdings' }[tab] || 'All Holdings';
         render();
     });
 });
