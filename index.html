@@ -917,6 +917,10 @@
         <button class="nav-item" data-tab="UK">
             <span class="nav-dot uk"></span>UK Market
         </button>
+        <div class="nav-section" style="margin-top:16px">Planning</div>
+        <button class="nav-item" id="watchlist-nav-btn">
+            <span class="nav-dot" style="background:#c8ff00"></span>Watchlist
+        </button>
     </nav>
     <div class="sidebar-footer">
         <button class="sidebar-add" id="add-btn">+ Add Holding</button>
@@ -931,6 +935,20 @@
 <!-- ── Main ── -->
 <main class="main">
 
+    <!-- ── Watchlist Panel ── -->
+    <div id="watchlist-panel" style="display:none">
+        <div class="page-header">
+            <div>
+                <div class="greeting">Watchlist</div>
+                <div class="greeting-sub">Plan your future buys and sells</div>
+            </div>
+            <button class="btn btn-primary" id="add-watch-btn">+ Add Item</button>
+        </div>
+        <div id="watchlist-body"></div>
+    </div>
+
+    <!-- ── Main Dashboard ── -->
+    <div id="dashboard-panel">
     <div class="page-header">
         <div>
             <div class="greeting" id="greeting">Good morning, Yanni</div>
@@ -984,6 +1002,7 @@
         <div id="table-body"></div>
     </div>
 
+    </div><!-- end dashboard-panel -->
 </main>
 
 <!-- ── Modal ── -->
@@ -1069,6 +1088,54 @@
 
 <div class="toast" id="toast"></div>
 <div class="chart-tooltip" id="chart-tooltip"></div>
+
+<!-- ── Watchlist Modal ── -->
+<div class="overlay" id="watch-overlay">
+    <div class="modal">
+        <div class="modal-hdr">
+            <h2 id="watch-modal-title">Add to Watchlist</h2>
+            <button class="modal-x" id="watch-modal-close">×</button>
+        </div>
+        <form id="watch-form" autocomplete="off">
+            <div class="frow">
+                <div class="fg">
+                    <label>Ticker</label>
+                    <input class="finput" id="w-ticker" type="text" placeholder="AAPL" required>
+                </div>
+                <div class="fg">
+                    <label>Action</label>
+                    <select class="finput" id="w-action">
+                        <option value="Buy">Buy</option>
+                        <option value="Sell">Sell</option>
+                        <option value="Watch">Watch</option>
+                    </select>
+                </div>
+            </div>
+            <div class="fg">
+                <label>Name</label>
+                <input class="finput" id="w-name" type="text" placeholder="Company name" required>
+            </div>
+            <div class="frow">
+                <div class="fg">
+                    <label>Target Price</label>
+                    <input class="finput" id="w-price" type="number" step="any" min="0" placeholder="0.00">
+                </div>
+                <div class="fg">
+                    <label>Quantity</label>
+                    <input class="finput" id="w-qty" type="number" step="any" min="0" placeholder="0">
+                </div>
+            </div>
+            <div class="fg">
+                <label>Notes <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+                <input class="finput" id="w-notes" type="text" placeholder="e.g. Wait for dip below $100">
+            </div>
+            <div class="modal-foot">
+                <button type="button" class="btn btn-secondary" id="watch-cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <!-- ── Buy More Modal ── -->
 <div class="overlay" id="buy-overlay">
@@ -1941,8 +2008,9 @@ document.getElementById('bk-tabs').addEventListener('click', e => {
     render();
 });
 
-document.querySelectorAll('.nav-item').forEach(btn => {
+document.querySelectorAll('.nav-item[data-tab]').forEach(btn => {
     btn.addEventListener('click', () => {
+        showPanel('dashboard');
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         btn.classList.add('active');
         tab = btn.dataset.tab;
@@ -2104,9 +2172,128 @@ document.getElementById('buy-modal-close').addEventListener('click', closeBuyMod
 document.getElementById('buy-cancel').addEventListener('click', closeBuyModal);
 document.getElementById('buy-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeBuyModal(); });
 
+// ── Watchlist ──
+const WATCH_KEY = 'portfolio_watchlist';
+let watchlist = [];
+let watchEditId = null;
+let showingWatchlist = false;
+
+function loadWatchlist() {
+    try { watchlist = JSON.parse(localStorage.getItem(WATCH_KEY) || '[]'); } catch { watchlist = []; }
+}
+function saveWatchlist() { localStorage.setItem(WATCH_KEY, JSON.stringify(watchlist)); }
+
+function showPanel(which) {
+    showingWatchlist = which === 'watchlist';
+    document.getElementById('dashboard-panel').style.display = showingWatchlist ? 'none' : '';
+    document.getElementById('watchlist-panel').style.display = showingWatchlist ? '' : 'none';
+    document.getElementById('watchlist-nav-btn').classList.toggle('active', showingWatchlist);
+    document.querySelectorAll('.nav-item[data-tab]').forEach(n => n.classList.toggle('active', !showingWatchlist && n.dataset.tab === tab));
+    if (showingWatchlist) renderWatchlist();
+}
+
+const ACTION_COLORS = { Buy: '#22c55e', Sell: '#ef4444', Watch: '#f59e0b' };
+
+function renderWatchlist() {
+    const el = document.getElementById('watchlist-body');
+    if (!watchlist.length) {
+        el.innerHTML = `<div class="card"><div class="empty" style="padding:60px 20px">
+            <div class="empty-icon">📋</div>
+            <h3>No items yet</h3>
+            <p>Add stocks or ETFs you're planning to buy, sell, or monitor.</p>
+            <button class="btn btn-primary" onclick="openWatchModal()">+ Add Item</button>
+        </div></div>`;
+        return;
+    }
+    el.innerHTML = `<div class="card"><table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr>
+            <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)">Item</th>
+            <th style="padding:10px 16px;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)">Action</th>
+            <th style="padding:10px 16px;text-align:right;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)">Target Price</th>
+            <th style="padding:10px 16px;text-align:right;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)">Qty</th>
+            <th style="padding:10px 16px;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)">Notes</th>
+            <th style="border-bottom:1px solid var(--sep)"></th>
+        </tr></thead>
+        <tbody>${watchlist.map(w => `
+        <tr style="border-bottom:1px solid var(--sep)">
+            <td style="padding:14px 16px">
+                <div style="font-weight:600">${w.ticker}</div>
+                <div style="font-size:11px;color:var(--label2)">${w.name}</div>
+            </td>
+            <td style="padding:14px 16px">
+                <span style="background:${ACTION_COLORS[w.action]}18;color:${ACTION_COLORS[w.action]};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">${w.action}</span>
+            </td>
+            <td style="padding:14px 16px;text-align:right">${w.targetPrice ? '$' + Number(w.targetPrice).toFixed(2) : '—'}</td>
+            <td style="padding:14px 16px;text-align:right">${w.qty || '—'}</td>
+            <td style="padding:14px 16px;color:var(--label2);font-size:12px">${w.notes || '—'}</td>
+            <td style="padding:14px 16px">
+                <div style="display:flex;gap:4px">
+                    <button class="row-btn" onclick="openWatchModal('${w.id}')">Edit</button>
+                    <button class="row-btn del" onclick="delWatch('${w.id}')">Remove</button>
+                </div>
+            </td>
+        </tr>`).join('')}</tbody>
+    </table></div>`;
+}
+
+function openWatchModal(id = null) {
+    watchEditId = id;
+    document.getElementById('watch-modal-title').textContent = id ? 'Edit Item' : 'Add to Watchlist';
+    if (id) {
+        const w = watchlist.find(x => x.id === id);
+        if (!w) return;
+        document.getElementById('w-ticker').value = w.ticker;
+        document.getElementById('w-action').value = w.action;
+        document.getElementById('w-name').value   = w.name;
+        document.getElementById('w-price').value  = w.targetPrice || '';
+        document.getElementById('w-qty').value    = w.qty || '';
+        document.getElementById('w-notes').value  = w.notes || '';
+    } else {
+        document.getElementById('watch-form').reset();
+    }
+    document.getElementById('watch-overlay').classList.add('open');
+    setTimeout(() => document.getElementById('w-ticker').focus(), 50);
+}
+
+function delWatch(id) {
+    if (!confirm('Remove this item?')) return;
+    watchlist = watchlist.filter(w => w.id !== id);
+    saveWatchlist(); renderWatchlist(); toast('Removed');
+}
+
+document.getElementById('watch-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const ticker = document.getElementById('w-ticker').value.trim().toUpperCase();
+    const action = document.getElementById('w-action').value;
+    const name   = document.getElementById('w-name').value.trim();
+    const targetPrice = document.getElementById('w-price').value;
+    const qty    = document.getElementById('w-qty').value;
+    const notes  = document.getElementById('w-notes').value.trim();
+    if (watchEditId) {
+        const i = watchlist.findIndex(x => x.id === watchEditId);
+        if (i !== -1) watchlist[i] = { ...watchlist[i], ticker, action, name, targetPrice, qty, notes };
+        toast('Updated');
+    } else {
+        watchlist.push({ id: uid(), ticker, action, name, targetPrice, qty, notes });
+        toast('Added to watchlist');
+    }
+    saveWatchlist();
+    document.getElementById('watch-overlay').classList.remove('open');
+    watchEditId = null;
+    renderWatchlist();
+});
+
+const closeWatchModal = () => { document.getElementById('watch-overlay').classList.remove('open'); watchEditId = null; };
+document.getElementById('watch-modal-close').addEventListener('click', closeWatchModal);
+document.getElementById('watch-cancel').addEventListener('click', closeWatchModal);
+document.getElementById('watch-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeWatchModal(); });
+document.getElementById('add-watch-btn').addEventListener('click', () => openWatchModal());
+document.getElementById('watchlist-nav-btn').addEventListener('click', () => showPanel('watchlist'));
+
 // ── Init ──
 function init() {
     load();
+    loadWatchlist();
     setGreeting();
     render();
     fetchPrices();
