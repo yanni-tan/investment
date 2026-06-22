@@ -950,7 +950,10 @@
         </div>
         <div class="sync-row">
             <span><span class="sync-dot offline" id="sync-dot"></span><span id="sync-label">Not connected</span></span>
-            <button id="sync-setup-btn">Setup sync</button>
+            <div style="display:flex;gap:8px">
+                <button id="sync-pull-btn" style="display:none">↓ Pull</button>
+                <button id="sync-setup-btn">Setup sync</button>
+            </div>
         </div>
     </div>
     </div>
@@ -2372,15 +2375,14 @@ async function ghRequest(method, path, body) {
 
 async function syncLoad() {
     if (!ghToken) return false;
-    setSyncStatus('syncing', 'Loading…');
+    setSyncStatus('syncing', 'Syncing…');
     try {
         const res = await ghRequest('GET', SYNC_FILE);
-        if (res.status === 404) {
-            setSyncStatus('synced', 'Synced (new)');
-            return false;
-        }
+        if (res.status === 404) { setSyncStatus('synced', 'Synced'); return false; }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
+        // Only update if remote is newer (different SHA)
+        if (syncSha && data.sha === syncSha) { setSyncStatus('synced', 'Synced'); return false; }
         syncSha = data.sha;
         const payload = JSON.parse(atob(data.content.replace(/\n/g, '')));
         if (Array.isArray(payload.holdings)) {
@@ -2485,12 +2487,25 @@ function init() {
     fetchPrices();
     setInterval(fetchPrices, 60_000);
     if (ghToken) {
-        setSyncStatus('syncing', 'Loading…');
-        syncLoad().then(loaded => { if (loaded) { render(); fetchPrices(); } });
+        document.getElementById('sync-pull-btn').style.display = '';
+        document.getElementById('sync-setup-btn').textContent = 'Manage sync';
+        setSyncStatus('syncing', 'Syncing…');
+        syncLoad().then(loaded => { if (loaded) { render(); if (showingWatchlist) renderWatchlist(); fetchPrices(); } });
+        // Auto-poll every 30s for changes from other devices
+        setInterval(async () => {
+            const updated = await syncLoad();
+            if (updated) { render(); if (showingWatchlist) renderWatchlist(); }
+        }, 30_000);
     } else {
         setSyncStatus('offline', 'Not synced');
     }
 }
+
+document.getElementById('sync-pull-btn').addEventListener('click', async () => {
+    const updated = await syncLoad();
+    if (updated) { render(); if (showingWatchlist) renderWatchlist(); toast('Pulled latest data ✓'); }
+    else toast('Already up to date');
+});
 
 if (sessionStorage.getItem('portfolio_auth') === '1') {
     document.getElementById('lock-screen').style.display = 'none';
