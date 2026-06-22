@@ -142,24 +142,33 @@
       "targetPrice": "692.5",
       "qty": "2",
       "notes": "Already ordered"
+    },
+    {
+      "id": "pmfkazyoccmqpjt4o3",
+      "ticker": "CSPX",
+      "action": "Buy",
+      "name": "CSPX",
+      "targetPrice": "802.85",
+      "qty": "1",
+      "notes": "Replaces VOO"
     }
   ],
   "snapshots": [
     {
       "month": "2026-06",
-      "gainUSD": 6211.869999999995,
-      "totalUSD": 22689.566,
+      "gainUSD": 6263.7948,
+      "totalUSD": 23142.41068,
       "byMkt": {
         "US": 12596.039999999999,
-        "SG": 10093.526000000002,
+        "SG": 10546.37068,
         "UK": 0
       },
       "costByMkt": {
         "US": 7541.530000000001,
-        "SG": 8936.166000000001,
+        "SG": 9337.08588,
         "UK": 0
       }
     }
   ],
-  "updatedAt": "2026-06-22T18:26:59.158Z"
+  "updatedAt": "2026-06-22T18:27:57.027Z"
 }
