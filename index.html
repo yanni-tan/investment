@@ -601,7 +601,26 @@
         .bk-right { margin-left: auto; text-align: right; }
         .bk-gain  { font-size: 12px; font-weight: 600; }
 
-        /* ── Chart tooltip ── */
+        /* ── Sync indicator ── */
+        .sync-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            display: inline-block; margin-right: 5px; flex-shrink: 0;
+        }
+        .sync-dot.synced  { background: var(--green); }
+        .sync-dot.syncing { background: var(--amber); animation: pulse 1s infinite; }
+        .sync-dot.error   { background: var(--red); }
+        .sync-dot.offline { background: var(--label3); }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        .sync-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 4px 0; font-size: 11px; color: var(--sidebar-text);
+        }
+        .sync-row button {
+            font-size: 11px; background: none; border: none;
+            color: var(--sidebar-text); cursor: pointer; font-family: inherit;
+            text-decoration: underline; padding: 0;
+        }
+        .sync-row button:hover { color: var(--sidebar-text-active); }
         .chart-tooltip {
             position: fixed; pointer-events: none; z-index: 500;
             background: #111827; color: #fff;
@@ -929,6 +948,11 @@
             <button class="util-btn" id="import-btn">↓ Import</button>
             <input type="file" id="import-file" accept=".json" style="display:none">
         </div>
+        <div class="sync-row">
+            <span><span class="sync-dot offline" id="sync-dot"></span><span id="sync-label">Not connected</span></span>
+            <button id="sync-setup-btn">Setup sync</button>
+        </div>
+    </div>
     </div>
 </aside>
 
@@ -1088,6 +1112,31 @@
 
 <div class="toast" id="toast"></div>
 <div class="chart-tooltip" id="chart-tooltip"></div>
+
+<!-- ── Sync Setup Modal ── -->
+<div class="overlay" id="sync-overlay">
+    <div class="modal">
+        <div class="modal-hdr">
+            <h2>GitHub Sync Setup</h2>
+            <button class="modal-x" id="sync-modal-close">×</button>
+        </div>
+        <p style="font-size:13px;color:var(--label2);margin-bottom:18px;line-height:1.6">
+            Your portfolio data will sync automatically across all devices via your private GitHub repo.
+        </p>
+        <div class="fg">
+            <label>GitHub Personal Access Token
+                <a href="https://github.com/settings/tokens/new?scopes=repo&description=Investment+Portfolio+Sync" target="_blank" style="font-weight:400;text-transform:none;letter-spacing:0;margin-left:6px;color:var(--accent);text-decoration:none;font-size:11px">→ Create token</a>
+            </label>
+            <input class="finput" id="sync-token-input" type="password" placeholder="ghp_xxxxxxxxxxxx">
+        </div>
+        <p style="font-size:11px;color:var(--label3);margin-top:-8px;margin-bottom:18px">Token needs <strong>repo</strong> scope. Stored only in this browser.</p>
+        <div class="modal-foot">
+            <button type="button" class="btn btn-secondary" id="sync-modal-cancel">Cancel</button>
+            <button type="button" class="btn btn-primary" id="sync-connect-btn">Connect</button>
+        </div>
+        <div id="sync-modal-status" style="font-size:12px;color:var(--label2);margin-top:12px;min-height:16px"></div>
+    </div>
+</div>
 
 <!-- ── Watchlist Modal ── -->
 <div class="overlay" id="watch-overlay">
@@ -2293,6 +2342,127 @@ document.getElementById('watch-overlay').addEventListener('click', e => { if (e.
 document.getElementById('add-watch-btn').addEventListener('click', () => openWatchModal());
 document.getElementById('watchlist-nav-btn').addEventListener('click', () => showPanel('watchlist'));
 
+// ── GitHub Sync ──
+const SYNC_REPO  = 'yanni-tan/investment';
+const SYNC_FILE  = 'data.json';
+const SYNC_TOKEN_KEY = 'gh_sync_token';
+let ghToken = localStorage.getItem(SYNC_TOKEN_KEY) || '';
+let syncSha  = null;   // current file SHA from GitHub
+let syncBusy = false;
+
+function setSyncStatus(state, label) {
+    const dot = document.getElementById('sync-dot');
+    const lbl = document.getElementById('sync-label');
+    dot.className = `sync-dot ${state}`;
+    lbl.textContent = label;
+}
+
+async function ghRequest(method, path, body) {
+    const res = await fetch(`https://api.github.com/repos/${SYNC_REPO}/contents/${path}`, {
+        method,
+        headers: {
+            Authorization: `token ${ghToken}`,
+            Accept: 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json',
+        },
+        body: body ? JSON.stringify(body) : undefined,
+    });
+    return res;
+}
+
+async function syncLoad() {
+    if (!ghToken) return false;
+    setSyncStatus('syncing', 'Loading…');
+    try {
+        const res = await ghRequest('GET', SYNC_FILE);
+        if (res.status === 404) {
+            setSyncStatus('synced', 'Synced (new)');
+            return false;
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        syncSha = data.sha;
+        const payload = JSON.parse(atob(data.content.replace(/\n/g, '')));
+        if (Array.isArray(payload.holdings)) {
+            holdings = payload.holdings;
+            localStorage.setItem(KEY, JSON.stringify(holdings));
+        }
+        if (Array.isArray(payload.watchlist)) {
+            watchlist = payload.watchlist;
+            localStorage.setItem(WATCH_KEY, JSON.stringify(watchlist));
+        }
+        if (Array.isArray(payload.snapshots)) {
+            localStorage.setItem('portfolio_snapshots', JSON.stringify(payload.snapshots));
+        }
+        setSyncStatus('synced', 'Synced');
+        return true;
+    } catch (e) {
+        setSyncStatus('error', 'Sync error');
+        return false;
+    }
+}
+
+async function syncSave() {
+    if (!ghToken || syncBusy) return;
+    syncBusy = true;
+    setSyncStatus('syncing', 'Saving…');
+    try {
+        const payload = {
+            holdings,
+            watchlist,
+            snapshots: loadSnapshots(),
+            updatedAt: new Date().toISOString(),
+        };
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+        const body = { message: 'Portfolio sync', content, committer: { name: 'Yanni Tan', email: 'yanni@users.noreply.github.com' } };
+        if (syncSha) body.sha = syncSha;
+        const res = await ghRequest('PUT', SYNC_FILE, body);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        syncSha = data.content.sha;
+        setSyncStatus('synced', 'Synced ✓');
+    } catch (e) {
+        setSyncStatus('error', 'Save failed');
+    } finally {
+        syncBusy = false;
+    }
+}
+
+// Patch save/saveWatchlist to also push to GitHub
+const _origSave = save;
+function save() { _origSave(); syncSave(); }
+const _origSaveWatchlist = saveWatchlist;
+function saveWatchlist() { _origSaveWatchlist(); syncSave(); }
+
+// Sync setup modal
+document.getElementById('sync-setup-btn').addEventListener('click', () => {
+    document.getElementById('sync-token-input').value = ghToken;
+    document.getElementById('sync-modal-status').textContent = '';
+    document.getElementById('sync-overlay').classList.add('open');
+});
+const closeSyncModal = () => document.getElementById('sync-overlay').classList.remove('open');
+document.getElementById('sync-modal-close').addEventListener('click', closeSyncModal);
+document.getElementById('sync-modal-cancel').addEventListener('click', closeSyncModal);
+document.getElementById('sync-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeSyncModal(); });
+
+document.getElementById('sync-connect-btn').addEventListener('click', async () => {
+    const token = document.getElementById('sync-token-input').value.trim();
+    if (!token) return;
+    ghToken = token;
+    localStorage.setItem(SYNC_TOKEN_KEY, token);
+    document.getElementById('sync-modal-status').textContent = 'Connecting…';
+    const ok = await syncLoad();
+    if (ok || document.getElementById('sync-label').textContent.includes('new')) {
+        render();
+        fetchPrices();
+        closeSyncModal();
+        toast('Sync connected ✓');
+        document.getElementById('sync-setup-btn').textContent = 'Manage sync';
+    } else {
+        document.getElementById('sync-modal-status').textContent = 'Could not connect — check token and repo scope.';
+    }
+});
+
 // ── Init ──
 function init() {
     load();
@@ -2301,6 +2471,12 @@ function init() {
     render();
     fetchPrices();
     setInterval(fetchPrices, 60_000);
+    if (ghToken) {
+        setSyncStatus('syncing', 'Loading…');
+        syncLoad().then(loaded => { if (loaded) { render(); fetchPrices(); } });
+    } else {
+        setSyncStatus('offline', 'Not synced');
+    }
 }
 
 if (sessionStorage.getItem('portfolio_auth') === '1') {
