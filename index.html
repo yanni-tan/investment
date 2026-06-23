@@ -1721,6 +1721,7 @@ async function fetchPrices() {
         saveSnapshot();
         render();
         if (activePanel === 'espp') renderEspp();
+        if (activePanel === 'watchlist') renderWatchlist();
     }
 }
 
@@ -2798,7 +2799,7 @@ function showPanel(which) {
     if (which === 'watchlist') renderWatchlist();
     if (which === 'dividends') renderDividends();
     if (which === 'realized') renderRealizedPanel();
-    if (which === 'espp') renderEspp();
+    if (which === 'espp') { renderEspp(); if (!prices['AAPL']) fetchPrices(); }
 }
 
 const ACTION_COLORS = { Buy: '#22c55e', Sell: '#ef4444', Watch: '#f59e0b' };
