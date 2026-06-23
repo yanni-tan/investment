@@ -1511,9 +1511,15 @@
             <button class="modal-x" id="espp-modal-close">×</button>
         </div>
         <form id="espp-form" autocomplete="off">
-            <div class="fg">
-                <label>Total Package (USD)</label>
-                <input class="finput" id="espp-total" type="number" step="any" min="0" placeholder="180128.72" required>
+            <div class="frow">
+                <div class="fg">
+                    <label>Total Units</label>
+                    <input class="finput" id="espp-units" type="number" step="any" min="0" placeholder="625" required>
+                </div>
+                <div class="fg">
+                    <label>Grant Value (USD)</label>
+                    <input class="finput" id="espp-grant-value" type="number" step="any" min="0" placeholder="132000" required>
+                </div>
             </div>
             <div class="frow">
                 <div class="fg">
@@ -1529,6 +1535,7 @@
                 <div class="fg">
                     <label>Vest Frequency</label>
                     <select class="finput" id="espp-vest-freq">
+                        <option value="semi-annually">Semi-annually</option>
                         <option value="quarterly">Quarterly</option>
                         <option value="monthly">Monthly</option>
                         <option value="annually">Annually</option>
@@ -1536,7 +1543,7 @@
                 </div>
                 <div class="fg">
                     <label>Vested Amount (USD)</label>
-                    <input class="finput" id="espp-vested" type="number" step="any" min="0" placeholder="31924.32" required>
+                    <input class="finput" id="espp-vested" type="number" step="any" min="0" placeholder="31824.32" required>
                 </div>
             </div>
             <div class="modal-foot">
@@ -3515,7 +3522,8 @@ function saveEspp() { localStorage.setItem(ESPP_KEY, JSON.stringify(esppData)); 
 
 function openEsppModal() {
     if (esppData) {
-        document.getElementById('espp-total').value = esppData.totalPackage;
+        document.getElementById('espp-units').value = esppData.totalUnits;
+        document.getElementById('espp-grant-value').value = esppData.grantValue;
         document.getElementById('espp-grant-date').value = esppData.grantDate;
         document.getElementById('espp-vest-years').value = esppData.vestYears;
         document.getElementById('espp-vest-freq').value = esppData.vestFreq;
@@ -3529,7 +3537,8 @@ function openEsppModal() {
 document.getElementById('espp-form').addEventListener('submit', e => {
     e.preventDefault();
     esppData = {
-        totalPackage: parseFloat(document.getElementById('espp-total').value),
+        totalUnits: parseFloat(document.getElementById('espp-units').value),
+        grantValue: parseFloat(document.getElementById('espp-grant-value').value),
         grantDate: document.getElementById('espp-grant-date').value,
         vestYears: parseInt(document.getElementById('espp-vest-years').value),
         vestFreq: document.getElementById('espp-vest-freq').value,
@@ -3552,24 +3561,32 @@ function renderEspp() {
     if (!esppData) {
         el.innerHTML = `<div class="card"><div class="empty" style="padding:60px 20px">
             <div class="empty-icon">🍎</div><h3>No ESPP data</h3>
-            <p>Add your Apple Employee Stock Purchase Plan details.</p>
+            <p>Add your Apple equity grant details.</p>
             <button class="btn btn-primary" onclick="openEsppModal()">+ Setup ESPP</button>
         </div></div>`;
         return;
     }
 
-    const { totalPackage, grantDate, vestYears, vestFreq, vestedAmount } = esppData;
-    const unvested = totalPackage - vestedAmount;
-    const vestPct = totalPackage > 0 ? (vestedAmount / totalPackage * 100) : 0;
+    const { totalUnits, grantValue, grantDate, vestYears, vestFreq, vestedAmount } = esppData;
+    const grantPrice = grantValue / totalUnits;
 
     // AAPL live price
     const aaplPrice = prices['AAPL']?.price || null;
     const aaplChange = prices['AAPL']?.changePct || null;
 
-    // Calculate vest schedule
-    const freqMonths = vestFreq === 'quarterly' ? 3 : vestFreq === 'monthly' ? 1 : 12;
-    const totalTranches = (vestYears * 12) / freqMonths;
-    const trancheAmount = totalPackage / totalTranches;
+    // Current values based on live price
+    const currentTotal = aaplPrice ? totalUnits * aaplPrice : null;
+    const unrealizedGain = currentTotal ? currentTotal - grantValue : null;
+    const gainPctTotal = grantValue > 0 && unrealizedGain != null ? (unrealizedGain / grantValue * 100) : null;
+
+    // Vesting
+    const unvested = (currentTotal || grantValue) - vestedAmount;
+    const vestPct = (currentTotal || grantValue) > 0 ? (vestedAmount / (currentTotal || grantValue) * 100) : 0;
+
+    // Vest schedule
+    const freqMonths = vestFreq === 'semi-annually' ? 6 : vestFreq === 'quarterly' ? 3 : vestFreq === 'monthly' ? 1 : 12;
+    const totalTranches = Math.round((vestYears * 12) / freqMonths);
+    const unitsPerTranche = totalUnits / totalTranches;
     const grant = new Date(grantDate + 'T00:00:00');
     const now = new Date();
 
@@ -3577,18 +3594,18 @@ function renderEspp() {
     for (let i = 1; i <= totalTranches; i++) {
         const d = new Date(grant);
         d.setMonth(d.getMonth() + i * freqMonths);
-        const dateStr = d.toISOString().slice(0, 10);
         const isPast = d <= now;
-        vestEvents.push({ date: d, dateStr, amount: trancheAmount, isPast });
+        const units = unitsPerTranche;
+        const dollarVal = aaplPrice ? units * aaplPrice : units * grantPrice;
+        vestEvents.push({ date: d, isPast, units, dollarVal });
     }
 
     const vestedTranches = vestEvents.filter(v => v.isPast).length;
+    const vestedUnits = vestedTranches * unitsPerTranche;
     const nextVest = vestEvents.find(v => !v.isPast);
     const nextVestDays = nextVest ? Math.ceil((nextVest.date - now) / (1000*60*60*24)) : null;
 
-    // Estimated share equivalent
-    const estShares = aaplPrice ? (totalPackage / aaplPrice) : null;
-    const vestedShares = aaplPrice ? (vestedAmount / aaplPrice) : null;
+    const fmtUSD = v => '$' + v.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
 
     el.innerHTML = `
         <div class="espp-hero">
@@ -3597,20 +3614,28 @@ function renderEspp() {
                     <span style="font-size:28px">🍎</span>
                     <div>
                         <div style="font-size:16px;font-weight:600">Apple Inc.</div>
-                        <div style="font-size:12px;color:rgba(255,255,255,0.5)">AAPL · ESPP</div>
+                        <div style="font-size:12px;color:rgba(255,255,255,0.5)">AAPL · ${totalUnits} units · Grant price ${fmtUSD(grantPrice)}</div>
                     </div>
                     ${aaplPrice ? `<div style="margin-left:auto;text-align:right">
-                        <div style="font-size:18px;font-weight:600">$${aaplPrice.toFixed(2)}</div>
+                        <div style="font-size:18px;font-weight:600">${fmtUSD(aaplPrice)}</div>
                         <div style="font-size:12px;color:${aaplChange >= 0 ? '#4ade80' : '#f87171'}">${aaplChange >= 0 ? '↑' : '↓'} ${Math.abs(aaplChange).toFixed(2)}%</div>
                     </div>` : ''}
                 </div>
-                <div class="espp-hero-label">Total Package</div>
-                <div class="espp-hero-value">$${totalPackage.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</div>
-                <div class="espp-hero-sub">Grant date: ${new Date(grantDate+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})} · ${vestYears}-year ${vestFreq} vest</div>
+                <div class="espp-hero-label">Current Total Value</div>
+                <div class="espp-hero-value">${currentTotal ? fmtUSD(currentTotal) : fmtUSD(grantValue) + ' (grant)'}</div>
+                <div style="display:flex;gap:12px;margin-top:4px">
+                    <div class="espp-hero-sub">Grant: ${fmtUSD(grantValue)}</div>
+                    ${unrealizedGain != null ? `<div class="espp-hero-sub" style="color:${unrealizedGain >= 0 ? '#4ade80' : '#f87171'}">
+                        ${unrealizedGain >= 0 ? '↑' : '↓'} ${fmtUSD(Math.abs(unrealizedGain))} (${gainPctTotal.toFixed(1)}%)
+                    </div>` : ''}
+                </div>
+                <div class="espp-hero-sub" style="margin-top:4px">
+                    ${new Date(grantDate+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})} · ${vestYears}-year ${vestFreq} vest
+                </div>
                 <div class="espp-progress"><div class="espp-progress-fill" style="width:${vestPct.toFixed(1)}%"></div></div>
                 <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.5)">
                     <span>${vestPct.toFixed(1)}% vested</span>
-                    <span>${vestedTranches} / ${totalTranches} tranches</span>
+                    <span>${vestedTranches} / ${totalTranches} tranches (${vestedUnits.toFixed(1)} / ${totalUnits} units)</span>
                 </div>
             </div>
         </div>
@@ -3618,18 +3643,18 @@ function renderEspp() {
         <div class="espp-stats">
             <div class="espp-stat">
                 <div class="espp-stat-label">Vested</div>
-                <div class="espp-stat-value" style="color:var(--green)">$${vestedAmount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
-                ${vestedShares ? `<div class="espp-stat-sub">≈ ${vestedShares.toFixed(1)} shares</div>` : ''}
+                <div class="espp-stat-value" style="color:var(--green)">${fmtUSD(vestedAmount)}</div>
+                <div class="espp-stat-sub">${vestedUnits.toFixed(1)} units vested</div>
             </div>
             <div class="espp-stat">
                 <div class="espp-stat-label">Unvested</div>
-                <div class="espp-stat-value">$${unvested.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
-                ${estShares ? `<div class="espp-stat-sub">≈ ${(estShares - vestedShares).toFixed(1)} shares</div>` : ''}
+                <div class="espp-stat-value">${fmtUSD(Math.max(unvested, 0))}</div>
+                <div class="espp-stat-sub">${(totalUnits - vestedUnits).toFixed(1)} units remaining</div>
             </div>
             <div class="espp-stat">
                 <div class="espp-stat-label">Next Vest</div>
-                <div class="espp-stat-value">${nextVest ? nextVest.date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'Complete'}</div>
-                ${nextVestDays != null ? `<div class="espp-stat-sub">${nextVestDays} day${nextVestDays!==1?'s':''} · $${trancheAmount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>` : ''}
+                <div class="espp-stat-value">${nextVest ? nextVest.date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'Fully vested'}</div>
+                ${nextVestDays != null ? `<div class="espp-stat-sub">${nextVestDays} day${nextVestDays!==1?'s':''} · ${unitsPerTranche.toFixed(1)} units (${fmtUSD(nextVest.dollarVal)})</div>` : ''}
             </div>
         </div>
 
@@ -3647,7 +3672,7 @@ function renderEspp() {
                     <div class="espp-vest-dot ${dotCls}"></div>
                     <span class="espp-vest-date">${v.date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>
                     ${statusHtml}
-                    <span class="espp-vest-amt">$${v.amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+                    <span class="espp-vest-amt" style="margin-left:auto">${v.units.toFixed(1)} units · ${fmtUSD(v.dollarVal)}</span>
                 </div>`;
             }).join('')}
         </div>`;
