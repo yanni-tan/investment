@@ -58,7 +58,6 @@
             --sep:#1e293b;--shadow:0 1px 3px rgba(0,0,0,0.3),0 8px 32px rgba(0,0,0,0.4);
         }
         [data-theme="dark"] .kpi-card.total{background:linear-gradient(135deg,#0a0f00 0%,#111800 100%)}
-        [data-theme="dark"] .lock-card{background:#1e293b}
         [data-theme="dark"] .brand-icon{background:#f9fafb}
         [data-theme="light"] {
             --sidebar:#ffffff;--sidebar-border:rgba(0,0,0,0.07);--sidebar-text:#9ca3af;--sidebar-text-active:#111827;
@@ -802,82 +801,6 @@
         .btn-secondary { background: var(--surface2); color: var(--label); border: 1.5px solid var(--sep); }
 
         /* ── Lock Screen ── */
-        .lock-screen {
-            position: fixed; inset: 0;
-            background: var(--bg);
-            z-index: 999;
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        .lock-card {
-            background: #ffffff;
-            border: 1px solid var(--sep);
-            border-radius: 24px;
-            padding: 40px 36px;
-            width: 100%; max-width: 360px;
-            margin: 20px;
-            text-align: center;
-            box-shadow: 0 8px 40px rgba(0,0,0,0.08);
-        }
-
-        .lock-brand {
-            width: 52px; height: 52px;
-            background: #111827;
-            border-radius: 16px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 22px; font-weight: 800; color: var(--accent);
-            margin: 0 auto 18px;
-        }
-
-        .lock-card h2 {
-            font-size: 20px; font-weight: 700;
-            color: var(--label); letter-spacing: -0.4px;
-            margin-bottom: 6px;
-        }
-
-        .lock-card p {
-            font-size: 13px; color: var(--label2);
-            margin-bottom: 24px;
-        }
-
-        .lock-input {
-            width: 100%; padding: 12px 16px;
-            background: var(--surface2);
-            border: 1.5px solid var(--sep);
-            border-radius: var(--radius-sm);
-            font-size: 16px; color: var(--label);
-            font-family: inherit; outline: none;
-            text-align: center; letter-spacing: 4px;
-            margin-bottom: 12px;
-            transition: border-color .15s;
-        }
-
-        .lock-input:focus { border-color: var(--accent); }
-        .lock-input::placeholder { letter-spacing: 0; color: var(--label3); }
-
-        .lock-btn {
-            width: 100%; padding: 12px;
-            background: var(--accent); color: #111827;
-            border: none; border-radius: var(--radius-sm);
-            font-size: 15px; font-weight: 700;
-            cursor: pointer; font-family: inherit;
-            transition: opacity .15s;
-        }
-        .lock-btn:hover { opacity: 0.88; }
-
-        .lock-error {
-            font-size: 12px; color: var(--red);
-            margin-top: 10px; opacity: 0;
-            transition: opacity .2s;
-        }
-
-        @keyframes shake {
-            0%,100% { transform: translateX(0); }
-            20%,60%  { transform: translateX(-6px); }
-            40%,80%  { transform: translateX(6px); }
-        }
-        .shake { animation: shake .4s ease; }
-
         /* ── Toast ── */
         .toast {
             position: fixed; bottom: 28px; left: 50%;
@@ -1134,20 +1057,6 @@
     </style>
 </head>
 <body>
-
-<!-- ── Lock Screen ── -->
-<div class="lock-screen" id="lock-screen">
-    <div class="lock-card">
-        <div class="lock-brand">$</div>
-        <h2>Investment Portfolio</h2>
-        <p>Enter your password to continue</p>
-        <form id="lock-form">
-            <input class="lock-input" id="lock-pwd" type="password" placeholder="Password" autocomplete="current-password">
-            <button class="lock-btn" type="submit">Unlock</button>
-        </form>
-        <div class="lock-error" id="lock-error">Incorrect password</div>
-    </div>
-</div>
 
 <!-- ── Mobile Top Bar ── -->
 <div class="mobile-bar">
@@ -1682,32 +1591,6 @@
 </div>
 
 <script>
-// ── Auth ──
-const PWD_HASH = '729d868e3527e325418372aa1ccf25065973902dd6f3e782d6d54106454ad9ee';
-
-async function sha256(str) {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-document.getElementById('lock-form').addEventListener('submit', async e => {
-    e.preventDefault();
-    const pwd = document.getElementById('lock-pwd').value;
-    const hash = await sha256(pwd);
-    if (hash === PWD_HASH) {
-        sessionStorage.setItem('portfolio_auth', '1');
-        document.getElementById('lock-screen').style.display = 'none';
-        init();
-    } else {
-        const input = document.getElementById('lock-pwd');
-        const err   = document.getElementById('lock-error');
-        input.classList.add('shake');
-        err.style.opacity = '1';
-        input.value = '';
-        input.focus();
-        setTimeout(() => { input.classList.remove('shake'); err.style.opacity = '0'; }, 1200);
-    }
-});
 
 // ── Constants ──
 const KEY = 'portfolio_v1';
@@ -3791,12 +3674,7 @@ document.getElementById('sync-pull-btn').addEventListener('click', async () => {
     else toast('Already up to date');
 });
 
-if (sessionStorage.getItem('portfolio_auth') === '1') {
-    document.getElementById('lock-screen').style.display = 'none';
-    init();
-} else {
-    setTimeout(() => document.getElementById('lock-pwd').focus(), 100);
-}
+init();
 </script>
 </body>
 </html>
