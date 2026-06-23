@@ -486,11 +486,15 @@
         .neu { color: var(--label2); }
 
         .weight-bar {
-            display: flex; align-items: center; gap: 8px;
+            display: flex; flex-direction: column; gap: 4px;
+        }
+
+        .weight-pct {
+            font-size: 13px; font-weight: 600;
         }
 
         .weight-track {
-            width: 48px; height: 4px;
+            width: 100%; height: 4px;
             background: var(--sep); border-radius: 2px; overflow: hidden;
         }
 
@@ -1090,6 +1094,13 @@
                         <option value="GBP">GBP</option>
                     </select>
                 </div>
+                <div class="fg">
+                    <label>Account</label>
+                    <select class="finput" id="f-account">
+                        <option value="Cash">Cash</option>
+                        <option value="SRS">SRS</option>
+                    </select>
+                </div>
             </div>
             <div class="frow">
                 <div class="fg">
@@ -1257,6 +1268,7 @@ let fxGBPUSD = 1.27;
 let editId   = null;
 let tab      = 'all';
 let typeFilter = 'all';
+let accountFilter = 'all';
 let sortCol  = null;
 let sortDir  = 'desc';
 let bkTab    = 'type';
@@ -1425,12 +1437,13 @@ function render() {
     const all      = holdings.map(enrich);
     const byTab    = tab === 'all' ? all : all.filter(r => r.market === tab);
     const filtered = typeFilter === 'all' ? byTab : byTab.filter(r => r.type === typeFilter);
+    const filtered2 = accountFilter === 'all' ? filtered : filtered.filter(r => (r.account || 'Cash') === accountFilter);
     const tot      = totalUSDof(all);
 
     renderKPI(all);
     renderMarkets(all);
     renderTypeChips(all);
-    renderTable(filtered, tot);
+    renderTable(filtered2, tot);
     renderChart(all, tot);
     renderBreakdown(all);
 }
@@ -1668,7 +1681,7 @@ function tableRow(r, tot) {
                     </div>
                 </div>
             </td>
-            <td><span class="mkt-pill mkt-${r.market.toLowerCase()}">${r.market}</span></td>
+            <td><span class="mkt-pill mkt-${r.market.toLowerCase()}">${r.market}</span>${r.account === 'SRS' ? ' <span class="mkt-pill" style="background:rgba(139,92,246,0.12);color:#7c3aed">SRS</span>' : ''}</td>
             <td class="r">${Number(r.shares).toLocaleString('en-US', { maximumFractionDigits: 4 })}</td>
             <td class="r">${money(r.avgCost, r.currency)}</td>
             <td class="r">${priceCell}</td>
@@ -1676,8 +1689,8 @@ function tableRow(r, tot) {
             <td class="r">${gainCell}</td>
             <td class="r">
                 <div class="weight-bar">
+                    <span class="weight-pct">${wt.toFixed(1)}%</span>
                     <div class="weight-track"><div class="weight-fill" style="width:${Math.min(wt,100).toFixed(1)}%"></div></div>
-                    <span>${wt.toFixed(1)}%</span>
                 </div>
             </td>
             <td>
@@ -1811,15 +1824,21 @@ function renderMarkets(rows) {
 function renderTypeChips(rows) {
     const el = document.getElementById('type-chips');
     const types   = ['all', ...new Set(holdings.map(r => r.type))].filter(Boolean);
+    const accounts = [...new Set(holdings.map(r => r.account || 'Cash'))];
     const markets = [...new Set(holdings.map(r => r.market))].filter(Boolean).sort();
 
     el.innerHTML =
         types.map(t => `<button class="chip ${typeFilter === t ? 'active' : ''}" data-type="${t}">${t === 'all' ? 'All' : t}</button>`).join('') +
+        (accounts.length > 1 ? `<span class="chip-sep"></span>` +
+        ['all', ...accounts].map(a => `<button class="chip ${accountFilter === a ? 'active' : ''}" data-account="${a}">${a === 'all' ? 'All Accounts' : a}</button>`).join('') : '') +
         `<span class="chip-sep"></span>` +
         markets.map(m => `<button class="chip ${tab === m ? 'active' : ''}" data-market="${m}">${MKT_FLAGS[m] || ''} ${m}</button>`).join('');
 
     el.querySelectorAll('[data-type]').forEach(btn => {
         btn.addEventListener('click', () => { typeFilter = btn.dataset.type; render(); });
+    });
+    el.querySelectorAll('[data-account]').forEach(btn => {
+        btn.addEventListener('click', () => { accountFilter = btn.dataset.account; render(); });
     });
     el.querySelectorAll('[data-market]').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1985,6 +2004,7 @@ function openModal(id = null) {
         document.getElementById('f-type').value     = h.type;
         document.getElementById('f-sector').value   = h.sector || '';
         document.getElementById('f-currency').value = h.currency;
+        document.getElementById('f-account').value  = h.account || 'Cash';
         document.getElementById('f-shares').value   = h.shares;
         document.getElementById('f-avgcost').value  = h.avgCost;
         document.getElementById('f-notes').value    = h.notes || '';
@@ -2016,6 +2036,7 @@ document.getElementById('hform').addEventListener('submit', e => {
     const type     = document.getElementById('f-type').value;
     const sector   = document.getElementById('f-sector').value;
     const currency = document.getElementById('f-currency').value;
+    const account  = document.getElementById('f-account').value;
     const shares   = parseFloat(document.getElementById('f-shares').value);
     const avgCost  = parseFloat(document.getElementById('f-avgcost').value);
     const notes    = document.getElementById('f-notes').value.trim();
@@ -2027,10 +2048,10 @@ document.getElementById('hform').addEventListener('submit', e => {
 
     if (editId) {
         const i = holdings.findIndex(h => h.id === editId);
-        if (i !== -1) holdings[i] = { ...holdings[i], ticker, market, name, type, sector, currency, shares, avgCost, notes };
+        if (i !== -1) holdings[i] = { ...holdings[i], ticker, market, name, type, sector, currency, account, shares, avgCost, notes };
         toast('Holding updated');
     } else {
-        holdings.push({ id: uid(), ticker, market, name, type, sector, currency, shares, avgCost, notes });
+        holdings.push({ id: uid(), ticker, market, name, type, sector, currency, account, shares, avgCost, notes });
         toast('Holding added');
     }
 
