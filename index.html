@@ -882,6 +882,45 @@
         }
         .toast.show { transform: translateX(-50%) translateY(0); }
 
+        /* ── Mobile Top Bar ── */
+        .mobile-bar {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0;
+            height: 56px; z-index: 30;
+            background: var(--sidebar);
+            border-bottom: 1px solid var(--sidebar-border);
+            align-items: center; justify-content: space-between;
+            padding: 0 16px;
+        }
+
+        .mobile-bar-left { display: flex; align-items: center; gap: 12px; }
+
+        .hamburger {
+            width: 36px; height: 36px;
+            background: none; border: none; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+            padding: 0;
+        }
+        .hamburger span {
+            display: block; width: 20px; height: 2px;
+            background: var(--sidebar-text-active); border-radius: 1px;
+            transition: all .2s;
+        }
+
+        .mobile-add-btn {
+            padding: 7px 14px;
+            background: var(--accent); color: #111827;
+            border: none; border-radius: var(--radius-sm);
+            font-size: 13px; font-weight: 700;
+            cursor: pointer; font-family: inherit;
+        }
+
+        .sidebar-backdrop {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.4); z-index: 19;
+        }
+        .sidebar-backdrop.open { display: block; }
+
         /* ── Responsive ── */
         @media (max-width: 1100px) {
             .top-section { grid-template-columns: 1fr; }
@@ -892,8 +931,17 @@
         }
         @media (max-width: 680px) {
             :root { --sidebar-w: 0px; }
-            .sidebar { display: none; }
-            .main { padding: 20px 16px 40px; }
+            .mobile-bar { display: flex; }
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform .25s ease;
+                z-index: 25;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+                width: 260px;
+            }
+            .main { padding: 72px 16px 40px; }
             .kpi-grid { grid-template-columns: 1fr 1fr; }
             .card { overflow-x: auto; }
             table { min-width: 640px; }
@@ -916,6 +964,18 @@
         <div class="lock-error" id="lock-error">Incorrect password</div>
     </div>
 </div>
+
+<!-- ── Mobile Top Bar ── -->
+<div class="mobile-bar">
+    <div class="mobile-bar-left">
+        <button class="hamburger" id="hamburger-btn">
+            <span></span><span></span><span></span>
+        </button>
+        <span style="font-size:15px;font-weight:600;color:var(--sidebar-text-active)">Portfolio</span>
+    </div>
+    <button class="mobile-add-btn" onclick="openModal()">+ Add</button>
+</div>
+<div class="sidebar-backdrop" id="sidebar-backdrop"></div>
 
 <!-- ── Sidebar ── -->
 <aside class="sidebar">
@@ -1434,7 +1494,7 @@ function signed(v, cur) {
 }
 function pct(v) {
     if (v == null) return '—';
-    return (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
+    return v.toFixed(2) + '%';
 }
 function cc(v) { return v == null ? 'neu' : v > 0 ? 'pos' : v < 0 ? 'neg' : 'neu'; }
 function badgeClass(v) { return v == null ? 'neu' : v > 0 ? 'up' : v < 0 ? 'down' : 'neu'; }
@@ -2071,6 +2131,21 @@ document.getElementById('refresh-btn').addEventListener('click', fetchPrices);
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal-cancel').addEventListener('click', closeModal);
 document.getElementById('overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+// ── Mobile sidebar toggle ──
+function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('open');
+    document.getElementById('sidebar-backdrop').classList.toggle('open');
+}
+function closeSidebar() {
+    document.querySelector('.sidebar').classList.remove('open');
+    document.getElementById('sidebar-backdrop').classList.remove('open');
+}
+document.getElementById('hamburger-btn').addEventListener('click', toggleSidebar);
+document.getElementById('sidebar-backdrop').addEventListener('click', closeSidebar);
+document.querySelectorAll('.nav-item, .sidebar-add, .util-btn, #sync-setup-btn, #sync-pull-btn, #watchlist-nav-btn').forEach(el => {
+    el.addEventListener('click', closeSidebar);
+});
 
 document.getElementById('f-market').addEventListener('change', e => {
     const cur = { SG: 'SGD', UK: 'GBP', US: 'USD' };
