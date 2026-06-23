@@ -882,6 +882,56 @@
         }
         .toast.show { transform: translateX(-50%) translateY(0); }
 
+        /* ── Value Chart ── */
+        .vchart-wrap {
+            position: relative;
+            width: 100%;
+            height: 280px;
+        }
+        .vchart-yaxis {
+            position: absolute; left: 0; top: 0; bottom: 30px; width: 56px;
+            display: flex; flex-direction: column-reverse; justify-content: space-between;
+        }
+        .vchart-ylabel {
+            font-size: 11px; font-weight: 500; color: var(--label3);
+            text-align: right; padding-right: 10px; line-height: 1;
+        }
+        .vchart-area {
+            position: absolute; left: 56px; right: 0; top: 0; bottom: 30px;
+        }
+        .vchart-xaxis {
+            position: absolute; left: 56px; right: 0; bottom: 0; height: 30px;
+            display: flex; justify-content: space-between; align-items: flex-start;
+        }
+        .vchart-xlabel {
+            font-size: 11px; color: var(--label3); text-align: center;
+        }
+        .vchart-hover-line {
+            position: absolute; top: 0; width: 1px;
+            border-left: 1.5px dashed var(--accent);
+            pointer-events: none; display: none;
+        }
+        .vchart-hover-dot {
+            position: absolute; width: 12px; height: 12px;
+            border-radius: 50%; background: var(--surface);
+            border: 2.5px solid var(--accent);
+            transform: translate(-50%, -50%);
+            pointer-events: none; display: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .vchart-tooltip {
+            position: absolute; transform: translateX(-50%);
+            background: var(--accent); color: #111827;
+            padding: 6px 14px; border-radius: 10px;
+            font-size: 12px; text-align: center;
+            pointer-events: none; display: none;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            white-space: nowrap;
+        }
+        .vchart-tooltip strong {
+            display: block; font-size: 15px; font-weight: 700;
+        }
+
         /* ── Mobile Top Bar ── */
         .mobile-bar {
             display: none;
@@ -1130,6 +1180,14 @@
             <div id="bk-body"></div>
             <div class="fx-note" id="fx-note" style="display:none"></div>
         </div>
+    </div>
+
+    <!-- ── Portfolio Value Chart ── -->
+    <div class="card" id="value-chart-card" style="margin-bottom:20px">
+        <div class="card-header">
+            <h2>Portfolio Value</h2>
+        </div>
+        <div id="value-chart-body" style="padding:24px 24px 16px;position:relative"></div>
     </div>
 
     <!-- Full-width holdings table -->
@@ -1566,6 +1624,7 @@ function render() {
     renderTable(filtered2, tot);
     renderChart(all, tot);
     renderBreakdown(all);
+    renderValueChart();
 }
 
 // ── Monthly snapshots ──
@@ -1583,6 +1642,142 @@ function saveSnapshot() {
     if (idx >= 0) { snaps[idx] = entry; }
     else { snaps.push(entry); if (snaps.length > 12) snaps.shift(); }
     localStorage.setItem('portfolio_snapshots', JSON.stringify(snaps));
+}
+
+// ── Full Value Chart ──
+function renderValueChart() {
+    const el = document.getElementById('value-chart-body');
+    const card = document.getElementById('value-chart-card');
+    const snaps = loadSnapshots();
+    if (snaps.length < 2) {
+        card.style.display = 'none';
+        return;
+    }
+    card.style.display = '';
+
+    const vals = snaps.map(s => s.totalUSD);
+    const minV = Math.min(...vals) * 0.9;
+    const maxV = Math.max(...vals) * 1.05;
+    const range = Math.max(maxV - minV, 1);
+
+    // Y-axis: 5 steps
+    const ySteps = 5;
+    const yLabels = [];
+    for (let i = 0; i <= ySteps; i++) {
+        const v = minV + (range * i / ySteps);
+        if (v >= 1000) yLabels.push('$' + (v / 1000).toFixed(v >= 10000 ? 0 : 1) + 'K');
+        else yLabels.push('$' + Math.round(v));
+    }
+
+    // X labels
+    const xLabels = snaps.map(s => {
+        const d = new Date(s.month + '-15');
+        return d.toLocaleString('default', { month: 'short', year: '2-digit' });
+    });
+
+    // SVG dimensions
+    const W = 800, H = 220, PAD_T = 10, PAD_B = 4;
+    const chartH = H - PAD_T - PAD_B;
+
+    // Points
+    const pts = snaps.map((s, i) => ({
+        x: (i / (snaps.length - 1)) * W,
+        y: PAD_T + (1 - (s.totalUSD - minV) / range) * chartH,
+        val: s.totalUSD,
+        label: xLabels[i],
+    }));
+
+    // Smooth bezier path
+    function smoothPath(points) {
+        if (points.length < 2) return '';
+        let d = `M ${points[0].x},${points[0].y}`;
+        for (let i = 0; i < points.length - 1; i++) {
+            const p0 = points[Math.max(i - 1, 0)];
+            const p1 = points[i];
+            const p2 = points[i + 1];
+            const p3 = points[Math.min(i + 2, points.length - 1)];
+            const tension = 0.3;
+            const cp1x = p1.x + (p2.x - p0.x) * tension;
+            const cp1y = p1.y + (p2.y - p0.y) * tension;
+            const cp2x = p2.x - (p3.x - p1.x) * tension;
+            const cp2y = p2.y - (p3.y - p1.y) * tension;
+            d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
+        }
+        return d;
+    }
+
+    const linePath = smoothPath(pts);
+    const areaPath = linePath + ` L ${pts[pts.length-1].x},${H} L ${pts[0].x},${H} Z`;
+
+    // Grid lines
+    const gridLines = [];
+    for (let i = 0; i <= ySteps; i++) {
+        const gy = PAD_T + (1 - i / ySteps) * chartH;
+        gridLines.push(`<line x1="0" y1="${gy}" x2="${W}" y2="${gy}" stroke="var(--sep)" stroke-width="1" stroke-dasharray="4 4"/>`);
+    }
+
+    const svg = `<svg width="100%" height="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="display:block">
+        <defs>
+            <linearGradient id="vchartGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.02"/>
+            </linearGradient>
+        </defs>
+        ${gridLines.join('')}
+        <path d="${areaPath}" fill="url(#vchartGrad)"/>
+        <path d="${linePath}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
+
+    el.innerHTML = `
+        <div class="vchart-wrap">
+            <div class="vchart-yaxis">${yLabels.map(l => `<span class="vchart-ylabel">${l}</span>`).join('')}</div>
+            <div class="vchart-area" id="vchart-area">${svg}
+                <div class="vchart-hover-line" id="vchart-line"></div>
+                <div class="vchart-hover-dot" id="vchart-dot"></div>
+                <div class="vchart-tooltip" id="vchart-tip"></div>
+            </div>
+            <div class="vchart-xaxis">${xLabels.map(l => `<span class="vchart-xlabel">${l}</span>`).join('')}</div>
+        </div>`;
+
+    // Hover interaction
+    const area = document.getElementById('vchart-area');
+    const line = document.getElementById('vchart-line');
+    const dot  = document.getElementById('vchart-dot');
+    const tip  = document.getElementById('vchart-tip');
+
+    function handleHover(e) {
+        const rect = area.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const pct = mx / rect.width;
+        const idx = Math.round(pct * (pts.length - 1));
+        if (idx < 0 || idx >= pts.length) return;
+
+        const px = (pts[idx].x / W) * 100;
+        const py = (pts[idx].y / H) * 100;
+        const areaH = rect.height;
+
+        line.style.display = 'block';
+        line.style.left = px + '%';
+        line.style.height = ((H - pts[idx].y) / H * 100) + '%';
+        line.style.bottom = (PAD_B / H * 100) + '%';
+        line.style.top = 'auto';
+
+        dot.style.display = 'block';
+        dot.style.left = px + '%';
+        dot.style.top = py + '%';
+
+        tip.style.display = 'block';
+        tip.style.left = px + '%';
+        tip.style.top = Math.max(py - 16, 0) + '%';
+        tip.style.transform = 'translate(-50%, -100%)';
+        tip.innerHTML = `<span style="font-size:11px;opacity:0.7">Portfolio Value</span><strong>${money(pts[idx].val, 'USD')}</strong>`;
+    }
+
+    area.addEventListener('mousemove', handleHover);
+    area.addEventListener('touchmove', e => { e.preventDefault(); handleHover(e.touches[0]); }, { passive: false });
+    const hideHover = () => { line.style.display = 'none'; dot.style.display = 'none'; tip.style.display = 'none'; };
+    area.addEventListener('mouseleave', hideHover);
+    area.addEventListener('touchend', hideHover);
 }
 
 // ── SVG Line Chart ──
