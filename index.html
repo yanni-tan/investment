@@ -2441,6 +2441,8 @@ function renderStatsRow(rows) {
     }
 
     el.innerHTML = html;
+}
+
 function renderTypeChips(rows) {
     const el = document.getElementById('type-chips');
     const types   = ['all', ...new Set(holdings.map(r => r.type))].filter(Boolean);
