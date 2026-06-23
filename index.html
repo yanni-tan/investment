@@ -2974,6 +2974,23 @@ async function syncLoad() {
         }
         if (payload.espp) {
             esppData = payload.espp;
+            // Migrate old single-grant format
+            if (esppData && !esppData.grants) {
+                const old = esppData;
+                esppData = {
+                    grants: [{
+                        id: Date.now().toString(36),
+                        label: 'Initial Grant',
+                        units: old.totalUnits,
+                        grantValue: old.grantValue,
+                        grantDate: old.grantDate,
+                        vestYears: old.vestYears,
+                        vestFreq: old.vestFreq,
+                    }],
+                    vestedUnits: old.vestedUnits ?? 0,
+                    updates: old.updates || [],
+                };
+            }
             localStorage.setItem(ESPP_KEY, JSON.stringify(esppData));
         }
         setSyncStatus('synced', 'Synced');
@@ -3320,7 +3337,7 @@ function loadEspp() {
             vestedUnits: old.vestedUnits ?? 0,
             updates: old.updates || [],
         };
-        saveEspp();
+        localStorage.setItem(ESPP_KEY, JSON.stringify(esppData));
     }
 }
 function saveEspp() { localStorage.setItem(ESPP_KEY, JSON.stringify(esppData)); syncSave(); }
@@ -3659,7 +3676,9 @@ function init() {
         document.getElementById('sync-pull-btn').style.display = '';
         document.getElementById('sync-setup-btn').textContent = 'Manage sync';
         setSyncStatus('syncing', 'Syncing…');
-        syncLoad().then(loaded => { if (loaded) { render(); if (showingWatchlist) renderWatchlist(); fetchPrices(); } });
+        syncLoad().then(loaded => {
+            if (loaded) { render(); if (showingWatchlist) renderWatchlist(); fetchPrices(); syncSave(); }
+        });
         // Auto-poll every 30s for changes from other devices
         setInterval(async () => {
             const updated = await syncLoad();
