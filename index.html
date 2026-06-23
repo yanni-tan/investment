@@ -2352,31 +2352,10 @@ function renderStatsRow(rows) {
     const s = calcSummary(rows);
     const mkts = [['US','USD',1], ['SG','SGD',1/fxSGDUSD]];
 
-    // Market cards + ESPP after US
+    // Market cards + ESPP before US
     let html = '';
     mkts.forEach(([mkt, cur, fx]) => {
-        const val  = (s.byMkt[mkt]  || 0) * fx;
-        const cost = (s.costByMkt[mkt] || 0) * fx;
-        const gain = val - cost;
-        const gPct = cost > 0 ? (gain / cost) * 100 : 0;
-        const flag = MKT_FLAGS[mkt] || '';
-        html += `<div class="stat-mini" onclick="setMarketTab('${mkt}')">
-            <div class="stat-head">
-                <div class="stat-icon" style="background:${MARKET_COLORS[mkt]}18">
-                    <span class="mkt-pill mkt-${mkt.toLowerCase()}" style="font-size:10px">${mkt}</span>
-                </div>
-                <span class="stat-flag">${flag}</span>
-            </div>
-            <div class="stat-label">${mkt} Holdings</div>
-            <div class="stat-value">${money(val, cur)}</div>
-            <div class="stat-badges">
-                <span class="kpi-badge ${badgeClass(gain)}" style="font-size:10px;padding:3px 8px">${gain >= 0 ? '↑' : '↓'} ${signed(gain, cur)}</span>
-                <span class="kpi-badge ${badgeClass(gPct)}" style="font-size:10px;padding:3px 8px">${gain >= 0 ? '↑' : '↓'} ${pct(gPct)}</span>
-            </div>
-            <div class="stat-sub">Cost: ${money(cost, cur)}</div>
-        </div>`;
-
-        // Insert ESPP card right after US
+        // Insert ESPP card before US
         if (mkt === 'US' && esppData?.grants?.length) {
             const totalUnits = esppData.grants.reduce((s,g) => s + g.units, 0);
             const vestedU = esppData.vestedUnits || 0;
@@ -2398,6 +2377,27 @@ function renderStatsRow(rows) {
                 <div class="stat-sub">${vestedU.toFixed(1)} / ${totalUnits} shares</div>
             </div>`;
         }
+
+        const val  = (s.byMkt[mkt]  || 0) * fx;
+        const cost = (s.costByMkt[mkt] || 0) * fx;
+        const gain = val - cost;
+        const gPct = cost > 0 ? (gain / cost) * 100 : 0;
+        const flag = MKT_FLAGS[mkt] || '';
+        html += `<div class="stat-mini" onclick="setMarketTab('${mkt}')">
+            <div class="stat-head">
+                <div class="stat-icon" style="background:${MARKET_COLORS[mkt]}18">
+                    <span class="mkt-pill mkt-${mkt.toLowerCase()}" style="font-size:10px">${mkt}</span>
+                </div>
+                <span class="stat-flag">${flag}</span>
+            </div>
+            <div class="stat-label">${mkt} Holdings</div>
+            <div class="stat-value">${money(val, cur)}</div>
+            <div class="stat-badges">
+                <span class="kpi-badge ${badgeClass(gain)}" style="font-size:10px;padding:3px 8px">${gain >= 0 ? '↑' : '↓'} ${signed(gain, cur)}</span>
+                <span class="kpi-badge ${badgeClass(gPct)}" style="font-size:10px;padding:3px 8px">${gain >= 0 ? '↑' : '↓'} ${pct(gPct)}</span>
+            </div>
+            <div class="stat-sub">Cost: ${money(cost, cur)}</div>
+        </div>`;
     });
 
     // Dividend card
