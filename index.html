@@ -1179,6 +1179,7 @@
                 <button class="bk-tab" data-bk="perf">Performance</button>
                 <button class="bk-tab" data-bk="alloc">Allocation</button>
                 <button class="bk-tab" data-bk="type">Type</button>
+                <button class="bk-tab" data-bk="sector">Sector</button>
             </div>
             <div id="bk-body"></div>
             <div class="fx-note" id="fx-note" style="display:none"></div>
@@ -1201,6 +1202,7 @@
                 <span class="count-badge" id="count"></span>
             </div>
             <div class="card-header-right">
+                <input type="text" id="search-input" class="finput" placeholder="Search holdings…" style="width:180px;padding:7px 12px;font-size:12px;border-radius:20px">
                 <div class="filter-chips" id="type-chips"></div>
             </div>
         </div>
@@ -1455,6 +1457,7 @@ let sortDir  = 'desc';
 let bkTab    = 'type';
 let fetching = false;
 let displayCur = 'USD'; // 'USD' or 'SGD'
+let searchQuery = '';
 
 // ── Storage ──
 function load() {
@@ -1633,12 +1636,16 @@ function render() {
     const byTab    = tab === 'all' ? all : all.filter(r => r.market === tab);
     const filtered = typeFilter === 'all' ? byTab : byTab.filter(r => r.type === typeFilter);
     const filtered2 = accountFilter === 'all' ? filtered : filtered.filter(r => (r.account || 'Cash') === accountFilter);
+    const searched = searchQuery ? filtered2.filter(r => {
+        const q = searchQuery.toLowerCase();
+        return r.name.toLowerCase().includes(q) || r.ticker.toLowerCase().includes(q) || (r.sector || '').toLowerCase().includes(q);
+    }) : filtered2;
     const tot      = totalUSDof(all);
 
     renderKPI(all);
     renderMarkets(all);
     renderTypeChips(all);
-    renderTable(filtered2, tot);
+    renderTable(searched, tot);
     renderChart(all, tot);
     renderBreakdown(all);
     renderValueChart();
@@ -2401,6 +2408,10 @@ document.getElementById('refresh-btn').addEventListener('click', fetchPrices);
 document.getElementById('currency-toggle-btn').addEventListener('click', () => {
     displayCur = displayCur === 'USD' ? 'SGD' : 'USD';
     document.getElementById('currency-toggle-btn').textContent = displayCur;
+    render();
+});
+document.getElementById('search-input').addEventListener('input', e => {
+    searchQuery = e.target.value.trim();
     render();
 });
 document.getElementById('modal-close').addEventListener('click', closeModal);
