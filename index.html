@@ -3553,7 +3553,8 @@ function renderEspp() {
             while (vestDates.length < totalTranches) {
                 for (const m of [1, 7]) { // Feb=1, Aug=7
                     const vd = new Date(yr, m, 15);
-                    if (vd > grantDate && vestDates.length < totalTranches) {
+                    const minVest = new Date(grantDate); minVest.setMonth(minVest.getMonth() + 6);
+                    if (vd >= minVest && vestDates.length < totalTranches) {
                         vestDates.push(vd);
                     }
                 }
