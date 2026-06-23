@@ -183,11 +183,11 @@
   "realized": [],
   "espp": {
     "totalUnits": 625,
-    "grantValue": 18189273,
+    "grantValue": 181892.73,
     "grantDate": "2027-06-23",
     "vestYears": 4,
     "vestFreq": "semi-annually",
     "vestedAmount": 32136.66
   },
-  "updatedAt": "2026-06-23T13:51:49.932Z"
+  "updatedAt": "2026-06-23T13:52:11.323Z"
 }
