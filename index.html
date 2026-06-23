@@ -1512,7 +1512,7 @@ function renderKPI(rows) {
                 <div class="kpi-label">Total Portfolio (USD)</div>
                 <div class="kpi-value">${money(s.totalUSD, 'USD')}</div>
                 <div>
-                    <span class="kpi-badge ${badgeClass(s.totalGain)}">${s.totalGain >= 0 ? '▲' : '▼'} ${pct(s.totalGainPct)}</span>
+                    <span class="kpi-badge ${badgeClass(s.totalGain)}">${s.totalGain >= 0 ? '↑' : '↓'} ${pct(s.totalGainPct)}</span>
                     <div class="kpi-sub" style="margin-top:6px">
                         🇺🇸 ${money(s.byMkt.US || 0, 'USD')} &nbsp;+&nbsp; 🇸🇬 ~${money(s.byMkt.SG || 0, 'USD')}
                     </div>
@@ -1528,7 +1528,7 @@ function renderKPI(rows) {
                 <div class="kpi-label">Unrealised Gain</div>
                 <div class="kpi-value">${signed(s.totalGain, 'USD')}</div>
                 <div>
-                    <span class="kpi-badge ${badgeClass(s.totalGainPct)}">${s.totalGain >= 0 ? '▲' : '▼'} ${pct(s.totalGainPct)}</span>
+                    <span class="kpi-badge ${badgeClass(s.totalGainPct)}">${s.totalGain >= 0 ? '↑' : '↓'} ${pct(s.totalGainPct)}</span>
                     <div class="kpi-sub">${signed(s.totalGain / fxSGDUSD, 'SGD')}</div>
                 </div>
             </div>
@@ -1654,7 +1654,7 @@ function tableRow(r, tot) {
         : '<span class="neu">—</span>';
 
     const dayCell = r.changePct != null
-        ? `<span class="change-pill change-${r.changePct >= 0 ? 'up' : 'down'}">${r.changePct >= 0 ? '▲' : '▼'} ${Math.abs(r.changePct).toFixed(2)}%</span>`
+        ? `<span class="change-pill change-${r.changePct >= 0 ? 'up' : 'down'}">${r.changePct >= 0 ? '↑' : '↓'} ${Math.abs(r.changePct).toFixed(2)}%</span>`
         : '<span style="color:var(--label3)">—</span>';
 
     return `
@@ -1797,8 +1797,8 @@ function renderMarkets(rows) {
                 <div class="kpi-label">${mkt} Holdings</div>
                 <div class="kpi-value" style="font-size:22px">${money(val, cur)}</div>
                 <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">
-                    <span class="kpi-badge ${badgeClass(gain)}">${gain >= 0 ? '▲' : '▼'} ${signed(gain, cur)}</span>
-                    <span class="kpi-badge ${badgeClass(gPct)}">${gain >= 0 ? '▲' : '▼'} ${pct(gPct)}</span>
+                    <span class="kpi-badge ${badgeClass(gain)}">${gain >= 0 ? '↑' : '↓'} ${signed(gain, cur)}</span>
+                    <span class="kpi-badge ${badgeClass(gPct)}">${gain >= 0 ? '↑' : '↓'} ${pct(gPct)}</span>
                 </div>
                 <div class="kpi-sub">Cost: ${money(cost, cur)}</div>
             </div>
