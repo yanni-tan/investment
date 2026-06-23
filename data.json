@@ -243,8 +243,16 @@
         "totalValue": 0,
         "vestedValue": 0,
         "note": ""
+      },
+      {
+        "date": "2026-06-23",
+        "vestedUnits": 107.149,
+        "aaplPrice": 298,
+        "totalValue": 186250,
+        "vestedValue": 31930.402000000002,
+        "note": ""
       }
     ]
   },
-  "updatedAt": "2026-06-23T16:43:43.940Z"
+  "updatedAt": "2026-06-23T16:44:26.761Z"
 }
