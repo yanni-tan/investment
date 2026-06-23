@@ -2360,7 +2360,7 @@ function renderStatsRow(rows) {
         if (mkt === 'US' && esppData?.grants?.length) {
             const totalUnits = esppData.grants.reduce((s,g) => s + g.units, 0);
             const vestedU = esppData.vestedUnits || 0;
-            const aaplPrice = prices['AAPL']?.price || null;
+            const aaplPrice = prices['AAPL']?.price || parseFloat(localStorage.getItem('espp_aapl_price')) || null;
             const totalGrantValue = esppData.grants.reduce((s,g) => s + g.grantValue, 0);
             const avgGrantPrice = totalGrantValue / totalUnits;
             const vestedVal = aaplPrice ? vestedU * aaplPrice : vestedU * avgGrantPrice;
@@ -3491,7 +3491,9 @@ function renderEspp() {
 
     const { grants, vestedUnits, updates = [] } = esppData;
     const fmtUSD = v => '$' + v.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
-    const aaplPrice = prices['AAPL']?.price || null;
+    const lastLoggedPrice = updates.length ? updates[updates.length - 1].aaplPrice : null;
+    const manualPrice = parseFloat(localStorage.getItem('espp_aapl_price')) || null;
+    const aaplPrice = prices['AAPL']?.price || manualPrice || lastLoggedPrice || null;
     const aaplChange = prices['AAPL']?.changePct || null;
     const now = new Date();
 
@@ -3570,10 +3572,14 @@ function renderEspp() {
                         <div style="font-size:16px;font-weight:600">Apple Inc.</div>
                         <div style="font-size:12px;color:rgba(255,255,255,0.5)">AAPL · ${totalUnits} units across ${grants.length} grant${grants.length!==1?'s':''}</div>
                     </div>
-                    ${aaplPrice ? `<div style="margin-left:auto;text-align:right">
-                        <div style="font-size:18px;font-weight:600">${fmtUSD(aaplPrice)}</div>
-                        <div style="font-size:12px;color:${aaplChange >= 0 ? '#4ade80' : '#f87171'}">${aaplChange >= 0 ? '↑' : '↓'} ${Math.abs(aaplChange).toFixed(2)}%</div>
-                    </div>` : ''}
+                    <div style="margin-left:auto;text-align:right">
+                        <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">
+                            <span style="font-size:12px;color:rgba(255,255,255,0.5)">AAPL $</span>
+                            <input id="espp-aapl-input" type="number" step="0.01" value="${aaplPrice || ''}" placeholder="298.00"
+                                style="width:90px;padding:4px 8px;font-size:16px;font-weight:600;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#fff;font-family:inherit;text-align:right;outline:none">
+                        </div>
+                        ${aaplChange != null ? `<div style="font-size:12px;color:${aaplChange >= 0 ? '#4ade80' : '#f87171'};margin-top:2px">${aaplChange >= 0 ? '↑' : '↓'} ${Math.abs(aaplChange).toFixed(2)}%</div>` : `<div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px">Enter current price</div>`}
+                    </div>
                 </div>
                 <div class="espp-hero-label">Current Total Value</div>
                 <div class="espp-hero-value">${fmtUSD(currentTotal)}</div>
@@ -3687,9 +3693,21 @@ function renderEspp() {
     }
 
     el.innerHTML = html;
+
+    // AAPL price input handler
+    const priceInput = document.getElementById('espp-aapl-input');
+    if (priceInput) {
+        priceInput.addEventListener('change', () => {
+            const val = parseFloat(priceInput.value);
+            if (val > 0) {
+                localStorage.setItem('espp_aapl_price', val);
+                renderEspp();
+                render(); // update dashboard stats too
+            }
+        });
+    }
 }
 
-// ── Init ──
 function init() {
     initTheme();
     load();
