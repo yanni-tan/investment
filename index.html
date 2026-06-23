@@ -237,7 +237,7 @@
             font-size: 14px;
             font-weight: 400;
             color: var(--label3);
-            margin-top: 4px;
+            margin-top: 128px;
             letter-spacing: 0;
         }
 
@@ -933,16 +933,20 @@
             :root { --sidebar-w: 0px; }
             .mobile-bar { display: flex; }
             .sidebar {
-                transform: translateX(-100%);
-                transition: transform .25s ease;
+                width: 260px;
+                left: -260px;
+                transition: left .25s ease;
                 z-index: 25;
             }
             .sidebar.open {
-                transform: translateX(0);
-                width: 260px;
+                left: 0;
             }
             .main { padding: 72px 16px 40px; }
-            .kpi-grid { grid-template-columns: 1fr 1fr; }
+            .kpi-grid { grid-template-columns: 1fr; }
+            .second-row { grid-template-columns: 1fr; }
+            .greeting { font-size: 28px; }
+            .greeting-sub { margin-top: 8px; }
+            #greeting-time, [id="greeting-time"] { margin-bottom: 8px !important; }
             .card { overflow-x: auto; }
             table { min-width: 640px; }
             .weight-track { display: none; }
@@ -1357,7 +1361,7 @@ function setGreeting() {
     const emoji = h < 6 ? '🌙' : h < 12 ? '🌅' : h < 17 ? '☀️' : h < 20 ? '🌆' : '🌙';
     const fmt = (d) => `Last updated on ${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}, ${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
     document.getElementById('greeting').innerHTML =
-        `<span id="greeting-time" style="display:block;font-size:13px;font-weight:400;color:var(--label3);letter-spacing:0;margin-bottom:2px">${fmt(now)}</span>${emoji} ${g}, Yanni Tan`;
+        `<span id="greeting-time" style="display:block;font-size:13px;font-weight:400;color:var(--label3);letter-spacing:0;margin-bottom:128px">${fmt(now)}</span>${emoji} ${g}, Yanni Tan`;
     document.getElementById('greeting-sub').textContent =
         now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 }
