@@ -1232,13 +1232,15 @@
         <button class="nav-item" data-tab="UK">
             <span class="nav-dot uk"></span>UK Market
         </button>
-        <div class="nav-section" style="margin-top:16px">Planning</div>
+        <div class="nav-section" style="margin-top:16px">Watchlist</div>
         <button class="nav-item" id="watchlist-nav-btn">
             <span class="nav-dot" style="background:#c8ff00"></span>Watchlist
         </button>
+        <div class="nav-section" style="margin-top:16px">Income</div>
         <button class="nav-item" id="dividends-nav-btn">
             <span class="nav-dot" style="background:#22c55e"></span>Dividends
         </button>
+        <div class="nav-section" style="margin-top:16px">Trading</div>
         <button class="nav-item" id="realized-nav-btn">
             <span class="nav-dot" style="background:#ef4444"></span>Realized Gains
         </button>
@@ -1311,7 +1313,10 @@
                 <div class="greeting">Apple ESPP</div>
                 <div class="greeting-sub">Employee Stock Purchase Plan</div>
             </div>
-            <button class="btn btn-primary" id="espp-edit-btn">Edit</button>
+            <div style="display:flex;gap:8px">
+                <button class="btn btn-secondary" id="espp-update-btn">Log Update</button>
+                <button class="btn btn-primary" id="espp-edit-btn">Edit</button>
+            </div>
         </div>
         <div id="espp-body"></div>
     </div>
@@ -1581,13 +1586,50 @@
                     </select>
                 </div>
                 <div class="fg">
-                    <label>Vested Amount (USD)</label>
-                    <input class="finput" id="espp-vested" type="number" step="any" min="0" placeholder="31824.32" required>
+                    <label>Vested Shares (Units)</label>
+                    <input class="finput" id="espp-vested" type="number" step="any" min="0" placeholder="78.125" required>
                 </div>
             </div>
             <div class="modal-foot">
                 <button type="button" class="btn btn-secondary" id="espp-cancel">Cancel</button>
                 <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ESPP Update Modal -->
+<div class="overlay" id="espp-update-overlay">
+    <div class="modal">
+        <div class="modal-hdr">
+            <h2>Log ESPP Update</h2>
+            <button class="modal-x" id="espp-update-close">×</button>
+        </div>
+        <form id="espp-update-form" autocomplete="off">
+            <div class="frow">
+                <div class="fg">
+                    <label>Date</label>
+                    <input class="finput" id="espp-update-date" type="date" required>
+                </div>
+                <div class="fg">
+                    <label>Vested Shares (Units)</label>
+                    <input class="finput" id="espp-update-units" type="number" step="any" min="0" required>
+                </div>
+            </div>
+            <div class="frow">
+                <div class="fg">
+                    <label>AAPL Price (USD)</label>
+                    <input class="finput" id="espp-update-price" type="number" step="any" min="0" placeholder="Auto-filled from live price">
+                </div>
+                <div class="fg">
+                    <label>Note (optional)</label>
+                    <input class="finput" id="espp-update-note" type="text" placeholder="e.g. Q1 vest received">
+                </div>
+            </div>
+            <div id="espp-update-preview" class="buy-preview" style="margin-bottom:12px"></div>
+            <div class="modal-foot">
+                <button type="button" class="btn btn-secondary" id="espp-update-cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary">Log Update</button>
             </div>
         </form>
     </div>
@@ -3562,7 +3604,7 @@ function openEsppModal() {
         document.getElementById('espp-grant-date').value = esppData.grantDate;
         document.getElementById('espp-vest-years').value = esppData.vestYears;
         document.getElementById('espp-vest-freq').value = esppData.vestFreq;
-        document.getElementById('espp-vested').value = esppData.vestedAmount;
+        document.getElementById('espp-vested').value = esppData.vestedUnits ?? '';
     } else {
         document.getElementById('espp-form').reset();
         document.getElementById('espp-vest-years').value = 4;
@@ -3571,13 +3613,16 @@ function openEsppModal() {
 }
 document.getElementById('espp-form').addEventListener('submit', e => {
     e.preventDefault();
+    const vestedUnits = parseFloat(document.getElementById('espp-vested').value);
     esppData = {
+        ...(esppData || {}),
         totalUnits: parseFloat(document.getElementById('espp-units').value),
         grantValue: parseFloat(document.getElementById('espp-grant-value').value),
         grantDate: document.getElementById('espp-grant-date').value,
         vestYears: parseInt(document.getElementById('espp-vest-years').value),
         vestFreq: document.getElementById('espp-vest-freq').value,
-        vestedAmount: parseFloat(document.getElementById('espp-vested').value),
+        vestedUnits,
+        updates: esppData?.updates || [],
     };
     saveEspp();
     document.getElementById('espp-overlay').classList.remove('open');
@@ -3591,6 +3636,73 @@ document.getElementById('espp-overlay').addEventListener('click', e => { if (e.t
 document.getElementById('espp-edit-btn').addEventListener('click', openEsppModal);
 document.getElementById('espp-nav-btn').addEventListener('click', () => showPanel('espp'));
 
+// ESPP Update log
+function openEsppUpdate() {
+    if (!esppData) { toast('Set up ESPP first'); return; }
+    const today = new Date().toISOString().slice(0, 10);
+    document.getElementById('espp-update-date').value = today;
+    document.getElementById('espp-update-units').value = esppData.vestedUnits ?? '';
+    const aaplPrice = prices['AAPL']?.price || '';
+    document.getElementById('espp-update-price').value = aaplPrice;
+    document.getElementById('espp-update-note').value = '';
+    updateEsppPreview();
+    document.getElementById('espp-update-overlay').classList.add('open');
+}
+
+function updateEsppPreview() {
+    const units = parseFloat(document.getElementById('espp-update-units').value) || 0;
+    const price = parseFloat(document.getElementById('espp-update-price').value) || 0;
+    const totalVal = esppData ? esppData.totalUnits * price : 0;
+    const vestedVal = units * price;
+    const preview = document.getElementById('espp-update-preview');
+    if (price > 0 && units > 0) {
+        preview.innerHTML = `Vested value: <strong>$${vestedVal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</strong> · Total: <strong>$${totalVal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</strong>`;
+    } else {
+        preview.innerHTML = 'Enter values to see preview';
+    }
+}
+
+document.getElementById('espp-update-units').addEventListener('input', updateEsppPreview);
+document.getElementById('espp-update-price').addEventListener('input', updateEsppPreview);
+
+document.getElementById('espp-update-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const vestedUnits = parseFloat(document.getElementById('espp-update-units').value);
+    const aaplPrice = parseFloat(document.getElementById('espp-update-price').value) || prices['AAPL']?.price || 0;
+    const date = document.getElementById('espp-update-date').value;
+    const note = document.getElementById('espp-update-note').value.trim();
+
+    if (!esppData.updates) esppData.updates = [];
+    esppData.updates.push({
+        date,
+        vestedUnits,
+        aaplPrice,
+        totalValue: esppData.totalUnits * aaplPrice,
+        vestedValue: vestedUnits * aaplPrice,
+        note,
+    });
+    esppData.updates.sort((a, b) => a.date.localeCompare(b.date));
+    esppData.vestedUnits = vestedUnits;
+    saveEspp();
+    document.getElementById('espp-update-overlay').classList.remove('open');
+    renderEspp();
+    toast('ESPP update logged');
+});
+
+const closeEsppUpdate = () => document.getElementById('espp-update-overlay').classList.remove('open');
+document.getElementById('espp-update-close').addEventListener('click', closeEsppUpdate);
+document.getElementById('espp-update-cancel').addEventListener('click', closeEsppUpdate);
+document.getElementById('espp-update-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeEsppUpdate(); });
+document.getElementById('espp-update-btn').addEventListener('click', openEsppUpdate);
+
+function deleteEsppUpdate(idx) {
+    if (!esppData?.updates) return;
+    esppData.updates.splice(idx, 1);
+    saveEspp();
+    renderEspp();
+    toast('Update removed');
+}
+
 function renderEspp() {
     const el = document.getElementById('espp-body');
     if (!esppData) {
@@ -3602,7 +3714,16 @@ function renderEspp() {
         return;
     }
 
-    const { totalUnits, grantValue, grantDate, vestYears, vestFreq, vestedAmount } = esppData;
+    // Migrate: if old vestedAmount exists but no vestedUnits, convert
+    if (esppData.vestedAmount != null && esppData.vestedUnits == null) {
+        const grantPrice = esppData.grantValue / esppData.totalUnits;
+        esppData.vestedUnits = esppData.vestedAmount / (prices['AAPL']?.price || grantPrice);
+        delete esppData.vestedAmount;
+        saveEspp();
+    }
+
+    const { totalUnits, grantValue, grantDate, vestYears, vestFreq, vestedUnits } = esppData;
+    const updates = esppData.updates || [];
     const grantPrice = grantValue / totalUnits;
 
     // AAPL live price
@@ -3614,9 +3735,11 @@ function renderEspp() {
     const unrealizedGain = currentTotal ? currentTotal - grantValue : null;
     const gainPctTotal = grantValue > 0 && unrealizedGain != null ? (unrealizedGain / grantValue * 100) : null;
 
-    // Vesting
-    const unvested = (currentTotal || grantValue) - vestedAmount;
-    const vestPct = (currentTotal || grantValue) > 0 ? (vestedAmount / (currentTotal || grantValue) * 100) : 0;
+    // Vested in dollars
+    const vestedValue = aaplPrice ? vestedUnits * aaplPrice : vestedUnits * grantPrice;
+    const unvestedUnits = totalUnits - vestedUnits;
+    const unvestedValue = aaplPrice ? unvestedUnits * aaplPrice : unvestedUnits * grantPrice;
+    const vestPct = totalUnits > 0 ? (vestedUnits / totalUnits * 100) : 0;
 
     // Vest schedule
     const freqMonths = vestFreq === 'semi-annually' ? 6 : vestFreq === 'quarterly' ? 3 : vestFreq === 'monthly' ? 1 : 12;
@@ -3636,7 +3759,6 @@ function renderEspp() {
     }
 
     const vestedTranches = vestEvents.filter(v => v.isPast).length;
-    const vestedUnits = vestedTranches * unitsPerTranche;
     const nextVest = vestEvents.find(v => !v.isPast);
     const nextVestDays = nextVest ? Math.ceil((nextVest.date - now) / (1000*60*60*24)) : null;
 
@@ -3670,7 +3792,7 @@ function renderEspp() {
                 <div class="espp-progress"><div class="espp-progress-fill" style="width:${vestPct.toFixed(1)}%"></div></div>
                 <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.5)">
                     <span>${vestPct.toFixed(1)}% vested</span>
-                    <span>${vestedTranches} / ${totalTranches} tranches (${vestedUnits.toFixed(1)} / ${totalUnits} units)</span>
+                    <span>${vestedUnits.toFixed(1)} / ${totalUnits} units</span>
                 </div>
             </div>
         </div>
@@ -3678,13 +3800,13 @@ function renderEspp() {
         <div class="espp-stats">
             <div class="espp-stat">
                 <div class="espp-stat-label">Vested</div>
-                <div class="espp-stat-value" style="color:var(--green)">${fmtUSD(vestedAmount)}</div>
-                <div class="espp-stat-sub">${vestedUnits.toFixed(1)} units vested</div>
+                <div class="espp-stat-value" style="color:var(--green)">${fmtUSD(vestedValue)}</div>
+                <div class="espp-stat-sub">${vestedUnits.toFixed(1)} shares vested</div>
             </div>
             <div class="espp-stat">
                 <div class="espp-stat-label">Unvested</div>
-                <div class="espp-stat-value">${fmtUSD(Math.max(unvested, 0))}</div>
-                <div class="espp-stat-sub">${(totalUnits - vestedUnits).toFixed(1)} units remaining</div>
+                <div class="espp-stat-value">${fmtUSD(Math.max(unvestedValue, 0))}</div>
+                <div class="espp-stat-sub">${unvestedUnits.toFixed(1)} shares remaining</div>
             </div>
             <div class="espp-stat">
                 <div class="espp-stat-label">Next Vest</div>
@@ -3710,7 +3832,34 @@ function renderEspp() {
                     <span class="espp-vest-amt" style="margin-left:auto">${v.units.toFixed(1)} units · ${fmtUSD(v.dollarVal)}</span>
                 </div>`;
             }).join('')}
-        </div>`;
+        </div>
+
+        ${updates.length ? `<div class="card" style="margin-top:20px">
+            <div class="card-header"><h2>Update History</h2><span class="count-badge">${updates.length} update${updates.length!==1?'s':''}</span></div>
+            <table style="width:100%;border-collapse:collapse">
+                <thead><tr>
+                    <th style="text-align:left;padding:10px 16px;font-size:11px;color:var(--label3);border-bottom:1px solid var(--sep)">Date</th>
+                    <th style="text-align:right;padding:10px 16px;font-size:11px;color:var(--label3);border-bottom:1px solid var(--sep)">Vested Shares</th>
+                    <th style="text-align:right;padding:10px 16px;font-size:11px;color:var(--label3);border-bottom:1px solid var(--sep)">AAPL Price</th>
+                    <th style="text-align:right;padding:10px 16px;font-size:11px;color:var(--label3);border-bottom:1px solid var(--sep)">Vested Value</th>
+                    <th style="text-align:right;padding:10px 16px;font-size:11px;color:var(--label3);border-bottom:1px solid var(--sep)">Total Value</th>
+                    <th style="text-align:left;padding:10px 16px;font-size:11px;color:var(--label3);border-bottom:1px solid var(--sep)">Note</th>
+                    <th style="width:40px;border-bottom:1px solid var(--sep)"></th>
+                </tr></thead>
+                <tbody>${[...updates].reverse().map((u, idx) => {
+                    const realIdx = updates.length - 1 - idx;
+                    return `<tr style="border-bottom:1px solid var(--sep)">
+                        <td style="padding:10px 16px;font-size:13px">${new Date(u.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</td>
+                        <td style="padding:10px 16px;font-size:13px;text-align:right;font-weight:600">${u.vestedUnits.toFixed(1)}</td>
+                        <td style="padding:10px 16px;font-size:13px;text-align:right">${fmtUSD(u.aaplPrice)}</td>
+                        <td style="padding:10px 16px;font-size:13px;text-align:right;color:var(--green)">${fmtUSD(u.vestedValue)}</td>
+                        <td style="padding:10px 16px;font-size:13px;text-align:right;font-weight:600">${fmtUSD(u.totalValue)}</td>
+                        <td style="padding:10px 16px;font-size:12px;color:var(--label2)">${u.note || '—'}</td>
+                        <td style="padding:10px 8px;text-align:center"><button class="row-btn del" onclick="deleteEsppUpdate(${realIdx})">×</button></td>
+                    </tr>`;
+                }).join('')}</tbody>
+            </table>
+        </div>` : ''}`;
 }
 
 // ── Init ──
