@@ -165,16 +165,16 @@
   "snapshots": [
     {
       "month": "2026-06",
-      "gainUSD": 6261.761599999998,
-      "totalUSD": 23124.678809999998,
+      "gainUSD": 6211.869999999995,
+      "totalUSD": 22689.566,
       "byMkt": {
         "US": 12596.039999999999,
-        "SG": 10528.63881,
+        "SG": 10093.526000000002,
         "UK": 0
       },
       "costByMkt": {
         "US": 7541.530000000001,
-        "SG": 9321.387209999999,
+        "SG": 8936.166000000001,
         "UK": 0
       }
     }
@@ -185,10 +185,10 @@
     "grants": [
       {
         "id": "mqqt706i",
-        "label": "Initial Grant",
+        "label": "Initial Grant - Onboard Package",
         "units": 625,
-        "grantValue": 181892.73,
-        "grantDate": "2027-06-23",
+        "grantValue": 132000,
+        "grantDate": "2027-07-14",
         "vestYears": 4,
         "vestFreq": "semi-annually"
       }
@@ -196,5 +196,5 @@
     "vestedUnits": 110.42449305148149,
     "updates": []
   },
-  "updatedAt": "2026-06-23T15:38:27.120Z"
+  "updatedAt": "2026-06-23T15:40:23.297Z"
 }
