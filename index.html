@@ -1829,8 +1829,6 @@ async function fetchPrices() {
         document.getElementById('last-updated').textContent = fmtTime;
         const gt = document.getElementById('greeting-time');
         if (gt) gt.textContent = fmtTime;
-        document.getElementById('fx-note').textContent =
-            `1 SGD = ${fxSGDUSD.toFixed(4)} USD · 1 GBP = ${fxGBPUSD.toFixed(4)} USD`;
 
     } catch {
         document.getElementById('last-updated').textContent = 'Price update failed';
