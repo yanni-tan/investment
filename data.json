@@ -169,24 +169,33 @@
       "targetPrice": "322",
       "qty": "1",
       "notes": ""
+    },
+    {
+      "id": "nnmmuix7hdmqq1sltm",
+      "ticker": "A35",
+      "action": "Buy",
+      "name": "A35",
+      "targetPrice": "",
+      "qty": "",
+      "notes": "Bond"
     }
   ],
   "snapshots": [
     {
       "month": "2026-06",
-      "gainUSD": 6263.7948,
-      "totalUSD": 23142.41068,
+      "gainUSD": 6263.9511999999995,
+      "totalUSD": 23143.77467,
       "byMkt": {
         "US": 12596.039999999999,
-        "SG": 10546.37068,
+        "SG": 10547.734670000002,
         "UK": 0
       },
       "costByMkt": {
         "US": 7541.530000000001,
-        "SG": 9337.08588,
+        "SG": 9338.293469999999,
         "UK": 0
       }
     }
   ],
-  "updatedAt": "2026-06-22T18:29:24.591Z"
+  "updatedAt": "2026-06-23T02:51:25.691Z"
 }
