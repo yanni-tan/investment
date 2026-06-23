@@ -214,7 +214,7 @@
         .main {
             margin-left: var(--sidebar-w);
             flex: 1;
-            padding: 28px 128px 60px;
+            padding: 20px 128px 60px;
             min-height: 100vh;
         }
 
@@ -1150,6 +1150,9 @@
         </div>
         <div class="header-right">
             <div class="last-updated-text" id="last-updated">Fetching live prices…</div>
+            <button class="icon-btn" id="currency-toggle-btn" title="Toggle display currency" style="font-size:13px;font-weight:700;color:var(--label2)">
+                USD
+            </button>
             <button class="icon-btn" id="refresh-btn" title="Refresh prices">
                 <svg viewBox="0 0 24 24" id="refresh-icon">
                     <polyline points="23 4 23 10 17 10"/>
@@ -1451,6 +1454,7 @@ let sortCol  = null;
 let sortDir  = 'desc';
 let bkTab    = 'type';
 let fetching = false;
+let displayCur = 'USD'; // 'USD' or 'SGD'
 
 // ── Storage ──
 function load() {
@@ -1563,6 +1567,19 @@ function toUSD(v, currency) {
     if (currency === 'SGD') return v * fxSGDUSD;
     if (currency === 'GBP') return v * fxGBPUSD;
     return v;
+}
+
+function fromUSD(v) {
+    if (displayCur === 'SGD') return v / fxSGDUSD;
+    return v;
+}
+
+function dmoney(usdVal) {
+    return money(fromUSD(usdVal), displayCur);
+}
+
+function dsigned(usdVal) {
+    return signed(fromUSD(usdVal), displayCur);
 }
 
 function totalUSDof(rows) {
@@ -1825,26 +1842,28 @@ function renderKPI(rows) {
     // Line charts from monthly snapshots
     const mkMonth = (s) => new Date(s.month + '-01').toLocaleString('default', { month: 'short' });
     const totalChart = svgLine(
-        snaps.map(s => ({ v: s.totalUSD, label: mkMonth(s), tip: `${s.month}<br>${money(s.totalUSD,'USD')}` })),
+        snaps.map(s => ({ v: fromUSD(s.totalUSD), label: mkMonth(s), tip: `${s.month}<br>${dmoney(s.totalUSD)}` })),
         { color: '#c8ff00', h: 44 }
     );
     const gainChart = svgLine(
-        snaps.map(s => ({ v: s.gainUSD, label: mkMonth(s), tip: `${s.month}<br>${signed(s.gainUSD,'USD')}` })),
+        snaps.map(s => ({ v: fromUSD(s.gainUSD), label: mkMonth(s), tip: `${s.month}<br>${dsigned(s.gainUSD)}` })),
         { color: '#22c55e', h: 44 }
     );
+
+    const curLabel = displayCur;
 
     el.innerHTML =
         `<div class="kpi-card total" style="display:flex;gap:16px;align-items:center">
             <div style="flex:1;min-width:0">
                 <div class="kpi-icon total">💼</div>
-                <div class="kpi-label">Total Portfolio (USD)</div>
-                <div class="kpi-value">${money(s.totalUSD, 'USD')}</div>
+                <div class="kpi-label">Total Portfolio (${curLabel})</div>
+                <div class="kpi-value">${dmoney(s.totalUSD)}</div>
                 <div>
                     <span class="kpi-badge ${badgeClass(s.totalGain)}">${s.totalGain >= 0 ? '↑' : '↓'} ${pct(s.totalGainPct)}</span>
                     <div class="kpi-sub" style="margin-top:6px">
-                        🇺🇸 ${money(s.byMkt.US || 0, 'USD')} &nbsp;+&nbsp; 🇸🇬 ~${money(s.byMkt.SG || 0, 'USD')}
+                        🇺🇸 ${dmoney(s.byMkt.US || 0)} &nbsp;+&nbsp; 🇸🇬 ~${dmoney(s.byMkt.SG || 0)}
                     </div>
-                    <div class="kpi-sub">Cost: ${money(s.totalCostUSD, 'USD')} · 1 SGD = ${fxSGDUSD.toFixed(4)} USD</div>
+                    <div class="kpi-sub">Cost: ${dmoney(s.totalCostUSD)} · 1 SGD = ${fxSGDUSD.toFixed(4)} USD</div>
                 </div>
             </div>
             <div style="flex:1;min-width:0">${totalChart}</div>
@@ -1854,10 +1873,10 @@ function renderKPI(rows) {
             <div style="flex:1;min-width:0">
                 <div class="kpi-icon blue">💰</div>
                 <div class="kpi-label">Unrealised Gain</div>
-                <div class="kpi-value">${signed(s.totalGain, 'USD')}</div>
+                <div class="kpi-value">${dsigned(s.totalGain)}</div>
                 <div>
                     <span class="kpi-badge ${badgeClass(s.totalGainPct)}">${s.totalGain >= 0 ? '↑' : '↓'} ${pct(s.totalGainPct)}</span>
-                    <div class="kpi-sub">${signed(s.totalGain / fxSGDUSD, 'SGD')}</div>
+                    <div class="kpi-sub">${displayCur === 'USD' ? signed(s.totalGain / fxSGDUSD, 'SGD') : signed(s.totalGain, 'USD')}</div>
                 </div>
             </div>
             <div style="flex:1;min-width:0">${gainChart}</div>
@@ -2068,7 +2087,7 @@ function renderChart(rows, tot) {
             <div class="donut-wrap">
                 <div class="donut-ring" style="background:${gradient}"></div>
                 <div class="donut-hole">
-                    <div class="donut-total">${money(total, 'USD')}</div>
+                    <div class="donut-total">${dmoney(total)}</div>
                     <div class="donut-label">Total USD</div>
                 </div>
             </div>
@@ -2379,6 +2398,11 @@ document.getElementById('hform').addEventListener('submit', e => {
 // ── Events ──
 document.getElementById('add-btn').addEventListener('click', () => openModal());
 document.getElementById('refresh-btn').addEventListener('click', fetchPrices);
+document.getElementById('currency-toggle-btn').addEventListener('click', () => {
+    displayCur = displayCur === 'USD' ? 'SGD' : 'USD';
+    document.getElementById('currency-toggle-btn').textContent = displayCur;
+    render();
+});
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal-cancel').addEventListener('click', closeModal);
 document.getElementById('overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
