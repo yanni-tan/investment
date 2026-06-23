@@ -987,6 +987,43 @@
         }
         .sidebar-backdrop.open { display: block; }
 
+        /* ── ESPP ── */
+        .espp-hero {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            border-radius: var(--radius); padding: 32px; color: #fff;
+            margin-bottom: 20px; position: relative; overflow: hidden;
+        }
+        .espp-hero::after {
+            content: ''; position: absolute; top: -40px; right: -40px;
+            width: 160px; height: 160px; border-radius: 50%;
+            background: rgba(168,85,247,0.15);
+        }
+        .espp-hero-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
+        .espp-hero-value { font-size: 36px; font-weight: 300; letter-spacing: -1px; margin-bottom: 4px; }
+        .espp-hero-sub { font-size: 13px; color: rgba(255,255,255,0.5); }
+        .espp-progress { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin: 20px 0 12px; overflow: hidden; }
+        .espp-progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #a855f7, #c084fc); transition: width .4s; }
+        .espp-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+        .espp-stat { background: var(--surface); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+        .espp-stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--label3); margin-bottom: 6px; }
+        .espp-stat-value { font-size: 22px; font-weight: 300; letter-spacing: -0.5px; }
+        .espp-stat-sub { font-size: 12px; color: var(--label2); margin-top: 4px; }
+        .espp-vest-timeline { margin-top: 20px; }
+        .espp-vest-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+            border-bottom: 1px solid var(--sep);
+        }
+        .espp-vest-item:last-child { border-bottom: none; }
+        .espp-vest-dot {
+            width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+        }
+        .espp-vest-dot.done { background: var(--green); }
+        .espp-vest-dot.next { background: var(--amber); box-shadow: 0 0 0 3px rgba(245,158,11,0.2); }
+        .espp-vest-dot.future { background: var(--sep); }
+        .espp-vest-date { font-size: 13px; font-weight: 500; min-width: 100px; }
+        .espp-vest-amt { font-size: 13px; font-weight: 600; margin-left: auto; }
+        .espp-vest-status { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+
         /* ── Mobile Holding Cards ── */
         .mobile-cards { display: none; }
 
@@ -1096,6 +1133,10 @@
             .mobile-bar span { font-size: 16px !important; }
             .mobile-add-btn { font-size: 14px; padding: 8px 16px; }
 
+            /* ESPP mobile */
+            .espp-stats { grid-template-columns: 1fr; }
+            .espp-hero-value { font-size: 28px; }
+
             /* Toast */
             .toast { font-size: 15px; padding: 12px 24px; }
         }
@@ -1162,6 +1203,10 @@
         <button class="nav-item" id="realized-nav-btn">
             <span class="nav-dot" style="background:#ef4444"></span>Realized Gains
         </button>
+        <div class="nav-section" style="margin-top:16px">Apple</div>
+        <button class="nav-item" id="espp-nav-btn">
+            <span class="nav-dot" style="background:#a855f7"></span>ESPP
+        </button>
     </nav>
     <div class="sidebar-footer">
         <button class="sidebar-add" id="add-btn">+ Add Holding</button>
@@ -1218,6 +1263,18 @@
             </div>
         </div>
         <div id="realized-body"></div>
+    </div>
+
+    <!-- ── ESPP Panel ── -->
+    <div id="espp-panel" style="display:none">
+        <div class="page-header">
+            <div>
+                <div class="greeting">Apple ESPP</div>
+                <div class="greeting-sub">Employee Stock Purchase Plan</div>
+            </div>
+            <button class="btn btn-primary" id="espp-edit-btn">Edit</button>
+        </div>
+        <div id="espp-body"></div>
     </div>
 
     <!-- ── Main Dashboard ── -->
@@ -1441,6 +1498,50 @@
             <div class="modal-foot">
                 <button type="button" class="btn btn-secondary" id="sell-cancel">Cancel</button>
                 <button type="submit" class="btn btn-primary" style="background:var(--red);color:#fff">Sell Shares</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ── ESPP Edit Modal ── -->
+<div class="overlay" id="espp-overlay">
+    <div class="modal">
+        <div class="modal-hdr">
+            <h2>Edit ESPP</h2>
+            <button class="modal-x" id="espp-modal-close">×</button>
+        </div>
+        <form id="espp-form" autocomplete="off">
+            <div class="fg">
+                <label>Total Package (USD)</label>
+                <input class="finput" id="espp-total" type="number" step="any" min="0" placeholder="180128.72" required>
+            </div>
+            <div class="frow">
+                <div class="fg">
+                    <label>Grant Date</label>
+                    <input class="finput" id="espp-grant-date" type="date" required>
+                </div>
+                <div class="fg">
+                    <label>Vest Period (Years)</label>
+                    <input class="finput" id="espp-vest-years" type="number" step="1" min="1" value="4" required>
+                </div>
+            </div>
+            <div class="frow">
+                <div class="fg">
+                    <label>Vest Frequency</label>
+                    <select class="finput" id="espp-vest-freq">
+                        <option value="quarterly">Quarterly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="annually">Annually</option>
+                    </select>
+                </div>
+                <div class="fg">
+                    <label>Vested Amount (USD)</label>
+                    <input class="finput" id="espp-vested" type="number" step="any" min="0" placeholder="31924.32" required>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button type="button" class="btn btn-secondary" id="espp-cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save</button>
             </div>
         </form>
     </div>
@@ -1671,7 +1772,9 @@ async function fetchPrices() {
 
     const tickers    = [...new Set(holdings.map(h => h.ticker))];
     const watchTickers = [...new Set(watchlist.map(w => w.ticker).filter(t => t && !tickers.includes(t)))];
-    const allSymbols = [...tickers, ...watchTickers, 'SGDUSD=X', 'GBPUSD=X'];
+    // Always fetch AAPL for ESPP
+    const esppTickers = esppData && !tickers.includes('AAPL') && !watchTickers.includes('AAPL') ? ['AAPL'] : [];
+    const allSymbols = [...tickers, ...watchTickers, ...esppTickers, 'SGDUSD=X', 'GBPUSD=X'];
 
     try {
         const results = await Promise.all(allSymbols.map(fetchSymbol));
@@ -1692,7 +1795,7 @@ async function fetchPrices() {
                     currency:  isPence ? 'GBP' : meta.currency,
                     state:     meta.marketState,
                 };
-                if (tickers.includes(symbol)) prices[symbol] = priceData;
+                if (tickers.includes(symbol) || esppTickers.includes(symbol)) prices[symbol] = priceData;
                 if (watchTickers.includes(symbol)) watchPrices[symbol] = priceData;
             }
         });
@@ -2684,7 +2787,7 @@ function closeSidebar() {
 }
 document.getElementById('hamburger-btn').addEventListener('click', toggleSidebar);
 document.getElementById('sidebar-backdrop').addEventListener('click', closeSidebar);
-document.querySelectorAll('.nav-item, .sidebar-add, .util-btn, #sync-setup-btn, #sync-pull-btn, #watchlist-nav-btn, #dividends-nav-btn, #realized-nav-btn').forEach(el => {
+document.querySelectorAll('.nav-item, .sidebar-add, .util-btn, #sync-setup-btn, #sync-pull-btn, #watchlist-nav-btn, #dividends-nav-btn, #realized-nav-btn, #espp-nav-btn').forEach(el => {
     el.addEventListener('click', closeSidebar);
 });
 
@@ -2891,13 +2994,16 @@ function showPanel(which) {
     document.getElementById('watchlist-panel').style.display = which === 'watchlist' ? '' : 'none';
     document.getElementById('dividends-panel').style.display = which === 'dividends' ? '' : 'none';
     document.getElementById('realized-panel').style.display = which === 'realized' ? '' : 'none';
+    document.getElementById('espp-panel').style.display = which === 'espp' ? '' : 'none';
     document.getElementById('watchlist-nav-btn').classList.toggle('active', which === 'watchlist');
     document.getElementById('dividends-nav-btn').classList.toggle('active', which === 'dividends');
     document.getElementById('realized-nav-btn').classList.toggle('active', which === 'realized');
+    document.getElementById('espp-nav-btn').classList.toggle('active', which === 'espp');
     document.querySelectorAll('.nav-item[data-tab]').forEach(n => n.classList.toggle('active', which === 'dashboard' && n.dataset.tab === tab));
     if (which === 'watchlist') renderWatchlist();
     if (which === 'dividends') renderDividends();
     if (which === 'realized') renderRealizedPanel();
+    if (which === 'espp') renderEspp();
 }
 
 const ACTION_COLORS = { Buy: '#22c55e', Sell: '#ef4444', Watch: '#f59e0b' };
@@ -3073,6 +3179,10 @@ async function syncLoad() {
             realized = payload.realized;
             localStorage.setItem(REALIZED_KEY, JSON.stringify(realized));
         }
+        if (payload.espp) {
+            esppData = payload.espp;
+            localStorage.setItem(ESPP_KEY, JSON.stringify(esppData));
+        }
         setSyncStatus('synced', 'Synced');
         return true;
     } catch (e) {
@@ -3092,6 +3202,7 @@ async function syncSave() {
             snapshots: loadSnapshots(),
             dividends,
             realized,
+            espp: esppData,
             updatedAt: new Date().toISOString(),
         };
         const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
@@ -3393,6 +3504,155 @@ function delRealized(id) {
 }
 document.getElementById('realized-nav-btn').addEventListener('click', () => showPanel('realized'));
 
+// ── ESPP ──
+const ESPP_KEY = 'portfolio_espp';
+let esppData = null;
+
+function loadEspp() {
+    try { esppData = JSON.parse(localStorage.getItem(ESPP_KEY)); } catch { esppData = null; }
+}
+function saveEspp() { localStorage.setItem(ESPP_KEY, JSON.stringify(esppData)); syncSave(); }
+
+function openEsppModal() {
+    if (esppData) {
+        document.getElementById('espp-total').value = esppData.totalPackage;
+        document.getElementById('espp-grant-date').value = esppData.grantDate;
+        document.getElementById('espp-vest-years').value = esppData.vestYears;
+        document.getElementById('espp-vest-freq').value = esppData.vestFreq;
+        document.getElementById('espp-vested').value = esppData.vestedAmount;
+    } else {
+        document.getElementById('espp-form').reset();
+        document.getElementById('espp-vest-years').value = 4;
+    }
+    document.getElementById('espp-overlay').classList.add('open');
+}
+document.getElementById('espp-form').addEventListener('submit', e => {
+    e.preventDefault();
+    esppData = {
+        totalPackage: parseFloat(document.getElementById('espp-total').value),
+        grantDate: document.getElementById('espp-grant-date').value,
+        vestYears: parseInt(document.getElementById('espp-vest-years').value),
+        vestFreq: document.getElementById('espp-vest-freq').value,
+        vestedAmount: parseFloat(document.getElementById('espp-vested').value),
+    };
+    saveEspp();
+    document.getElementById('espp-overlay').classList.remove('open');
+    renderEspp();
+    toast('ESPP updated');
+});
+const closeEsppModal = () => document.getElementById('espp-overlay').classList.remove('open');
+document.getElementById('espp-modal-close').addEventListener('click', closeEsppModal);
+document.getElementById('espp-cancel').addEventListener('click', closeEsppModal);
+document.getElementById('espp-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeEsppModal(); });
+document.getElementById('espp-edit-btn').addEventListener('click', openEsppModal);
+document.getElementById('espp-nav-btn').addEventListener('click', () => showPanel('espp'));
+
+function renderEspp() {
+    const el = document.getElementById('espp-body');
+    if (!esppData) {
+        el.innerHTML = `<div class="card"><div class="empty" style="padding:60px 20px">
+            <div class="empty-icon">🍎</div><h3>No ESPP data</h3>
+            <p>Add your Apple Employee Stock Purchase Plan details.</p>
+            <button class="btn btn-primary" onclick="openEsppModal()">+ Setup ESPP</button>
+        </div></div>`;
+        return;
+    }
+
+    const { totalPackage, grantDate, vestYears, vestFreq, vestedAmount } = esppData;
+    const unvested = totalPackage - vestedAmount;
+    const vestPct = totalPackage > 0 ? (vestedAmount / totalPackage * 100) : 0;
+
+    // AAPL live price
+    const aaplPrice = prices['AAPL']?.price || null;
+    const aaplChange = prices['AAPL']?.changePct || null;
+
+    // Calculate vest schedule
+    const freqMonths = vestFreq === 'quarterly' ? 3 : vestFreq === 'monthly' ? 1 : 12;
+    const totalTranches = (vestYears * 12) / freqMonths;
+    const trancheAmount = totalPackage / totalTranches;
+    const grant = new Date(grantDate + 'T00:00:00');
+    const now = new Date();
+
+    const vestEvents = [];
+    for (let i = 1; i <= totalTranches; i++) {
+        const d = new Date(grant);
+        d.setMonth(d.getMonth() + i * freqMonths);
+        const dateStr = d.toISOString().slice(0, 10);
+        const isPast = d <= now;
+        vestEvents.push({ date: d, dateStr, amount: trancheAmount, isPast });
+    }
+
+    const vestedTranches = vestEvents.filter(v => v.isPast).length;
+    const nextVest = vestEvents.find(v => !v.isPast);
+    const nextVestDays = nextVest ? Math.ceil((nextVest.date - now) / (1000*60*60*24)) : null;
+
+    // Estimated share equivalent
+    const estShares = aaplPrice ? (totalPackage / aaplPrice) : null;
+    const vestedShares = aaplPrice ? (vestedAmount / aaplPrice) : null;
+
+    el.innerHTML = `
+        <div class="espp-hero">
+            <div style="position:relative;z-index:1">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+                    <span style="font-size:28px">🍎</span>
+                    <div>
+                        <div style="font-size:16px;font-weight:600">Apple Inc.</div>
+                        <div style="font-size:12px;color:rgba(255,255,255,0.5)">AAPL · ESPP</div>
+                    </div>
+                    ${aaplPrice ? `<div style="margin-left:auto;text-align:right">
+                        <div style="font-size:18px;font-weight:600">$${aaplPrice.toFixed(2)}</div>
+                        <div style="font-size:12px;color:${aaplChange >= 0 ? '#4ade80' : '#f87171'}">${aaplChange >= 0 ? '↑' : '↓'} ${Math.abs(aaplChange).toFixed(2)}%</div>
+                    </div>` : ''}
+                </div>
+                <div class="espp-hero-label">Total Package</div>
+                <div class="espp-hero-value">$${totalPackage.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</div>
+                <div class="espp-hero-sub">Grant date: ${new Date(grantDate+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})} · ${vestYears}-year ${vestFreq} vest</div>
+                <div class="espp-progress"><div class="espp-progress-fill" style="width:${vestPct.toFixed(1)}%"></div></div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.5)">
+                    <span>${vestPct.toFixed(1)}% vested</span>
+                    <span>${vestedTranches} / ${totalTranches} tranches</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="espp-stats">
+            <div class="espp-stat">
+                <div class="espp-stat-label">Vested</div>
+                <div class="espp-stat-value" style="color:var(--green)">$${vestedAmount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+                ${vestedShares ? `<div class="espp-stat-sub">≈ ${vestedShares.toFixed(1)} shares</div>` : ''}
+            </div>
+            <div class="espp-stat">
+                <div class="espp-stat-label">Unvested</div>
+                <div class="espp-stat-value">$${unvested.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+                ${estShares ? `<div class="espp-stat-sub">≈ ${(estShares - vestedShares).toFixed(1)} shares</div>` : ''}
+            </div>
+            <div class="espp-stat">
+                <div class="espp-stat-label">Next Vest</div>
+                <div class="espp-stat-value">${nextVest ? nextVest.date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'Complete'}</div>
+                ${nextVestDays != null ? `<div class="espp-stat-sub">${nextVestDays} day${nextVestDays!==1?'s':''} · $${trancheAmount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>` : ''}
+            </div>
+        </div>
+
+        <div class="card espp-vest-timeline" style="margin-top:20px">
+            <div class="card-header"><h2>Vesting Schedule</h2><span class="count-badge">${vestedTranches} / ${totalTranches} vested</span></div>
+            ${vestEvents.map((v, i) => {
+                const isNext = !v.isPast && (i === 0 || vestEvents[i-1].isPast);
+                const dotCls = v.isPast ? 'done' : isNext ? 'next' : 'future';
+                const statusHtml = v.isPast
+                    ? '<span class="espp-vest-status" style="background:var(--green-bg);color:var(--green)">Vested</span>'
+                    : isNext
+                    ? '<span class="espp-vest-status" style="background:rgba(245,158,11,0.12);color:var(--amber)">Next</span>'
+                    : '<span class="espp-vest-status" style="background:var(--surface2);color:var(--label3)">Pending</span>';
+                return `<div class="espp-vest-item">
+                    <div class="espp-vest-dot ${dotCls}"></div>
+                    <span class="espp-vest-date">${v.date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>
+                    ${statusHtml}
+                    <span class="espp-vest-amt">$${v.amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+                </div>`;
+            }).join('')}
+        </div>`;
+}
+
 // ── Init ──
 function init() {
     initTheme();
@@ -3400,6 +3660,7 @@ function init() {
     loadWatchlist();
     loadDividends();
     loadRealized();
+    loadEspp();
     setGreeting();
     render();
     fetchPrices();
