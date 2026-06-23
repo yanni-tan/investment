@@ -1720,6 +1720,7 @@ async function fetchPrices() {
         icon.classList.remove('spinning');
         saveSnapshot();
         render();
+        if (activePanel === 'espp') renderEspp();
     }
 }
 
@@ -3497,9 +3498,9 @@ function renderEspp() {
     const totalUnits = grants.reduce((s,g) => s + g.units, 0);
     const totalGrantValue = grants.reduce((s,g) => s + g.grantValue, 0);
     const avgGrantPrice = totalGrantValue / totalUnits;
-    const currentTotal = aaplPrice ? totalUnits * aaplPrice : null;
-    const unrealizedGain = currentTotal ? currentTotal - totalGrantValue : null;
-    const gainPctTotal = totalGrantValue > 0 && unrealizedGain != null ? (unrealizedGain / totalGrantValue * 100) : null;
+    const currentTotal = totalUnits * (aaplPrice || avgGrantPrice);
+    const unrealizedGain = currentTotal - totalGrantValue;
+    const gainPctTotal = totalGrantValue > 0 ? (unrealizedGain / totalGrantValue * 100) : 0;
 
     const vestedValue = aaplPrice ? vestedUnits * aaplPrice : vestedUnits * avgGrantPrice;
     const unvestedUnits = totalUnits - vestedUnits;
@@ -3511,16 +3512,42 @@ function renderEspp() {
     grants.forEach(g => {
         const freqMonths = g.vestFreq === 'semi-annually' ? 6 : g.vestFreq === 'quarterly' ? 3 : g.vestFreq === 'monthly' ? 1 : 12;
         const totalTranches = Math.round((g.vestYears * 12) / freqMonths);
-        const unitsPerTranche = g.units / totalTranches;
         const grantDate = new Date(g.grantDate + 'T00:00:00');
         const grantPrice = g.grantValue / g.units;
-        for (let i = 1; i <= totalTranches; i++) {
-            const d = new Date(grantDate);
-            d.setMonth(d.getMonth() + i * freqMonths);
+
+        // Distribute units with rounding: later tranches get the extra shares
+        const baseUnits = Math.floor(g.units / totalTranches);
+        const remainder = g.units - baseUnits * totalTranches;
+
+        // For semi-annual: use Apple's fixed vest dates (Feb 15 & Aug 15)
+        const useFixedDates = g.vestFreq === 'semi-annually';
+        let vestDates = [];
+        if (useFixedDates) {
+            let yr = grantDate.getFullYear();
+            while (vestDates.length < totalTranches) {
+                for (const m of [1, 7]) { // Feb=1, Aug=7
+                    const vd = new Date(yr, m, 15);
+                    if (vd > grantDate && vestDates.length < totalTranches) {
+                        vestDates.push(vd);
+                    }
+                }
+                yr++;
+            }
+        }
+
+        for (let i = 0; i < totalTranches; i++) {
+            let d;
+            if (useFixedDates) {
+                d = vestDates[i];
+            } else {
+                d = new Date(grantDate);
+                d.setMonth(d.getMonth() + (i + 1) * freqMonths);
+            }
+            const units = baseUnits + (i >= totalTranches - remainder ? 1 : 0);
             allVestEvents.push({
                 date: d, isPast: d <= now,
-                units: unitsPerTranche,
-                dollarVal: aaplPrice ? unitsPerTranche * aaplPrice : unitsPerTranche * grantPrice,
+                units,
+                dollarVal: aaplPrice ? units * aaplPrice : units * grantPrice,
                 grantLabel: g.label,
             });
         }
@@ -3548,12 +3575,12 @@ function renderEspp() {
                     </div>` : ''}
                 </div>
                 <div class="espp-hero-label">Current Total Value</div>
-                <div class="espp-hero-value">${currentTotal ? fmtUSD(currentTotal) : fmtUSD(totalGrantValue) + ' (grant)'}</div>
+                <div class="espp-hero-value">${fmtUSD(currentTotal)}</div>
                 <div style="display:flex;gap:12px;margin-top:4px">
                     <div class="espp-hero-sub">Total grant: ${fmtUSD(totalGrantValue)}</div>
-                    ${unrealizedGain != null ? `<div class="espp-hero-sub" style="color:${unrealizedGain >= 0 ? '#4ade80' : '#f87171'}">
+                    <div class="espp-hero-sub" style="color:${unrealizedGain >= 0 ? '#4ade80' : '#f87171'}">
                         ${unrealizedGain >= 0 ? '↑' : '↓'} ${fmtUSD(Math.abs(unrealizedGain))} (${gainPctTotal.toFixed(1)}%)
-                    </div>` : ''}
+                    </div>
                 </div>
                 <div class="espp-progress"><div class="espp-progress-fill" style="width:${vestPct.toFixed(1)}%"></div></div>
                 <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.5)">
