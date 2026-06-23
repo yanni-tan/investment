@@ -1345,10 +1345,15 @@
                     <input class="finput" id="div-date" type="date" required>
                 </div>
                 <div class="fg">
+                    <label>Per Share</label>
+                    <input class="finput" id="div-per-share" type="number" step="any" min="0" placeholder="0.00">
+                </div>
+                <div class="fg">
                     <label>Amount Received</label>
                     <input class="finput" id="div-amount" type="number" step="any" min="0" placeholder="0.00" required>
                 </div>
             </div>
+            <div id="div-calc-info" style="font-size:12px;color:var(--label2);margin-bottom:12px;min-height:16px"></div>
             <div class="modal-foot">
                 <button type="button" class="btn btn-secondary" id="div-cancel">Cancel</button>
                 <button type="submit" class="btn btn-primary">Log Dividend</button>
@@ -3132,8 +3137,10 @@ function openDivModal(holdingId) {
     document.getElementById('div-modal-title').textContent = holdingId ? `Log Dividend` : 'Log Dividend';
     document.getElementById('div-date').value = new Date().toISOString().slice(0,10);
     document.getElementById('div-amount').value = '';
+    document.getElementById('div-per-share').value = '';
+    document.getElementById('div-calc-info').textContent = '';
     document.getElementById('div-overlay').classList.add('open');
-    setTimeout(() => document.getElementById('div-amount').focus(), 50);
+    setTimeout(() => document.getElementById('div-per-share').focus(), 50);
 }
 function renderDividends() {
     const el = document.getElementById('dividends-body');
@@ -3197,6 +3204,22 @@ document.getElementById('div-modal-close').addEventListener('click', closeDivMod
 document.getElementById('div-cancel').addEventListener('click', closeDivModal);
 document.getElementById('div-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeDivModal(); });
 document.getElementById('add-div-btn').addEventListener('click', () => openDivModal());
+
+function calcDivFromPerShare() {
+    const perShare = parseFloat(document.getElementById('div-per-share').value);
+    const info = document.getElementById('div-calc-info');
+    const amountEl = document.getElementById('div-amount');
+    if (!perShare || perShare <= 0) { info.textContent = ''; return; }
+    const holdingId = document.getElementById('div-holding-select').value;
+    const h = holdings.find(x => x.id === holdingId);
+    if (!h || !h.shares) { info.textContent = 'No shares found for this holding'; return; }
+    const total = perShare * h.shares;
+    amountEl.value = total.toFixed(2);
+    info.textContent = `$${perShare.toFixed(4)} × ${h.shares} shares = $${total.toFixed(2)}`;
+}
+document.getElementById('div-per-share').addEventListener('input', calcDivFromPerShare);
+document.getElementById('div-holding-select').addEventListener('change', calcDivFromPerShare);
+
 document.getElementById('dividends-nav-btn').addEventListener('click', () => showPanel('dividends'));
 
 // ── Sell / Realized Gains ──
