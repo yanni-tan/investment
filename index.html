@@ -930,7 +930,11 @@
             .kpi-grid { grid-template-columns: 1fr 1fr; }
         }
         @media (max-width: 680px) {
-            :root { --sidebar-w: 0px; }
+            :root {
+                --sidebar-w: 0px;
+                --radius: 16px;
+                --radius-sm: 10px;
+            }
             .mobile-bar { display: flex; }
             .sidebar {
                 width: 260px;
@@ -938,18 +942,63 @@
                 transition: left .25s ease;
                 z-index: 25;
             }
-            .sidebar.open {
-                left: 0;
-            }
-            .main { padding: 72px 16px 40px; }
-            .kpi-grid { grid-template-columns: 1fr; }
-            .second-row { grid-template-columns: 1fr; }
-            .greeting { font-size: 28px; }
-            .greeting-sub { margin-top: 8px; }
-            #greeting-time, [id="greeting-time"] { margin-bottom: 8px !important; }
+            .sidebar.open { left: 0; }
+
+            .main { padding: 68px 20px 40px; }
+
+            /* Greeting */
+            .greeting { font-size: 24px; letter-spacing: -0.5px; }
+            .greeting-sub { margin-top: 4px; font-size: 15px; }
+            #greeting-time, [id="greeting-time"] { margin-bottom: 4px !important; font-size: 14px !important; }
+            .page-header { margin-bottom: 20px; }
+
+            /* KPI cards */
+            .kpi-grid { grid-template-columns: 1fr; gap: 12px; }
+            .kpi-card { padding: 20px; }
+            .kpi-value { font-size: 26px; }
+            .kpi-label { font-size: 11px; }
+            .kpi-badge { font-size: 13px; padding: 5px 12px; }
+            .kpi-sub { font-size: 13px; }
+            .kpi-icon { width: 28px; height: 28px; margin-bottom: 14px; }
+
+            /* Market cards */
+            .second-row { grid-template-columns: 1fr; gap: 12px; }
+
+            /* Table */
             .card { overflow-x: auto; }
+            .card-header { padding: 14px 16px; }
+            .card-header h2 { font-size: 16px; }
             table { min-width: 640px; }
+            thead th { font-size: 11px; padding: 10px 14px; }
+            tbody td { padding: 14px; font-size: 14px; }
+            .ticker-name { font-size: 14px; }
+            .ticker-meta { font-size: 12px; }
+            .ticker-avatar { width: 38px; height: 38px; font-size: 11px; }
+            .count-badge { font-size: 13px; }
             .weight-track { display: none; }
+
+            /* Filter chips */
+            .chip { font-size: 13px; padding: 6px 14px; }
+            .filter-chips { gap: 8px; }
+
+            /* Badges & pills */
+            .mkt-pill { font-size: 11px; padding: 3px 10px; }
+            .change-pill { font-size: 12px; padding: 4px 10px; }
+
+            /* Buttons */
+            .btn { font-size: 15px; padding: 12px 18px; }
+            .row-btn { font-size: 13px; padding: 6px 12px; }
+
+            /* Last updated */
+            .last-updated-text { font-size: 13px; }
+
+            /* Mobile top bar */
+            .mobile-bar { height: 52px; }
+            .mobile-bar span { font-size: 16px !important; }
+            .mobile-add-btn { font-size: 14px; padding: 8px 16px; }
+
+            /* Toast */
+            .toast { font-size: 15px; padding: 12px 24px; }
         }
     </style>
 </head>
