@@ -185,6 +185,12 @@
       "holdingId": "wkk7vtoidbmqovrsxc",
       "date": "2026-05-21",
       "amount": 81
+    },
+    {
+      "id": "3v18cme54xzmqqvdsc2",
+      "holdingId": "y7me9s1gjdmqovubw7",
+      "date": "2026-05-11",
+      "amount": 71
     }
   ],
   "realized": [],
@@ -220,5 +226,5 @@
       }
     ]
   },
-  "updatedAt": "2026-06-23T16:39:23.556Z"
+  "updatedAt": "2026-06-23T16:39:42.770Z"
 }
