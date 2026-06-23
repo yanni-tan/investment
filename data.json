@@ -191,6 +191,12 @@
       "holdingId": "y7me9s1gjdmqovubw7",
       "date": "2026-05-11",
       "amount": 71
+    },
+    {
+      "id": "vgycpyagh4mqqvehe5",
+      "holdingId": "npcpo1kt4ikmqovskq8",
+      "date": "2026-05-11",
+      "amount": 58
     }
   ],
   "realized": [],
@@ -226,5 +232,5 @@
       }
     ]
   },
-  "updatedAt": "2026-06-23T16:39:42.770Z"
+  "updatedAt": "2026-06-23T16:40:15.245Z"
 }
