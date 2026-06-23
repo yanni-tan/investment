@@ -2364,7 +2364,7 @@ function renderStatsRow(rows) {
         // Insert ESPP card before US
         if (mkt === 'US' && esppData?.grants?.length) {
             const totalUnits = esppData.grants.reduce((s,g) => s + g.units, 0);
-            const vestedU = esppData.vestedUnits || 0;
+            const vestedU = getAutoVestedUnits(esppData.grants);
             const aaplPrice = prices['AAPL']?.price || parseFloat(localStorage.getItem('espp_aapl_price')) || null;
             const totalGrantValue = esppData.grants.reduce((s,g) => s + g.grantValue, 0);
             const avgGrantPrice = totalGrantValue / totalUnits;
@@ -3437,7 +3437,7 @@ function openEsppUpdate() {
     if (!esppData?.grants?.length) { toast('Add a grant first'); return; }
     const today = new Date().toISOString().slice(0, 10);
     document.getElementById('espp-update-date').value = today;
-    document.getElementById('espp-update-units').value = esppData.vestedUnits ?? '';
+    document.getElementById('espp-update-units').value = getAutoVestedUnits(esppData.grants) || '';
     const aaplPrice = prices['AAPL']?.price || '';
     document.getElementById('espp-update-price').value = aaplPrice;
     document.getElementById('espp-update-note').value = '';
@@ -3501,6 +3501,41 @@ function deleteEsppUpdate(idx) {
     toast('Update removed');
 }
 
+function getAutoVestedUnits(grants) {
+    if (!grants || !grants.length) return 0;
+    const now = new Date();
+    let vested = 0;
+    grants.forEach(g => {
+        const freqMonths = g.vestFreq === 'semi-annually' ? 6 : g.vestFreq === 'quarterly' ? 3 : g.vestFreq === 'monthly' ? 1 : 12;
+        const totalTranches = Math.round((g.vestYears * 12) / freqMonths);
+        const grantDate = new Date(g.grantDate + 'T00:00:00');
+        const baseUnits = Math.floor(g.units / totalTranches);
+        const remainder = g.units - baseUnits * totalTranches;
+        const useFixedDates = g.vestFreq === 'semi-annually';
+        let vestDates = [];
+        if (useFixedDates) {
+            let yr = grantDate.getFullYear();
+            while (vestDates.length < totalTranches) {
+                for (const m of [1, 7]) {
+                    const vd = new Date(yr, m, 15);
+                    const minVest = new Date(grantDate); minVest.setMonth(minVest.getMonth() + 6);
+                    if (vd >= minVest && vestDates.length < totalTranches) vestDates.push(vd);
+                }
+                yr++;
+            }
+        }
+        for (let i = 0; i < totalTranches; i++) {
+            let d;
+            if (useFixedDates) { d = vestDates[i]; }
+            else { d = new Date(grantDate); d.setMonth(d.getMonth() + (i + 1) * freqMonths); }
+            if (d <= now) {
+                vested += baseUnits + (i >= totalTranches - remainder ? 1 : 0);
+            }
+        }
+    });
+    return vested;
+}
+
 function renderEspp() {
     const el = document.getElementById('espp-body');
     if (!esppData || !esppData.grants?.length) {
@@ -3512,7 +3547,7 @@ function renderEspp() {
         return;
     }
 
-    const { grants, vestedUnits, updates = [] } = esppData;
+    const { grants, updates = [] } = esppData;
     const fmtUSD = v => '$' + v.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
     const lastLoggedPrice = updates.length ? updates[updates.length - 1].aaplPrice : null;
     const manualPrice = parseFloat(localStorage.getItem('espp_aapl_price')) || null;
@@ -3527,6 +3562,8 @@ function renderEspp() {
     const currentTotal = totalUnits * (aaplPrice || avgGrantPrice);
     const unrealizedGain = currentTotal - totalGrantValue;
     const gainPctTotal = totalGrantValue > 0 ? (unrealizedGain / totalGrantValue * 100) : 0;
+
+    const vestedUnits = getAutoVestedUnits(grants);
 
     const vestedValue = aaplPrice ? vestedUnits * aaplPrice : vestedUnits * avgGrantPrice;
     const unvestedUnits = totalUnits - vestedUnits;
