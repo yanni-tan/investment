@@ -193,7 +193,7 @@
         "vestFreq": "semi-annually"
       }
     ],
-    "vestedUnits": 72,
+    "vestedUnits": 107.129,
     "updates": [
       {
         "date": "2026-06-23",
@@ -202,8 +202,16 @@
         "totalValue": 186750,
         "vestedValue": 21513.600000000002,
         "note": ""
+      },
+      {
+        "date": "2026-06-23",
+        "vestedUnits": 107.129,
+        "aaplPrice": 298.8,
+        "totalValue": 186750,
+        "vestedValue": 32010.145200000003,
+        "note": ""
       }
     ]
   },
-  "updatedAt": "2026-06-23T15:42:33.351Z"
+  "updatedAt": "2026-06-23T15:43:45.069Z"
 }
