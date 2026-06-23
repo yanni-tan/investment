@@ -52,6 +52,22 @@
                 --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 8px 32px rgba(0,0,0,0.4);
             }
         }
+        [data-theme="dark"] {
+            --sidebar:#111827;--sidebar-border:rgba(255,255,255,0.06);--sidebar-text:#6b7280;--sidebar-text-active:#f9fafb;
+            --bg:#0f172a;--surface:#1e293b;--surface2:#263350;--label:#f1f5f9;--label2:#94a3b8;--label3:#475569;
+            --sep:#1e293b;--shadow:0 1px 3px rgba(0,0,0,0.3),0 8px 32px rgba(0,0,0,0.4);
+        }
+        [data-theme="dark"] .kpi-card.total{background:linear-gradient(135deg,#0a0f00 0%,#111800 100%)}
+        [data-theme="dark"] .lock-card{background:#1e293b}
+        [data-theme="dark"] .brand-icon{background:#f9fafb}
+        [data-theme="light"] {
+            --sidebar:#ffffff;--sidebar-border:rgba(0,0,0,0.07);--sidebar-text:#9ca3af;--sidebar-text-active:#111827;
+            --bg:#ebebe6;--surface:#ffffff;--surface2:#f5f5f1;--label:#111827;--label2:#6b7280;--label3:#9ca3af;
+            --sep:#e5e5e0;--shadow:0 1px 3px rgba(0,0,0,0.03),0 8px 24px rgba(0,0,0,0.07);
+        }
+        [data-theme="light"] .kpi-card.total{background:linear-gradient(135deg,#111827 0%,#1c2600 100%)}
+        .watch-hit { background: rgba(34,197,94,0.06); }
+        .watch-hit td:first-child::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--green); margin-right:6px; }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1140,11 +1156,18 @@
         <button class="nav-item" id="watchlist-nav-btn">
             <span class="nav-dot" style="background:#c8ff00"></span>Watchlist
         </button>
+        <button class="nav-item" id="dividends-nav-btn">
+            <span class="nav-dot" style="background:#22c55e"></span>Dividends
+        </button>
+        <button class="nav-item" id="realized-nav-btn">
+            <span class="nav-dot" style="background:#ef4444"></span>Realized Gains
+        </button>
     </nav>
     <div class="sidebar-footer">
         <button class="sidebar-add" id="add-btn">+ Add Holding</button>
         <div class="sidebar-utils">
-            <button class="util-btn" id="export-btn">↑ Export</button>
+            <button class="util-btn" id="export-btn">↑ JSON</button>
+            <button class="util-btn" id="csv-btn">↑ CSV</button>
             <button class="util-btn" id="import-btn">↓ Import</button>
             <input type="file" id="import-file" accept=".json" style="display:none">
         </div>
@@ -1174,6 +1197,29 @@
         <div id="watchlist-body"></div>
     </div>
 
+    <!-- ── Dividends Panel ── -->
+    <div id="dividends-panel" style="display:none">
+        <div class="page-header">
+            <div>
+                <div class="greeting">Dividends</div>
+                <div class="greeting-sub">Track your dividend income</div>
+            </div>
+            <button class="btn btn-primary" id="add-div-btn">+ Log Dividend</button>
+        </div>
+        <div id="dividends-body"></div>
+    </div>
+
+    <!-- ── Realized Gains Panel ── -->
+    <div id="realized-panel" style="display:none">
+        <div class="page-header">
+            <div>
+                <div class="greeting">Realized Gains</div>
+                <div class="greeting-sub">Closed positions and profit/loss</div>
+            </div>
+        </div>
+        <div id="realized-body"></div>
+    </div>
+
     <!-- ── Main Dashboard ── -->
     <div id="dashboard-panel">
     <div class="page-header">
@@ -1183,6 +1229,9 @@
         </div>
         <div class="header-right">
             <div class="last-updated-text" id="last-updated">Fetching live prices…</div>
+            <button class="icon-btn" id="theme-toggle-btn" title="Toggle dark/light mode" style="font-size:16px;padding:0">
+                🌙
+            </button>
             <button class="icon-btn" id="currency-toggle-btn" title="Toggle display currency" style="font-size:13px;font-weight:700;color:var(--label2)">
                 USD
             </button>
@@ -1328,6 +1377,70 @@
             <div class="modal-foot">
                 <button type="button" class="btn btn-secondary" id="modal-cancel">Cancel</button>
                 <button type="submit" class="btn btn-primary" id="modal-save">Add Holding</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ── Dividend Log Modal ── -->
+<div class="overlay" id="div-overlay">
+    <div class="modal">
+        <div class="modal-hdr">
+            <h2 id="div-modal-title">Log Dividend</h2>
+            <button class="modal-x" id="div-modal-close">×</button>
+        </div>
+        <form id="div-form" autocomplete="off">
+            <input type="hidden" id="div-holding-id">
+            <div class="fg">
+                <label>Holding</label>
+                <select class="finput" id="div-holding-select"></select>
+            </div>
+            <div class="frow">
+                <div class="fg">
+                    <label>Date</label>
+                    <input class="finput" id="div-date" type="date" required>
+                </div>
+                <div class="fg">
+                    <label>Amount Received</label>
+                    <input class="finput" id="div-amount" type="number" step="any" min="0" placeholder="0.00" required>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button type="button" class="btn btn-secondary" id="div-cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary">Log Dividend</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ── Sell Modal ── -->
+<div class="overlay" id="sell-overlay">
+    <div class="modal">
+        <div class="modal-hdr">
+            <h2 id="sell-modal-title">Sell Shares</h2>
+            <button class="modal-x" id="sell-modal-close">×</button>
+        </div>
+        <form id="sell-form" autocomplete="off">
+            <input type="hidden" id="sell-holding-id">
+            <div id="sell-info" style="font-size:13px;color:var(--label2);margin-bottom:16px;padding:10px 13px;background:var(--surface2);border-radius:var(--radius-sm)"></div>
+            <div class="frow">
+                <div class="fg">
+                    <label>Shares to Sell</label>
+                    <input class="finput" id="sell-shares" type="number" step="any" min="0" placeholder="0" required>
+                </div>
+                <div class="fg">
+                    <label>Sell Price / Share</label>
+                    <input class="finput" id="sell-price" type="number" step="any" min="0" placeholder="0.00" required>
+                </div>
+            </div>
+            <div class="fg">
+                <label>Date</label>
+                <input class="finput" id="sell-date" type="date" required>
+            </div>
+            <div id="sell-preview"></div>
+            <div class="modal-foot">
+                <button type="button" class="btn btn-secondary" id="sell-cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="background:var(--red);color:#fff">Sell Shares</button>
             </div>
         </form>
     </div>
@@ -1491,6 +1604,11 @@ let bkTab    = 'type';
 let fetching = false;
 let displayCur = 'USD'; // 'USD' or 'SGD'
 let searchQuery = '';
+let dividends = [];
+let realized = [];
+let watchPrices = {}; // live prices for watchlist tickers
+const DIV_KEY = 'portfolio_dividends';
+const REALIZED_KEY = 'portfolio_realized';
 
 // ── Storage ──
 function load() {
@@ -1499,6 +1617,16 @@ function load() {
 }
 function save() { localStorage.setItem(KEY, JSON.stringify(holdings)); syncSave(); }
 function uid()  { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+
+function loadDividends() {
+    try { dividends = JSON.parse(localStorage.getItem(DIV_KEY) || '[]'); } catch { dividends = []; }
+}
+function saveDividends() { localStorage.setItem(DIV_KEY, JSON.stringify(dividends)); syncSave(); }
+
+function loadRealized() {
+    try { realized = JSON.parse(localStorage.getItem(REALIZED_KEY) || '[]'); } catch { realized = []; }
+}
+function saveRealized() { localStorage.setItem(REALIZED_KEY, JSON.stringify(realized)); syncSave(); }
 
 // ── Greeting ──
 function setGreeting() {
@@ -1542,7 +1670,8 @@ async function fetchPrices() {
     document.getElementById('last-updated').textContent = 'Updating…';
 
     const tickers    = [...new Set(holdings.map(h => h.ticker))];
-    const allSymbols = [...tickers, 'SGDUSD=X', 'GBPUSD=X'];
+    const watchTickers = [...new Set(watchlist.map(w => w.ticker).filter(t => t && !tickers.includes(t)))];
+    const allSymbols = [...tickers, ...watchTickers, 'SGDUSD=X', 'GBPUSD=X'];
 
     try {
         const results = await Promise.all(allSymbols.map(fetchSymbol));
@@ -1556,13 +1685,15 @@ async function fetchPrices() {
                 fxGBPUSD = meta.regularMarketPrice || fxGBPUSD;
             } else {
                 const isPence = meta.currency === 'GBp';
-                prices[symbol] = {
+                const priceData = {
                     price:     isPence ? meta.regularMarketPrice / 100 : meta.regularMarketPrice,
                     change:    isPence ? (meta.regularMarketChange ?? 0) / 100 : (meta.regularMarketChange ?? 0),
                     changePct: meta.regularMarketChangePercent ?? null,
                     currency:  isPence ? 'GBP' : meta.currency,
                     state:     meta.marketState,
                 };
+                if (tickers.includes(symbol)) prices[symbol] = priceData;
+                if (watchTickers.includes(symbol)) watchPrices[symbol] = priceData;
             }
         });
 
@@ -1920,7 +2051,43 @@ function renderKPI(rows) {
                 </div>
             </div>
             <div style="flex:1;min-width:0">${gainChart}</div>
-        </div>`;
+        </div>` +
+
+        // Dividend income KPI
+        (() => {
+            const totalDiv = dividends.reduce((s,d) => s + (Number(d.amount) || 0), 0);
+            const all = holdings.map(enrich);
+            const totalVal = totalUSDof(all);
+            const divYield = totalVal > 0 ? (totalDiv / totalVal * 100) : 0;
+            return `<div class="kpi-card">
+                <div class="kpi-icon green">💵</div>
+                <div class="kpi-label">Dividend Income</div>
+                <div class="kpi-value" style="font-size:26px">${dmoney(totalDiv)}</div>
+                <div><span class="kpi-badge up">Yield ${divYield.toFixed(2)}%</span></div>
+                <div class="kpi-sub">${dividends.length} payment${dividends.length !== 1 ? 's' : ''} logged</div>
+            </div>`;
+        })() +
+
+        // Performance KPI
+        (() => {
+            const snaps = loadSnapshots();
+            if (snaps.length < 2) return `<div class="kpi-card">
+                <div class="kpi-icon blue">📊</div>
+                <div class="kpi-label">Annualized Return</div>
+                <div class="kpi-value" style="font-size:26px">—</div>
+                <div class="kpi-sub">Need 2+ months of data</div>
+            </div>`;
+            const first = snaps[0], last = snaps[snaps.length - 1];
+            const months = snaps.length - 1;
+            const cagr = first.totalUSD > 0 ? (Math.pow(last.totalUSD / first.totalUSD, 12 / months) - 1) * 100 : 0;
+            const totalRealized = realized.reduce((s,r) => s + (r.gainLoss || 0), 0);
+            return `<div class="kpi-card">
+                <div class="kpi-icon blue">📊</div>
+                <div class="kpi-label">Annualized Return (CAGR)</div>
+                <div class="kpi-value" style="font-size:26px"><span class="${cc(cagr)}">${pct(cagr)}</span></div>
+                <div class="kpi-sub">Over ${months} month${months !== 1 ? 's' : ''} · Realized: ${dmoney(totalRealized)}</div>
+            </div>`;
+        })();
 }
 
 // ── Holdings top (for right panel) ──
@@ -1994,8 +2161,10 @@ function mobileCard(r, tot) {
         </div>
         <div class="hc-actions">
             <button class="row-btn buy" onclick="openBuyModal('${r.id}')">Buy</button>
+            <button class="row-btn del" onclick="openSellModal('${r.id}')">Sell</button>
+            <button class="row-btn" onclick="openDivModal('${r.id}')">Div</button>
             <button class="row-btn" onclick="openModal('${r.id}')">Edit</button>
-            <button class="row-btn del" onclick="del('${r.id}')">Remove</button>
+            <button class="row-btn del" onclick="del('${r.id}')">×</button>
         </div>
     </div>`;
 }
@@ -2124,8 +2293,10 @@ function tableRow(r, tot) {
             <td>
                 <div class="row-actions">
                     <button class="row-btn buy" onclick="openBuyModal('${r.id}')">Buy</button>
+                    <button class="row-btn del" onclick="openSellModal('${r.id}')">Sell</button>
+                    <button class="row-btn" onclick="openDivModal('${r.id}')">Div</button>
                     <button class="row-btn" onclick="openModal('${r.id}')">Edit</button>
-                    <button class="row-btn del" onclick="del('${r.id}')">Remove</button>
+                    <button class="row-btn del" onclick="del('${r.id}')">×</button>
                 </div>
             </td>
         </tr>`;
@@ -2513,7 +2684,7 @@ function closeSidebar() {
 }
 document.getElementById('hamburger-btn').addEventListener('click', toggleSidebar);
 document.getElementById('sidebar-backdrop').addEventListener('click', closeSidebar);
-document.querySelectorAll('.nav-item, .sidebar-add, .util-btn, #sync-setup-btn, #sync-pull-btn, #watchlist-nav-btn').forEach(el => {
+document.querySelectorAll('.nav-item, .sidebar-add, .util-btn, #sync-setup-btn, #sync-pull-btn, #watchlist-nav-btn, #dividends-nav-btn, #realized-nav-btn').forEach(el => {
     el.addEventListener('click', closeSidebar);
 });
 
@@ -2712,13 +2883,21 @@ function loadWatchlist() {
 }
 function saveWatchlist() { localStorage.setItem(WATCH_KEY, JSON.stringify(watchlist)); syncSave(); }
 
+let activePanel = 'dashboard';
 function showPanel(which) {
+    activePanel = which;
     showingWatchlist = which === 'watchlist';
-    document.getElementById('dashboard-panel').style.display = showingWatchlist ? 'none' : '';
-    document.getElementById('watchlist-panel').style.display = showingWatchlist ? '' : 'none';
-    document.getElementById('watchlist-nav-btn').classList.toggle('active', showingWatchlist);
-    document.querySelectorAll('.nav-item[data-tab]').forEach(n => n.classList.toggle('active', !showingWatchlist && n.dataset.tab === tab));
-    if (showingWatchlist) renderWatchlist();
+    document.getElementById('dashboard-panel').style.display = which === 'dashboard' ? '' : 'none';
+    document.getElementById('watchlist-panel').style.display = which === 'watchlist' ? '' : 'none';
+    document.getElementById('dividends-panel').style.display = which === 'dividends' ? '' : 'none';
+    document.getElementById('realized-panel').style.display = which === 'realized' ? '' : 'none';
+    document.getElementById('watchlist-nav-btn').classList.toggle('active', which === 'watchlist');
+    document.getElementById('dividends-nav-btn').classList.toggle('active', which === 'dividends');
+    document.getElementById('realized-nav-btn').classList.toggle('active', which === 'realized');
+    document.querySelectorAll('.nav-item[data-tab]').forEach(n => n.classList.toggle('active', which === 'dashboard' && n.dataset.tab === tab));
+    if (which === 'watchlist') renderWatchlist();
+    if (which === 'dividends') renderDividends();
+    if (which === 'realized') renderRealizedPanel();
 }
 
 const ACTION_COLORS = { Buy: '#22c55e', Sell: '#ef4444', Watch: '#f59e0b' };
@@ -2734,18 +2913,28 @@ function renderWatchlist() {
         </div></div>`;
         return;
     }
+    const thStyle = 'padding:10px 16px;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)';
     el.innerHTML = `<div class="card"><table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead><tr>
-            <th style="padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)">Item</th>
-            <th style="padding:10px 16px;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)">Action</th>
-            <th style="padding:10px 16px;text-align:right;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)">Target Price</th>
-            <th style="padding:10px 16px;text-align:right;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)">Qty</th>
-            <th style="padding:10px 16px;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)">Account</th>
-            <th style="padding:10px 16px;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)">Notes</th>
+            <th style="${thStyle};text-align:left">Item</th>
+            <th style="${thStyle}">Action</th>
+            <th style="${thStyle};text-align:right">Current</th>
+            <th style="${thStyle};text-align:right">Target</th>
+            <th style="${thStyle};text-align:right">Qty</th>
+            <th style="${thStyle}">Account</th>
+            <th style="${thStyle}">Notes</th>
             <th style="border-bottom:1px solid var(--sep)"></th>
         </tr></thead>
-        <tbody>${watchlist.map(w => `
-        <tr style="border-bottom:1px solid var(--sep)">
+        <tbody>${watchlist.map(w => {
+            const lp = prices[w.ticker] || watchPrices[w.ticker];
+            const curPrice = lp?.price;
+            const target = Number(w.targetPrice);
+            const hit = curPrice && target && (
+                (w.action === 'Buy' && curPrice <= target) ||
+                (w.action === 'Sell' && curPrice >= target)
+            );
+            return `
+        <tr style="border-bottom:1px solid var(--sep)" class="${hit ? 'watch-hit' : ''}">
             <td style="padding:14px 16px">
                 <div style="font-weight:600">${w.ticker}</div>
                 <div style="font-size:11px;color:var(--label2)">${w.name}</div>
@@ -2753,6 +2942,7 @@ function renderWatchlist() {
             <td style="padding:14px 16px">
                 <span style="background:${ACTION_COLORS[w.action]}18;color:${ACTION_COLORS[w.action]};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">${w.action}</span>
             </td>
+            <td style="padding:14px 16px;text-align:right">${curPrice != null ? '$' + curPrice.toFixed(2) : '<span class="skel" style="width:48px;height:13px;display:inline-block"></span>'}${hit ? ' <span style="color:var(--green);font-weight:700;font-size:11px">TARGET HIT</span>' : ''}</td>
             <td style="padding:14px 16px;text-align:right">${w.targetPrice ? '$' + Number(w.targetPrice).toFixed(2) : '—'}</td>
             <td style="padding:14px 16px;text-align:right">${w.qty || '—'}</td>
             <td style="padding:14px 16px"><span class="mkt-pill" style="background:rgba(139,92,246,0.12);color:#7c3aed">${w.account || 'Cash'}</span></td>
@@ -2763,7 +2953,8 @@ function renderWatchlist() {
                     <button class="row-btn del" onclick="delWatch('${w.id}')">Remove</button>
                 </div>
             </td>
-        </tr>`).join('')}</tbody>
+        </tr>`;
+        }).join('')}</tbody>
     </table></div>`;
 }
 
@@ -2874,6 +3065,14 @@ async function syncLoad() {
         if (Array.isArray(payload.snapshots)) {
             localStorage.setItem('portfolio_snapshots', JSON.stringify(payload.snapshots));
         }
+        if (Array.isArray(payload.dividends)) {
+            dividends = payload.dividends;
+            localStorage.setItem(DIV_KEY, JSON.stringify(dividends));
+        }
+        if (Array.isArray(payload.realized)) {
+            realized = payload.realized;
+            localStorage.setItem(REALIZED_KEY, JSON.stringify(realized));
+        }
         setSyncStatus('synced', 'Synced');
         return true;
     } catch (e) {
@@ -2891,6 +3090,8 @@ async function syncSave() {
             holdings,
             watchlist,
             snapshots: loadSnapshots(),
+            dividends,
+            realized,
             updatedAt: new Date().toISOString(),
         };
         const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
@@ -2956,10 +3157,249 @@ document.getElementById('sync-connect-btn').addEventListener('click', async () =
     }
 });
 
+// ── Dark Mode Toggle ──
+function initTheme() {
+    const saved = localStorage.getItem('portfolio_theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+    updateThemeIcon();
+}
+function toggleTheme() {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const isDark = cur === 'dark' || (!cur && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const next = isDark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('portfolio_theme', next);
+    updateThemeIcon();
+}
+function updateThemeIcon() {
+    const btn = document.getElementById('theme-toggle-btn');
+    if (!btn) return;
+    const cur = document.documentElement.getAttribute('data-theme');
+    const isDark = cur === 'dark' || (!cur && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    btn.textContent = isDark ? '☀️' : '🌙';
+}
+document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
+
+// ── CSV Export ──
+function exportCSV() {
+    const all = holdings.map(enrich);
+    const tot = totalUSDof(all);
+    const headers = ['Ticker','Name','Market','Type','Sector','Currency','Account','Shares','Avg Cost','Price','Value','Cost Basis','Gain/Loss','Gain %','Weight %'];
+    const rows = all.map(r => {
+        const valueUSD = toUSD(r.value ?? r.costBasis, r.currency);
+        const wt = tot > 0 ? (valueUSD / tot * 100) : 0;
+        return [r.ticker, `"${r.name}"`, r.market, r.type, r.sector||'', r.currency, r.account||'Cash',
+            r.shares, r.avgCost, r.price??'', r.value??'', r.costBasis.toFixed(2),
+            r.gainLoss!=null?r.gainLoss.toFixed(2):'', r.gainPct!=null?r.gainPct.toFixed(2):'', wt.toFixed(1)
+        ].join(',');
+    });
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'portfolio.csv'; a.click();
+    URL.revokeObjectURL(a.href);
+    toast('Exported as CSV');
+}
+document.getElementById('csv-btn').addEventListener('click', exportCSV);
+
+// ── Dividends ──
+function openDivModal(holdingId) {
+    const sel = document.getElementById('div-holding-select');
+    sel.innerHTML = holdings.map(h => `<option value="${h.id}" ${h.id === holdingId ? 'selected' : ''}>${h.name} (${h.ticker})</option>`).join('');
+    document.getElementById('div-modal-title').textContent = holdingId ? `Log Dividend` : 'Log Dividend';
+    document.getElementById('div-date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('div-amount').value = '';
+    document.getElementById('div-overlay').classList.add('open');
+    setTimeout(() => document.getElementById('div-amount').focus(), 50);
+}
+function renderDividends() {
+    const el = document.getElementById('dividends-body');
+    if (!dividends.length) {
+        el.innerHTML = `<div class="card"><div class="empty" style="padding:60px 20px">
+            <div class="empty-icon">💵</div><h3>No dividends logged</h3>
+            <p>Record dividends as you receive them to track income.</p>
+            <button class="btn btn-primary" onclick="openDivModal()">+ Log Dividend</button>
+        </div></div>`;
+        return;
+    }
+    const sorted = [...dividends].sort((a,b) => b.date.localeCompare(a.date));
+    const totalDiv = dividends.reduce((s,d) => s + (Number(d.amount)||0), 0);
+    // Group by year
+    const byYear = {};
+    sorted.forEach(d => { const y = d.date.slice(0,4); (byYear[y] = byYear[y]||[]).push(d); });
+    const thS = 'padding:10px 16px;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)';
+    el.innerHTML = `
+    <div class="kpi-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:20px">
+        <div class="kpi-card"><div class="kpi-label">Total Income</div><div class="kpi-value" style="font-size:24px;color:var(--green)">$${totalDiv.toFixed(2)}</div></div>
+        <div class="kpi-card"><div class="kpi-label">This Year</div><div class="kpi-value" style="font-size:24px">$${(byYear[new Date().getFullYear()]||[]).reduce((s,d)=>s+(Number(d.amount)||0),0).toFixed(2)}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Payments</div><div class="kpi-value" style="font-size:24px">${dividends.length}</div></div>
+    </div>
+    <div class="card"><table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr>
+            <th style="${thS};text-align:left">Date</th>
+            <th style="${thS};text-align:left">Holding</th>
+            <th style="${thS};text-align:right">Amount</th>
+            <th style="border-bottom:1px solid var(--sep)"></th>
+        </tr></thead>
+        <tbody>${sorted.map(d => {
+            const h = holdings.find(x => x.id === d.holdingId);
+            return `<tr style="border-bottom:1px solid var(--sep)">
+                <td style="padding:14px 16px">${d.date}</td>
+                <td style="padding:14px 16px"><strong>${h?.name || '—'}</strong><div style="font-size:11px;color:var(--label2)">${h?.ticker||''}</div></td>
+                <td style="padding:14px 16px;text-align:right;font-weight:600;color:var(--green)">$${Number(d.amount).toFixed(2)}</td>
+                <td style="padding:14px 16px"><button class="row-btn del" onclick="delDividend('${d.id}')">×</button></td>
+            </tr>`;
+        }).join('')}</tbody>
+    </table></div>`;
+}
+function delDividend(id) {
+    dividends = dividends.filter(d => d.id !== id);
+    saveDividends(); renderDividends();
+}
+document.getElementById('div-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const holdingId = document.getElementById('div-holding-select').value;
+    const date = document.getElementById('div-date').value;
+    const amount = parseFloat(document.getElementById('div-amount').value);
+    if (!holdingId || !date || isNaN(amount)) return;
+    dividends.push({ id: uid(), holdingId, date, amount });
+    saveDividends();
+    document.getElementById('div-overlay').classList.remove('open');
+    toast('Dividend logged');
+    if (activePanel === 'dividends') renderDividends();
+    render(); // update KPI
+});
+const closeDivModal = () => document.getElementById('div-overlay').classList.remove('open');
+document.getElementById('div-modal-close').addEventListener('click', closeDivModal);
+document.getElementById('div-cancel').addEventListener('click', closeDivModal);
+document.getElementById('div-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeDivModal(); });
+document.getElementById('add-div-btn').addEventListener('click', () => openDivModal());
+document.getElementById('dividends-nav-btn').addEventListener('click', () => showPanel('dividends'));
+
+// ── Sell / Realized Gains ──
+function openSellModal(holdingId) {
+    const h = holdings.find(x => x.id === holdingId);
+    if (!h) return;
+    document.getElementById('sell-modal-title').textContent = `Sell · ${h.name}`;
+    document.getElementById('sell-holding-id').value = holdingId;
+    document.getElementById('sell-info').innerHTML =
+        `<strong>${h.ticker}</strong> · ${Number(h.shares).toLocaleString()} shares · avg cost ${money(h.avgCost, h.currency)}`;
+    document.getElementById('sell-shares').value = '';
+    document.getElementById('sell-price').value = '';
+    document.getElementById('sell-date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('sell-preview').innerHTML = '';
+    document.getElementById('sell-overlay').classList.add('open');
+    setTimeout(() => document.getElementById('sell-shares').focus(), 50);
+}
+function updateSellPreview() {
+    const holdingId = document.getElementById('sell-holding-id').value;
+    const h = holdings.find(x => x.id === holdingId);
+    const shares = parseFloat(document.getElementById('sell-shares').value);
+    const price = parseFloat(document.getElementById('sell-price').value);
+    if (!h || isNaN(shares) || isNaN(price) || shares <= 0 || price <= 0) {
+        document.getElementById('sell-preview').innerHTML = ''; return;
+    }
+    const gain = (price - h.avgCost) * shares;
+    const gainPct = h.avgCost > 0 ? ((price - h.avgCost) / h.avgCost * 100) : 0;
+    document.getElementById('sell-preview').innerHTML = `
+        <div class="buy-preview" style="margin-top:10px">
+            Proceeds: <strong style="color:var(--label)">${money(price * shares, h.currency)}</strong>
+            · P&L: <strong class="${cc(gain)}">${signed(gain, h.currency)} (${pct(gainPct)})</strong>
+            ${shares >= h.shares ? '<br><span style="color:var(--red);font-size:11px">Full position close</span>' : ''}
+        </div>`;
+}
+document.getElementById('sell-shares').addEventListener('input', updateSellPreview);
+document.getElementById('sell-price').addEventListener('input', updateSellPreview);
+
+document.getElementById('sell-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const holdingId = document.getElementById('sell-holding-id').value;
+    const i = holdings.findIndex(x => x.id === holdingId);
+    if (i === -1) return;
+    const h = holdings[i];
+    const shares = parseFloat(document.getElementById('sell-shares').value);
+    const price = parseFloat(document.getElementById('sell-price').value);
+    const date = document.getElementById('sell-date').value;
+    if (isNaN(shares) || isNaN(price) || shares <= 0) return;
+    if (shares > h.shares) { toast('Cannot sell more than you own'); return; }
+
+    const gain = (price - h.avgCost) * shares;
+    realized.push({
+        id: uid(), ticker: h.ticker, name: h.name, market: h.market, currency: h.currency,
+        shares, buyAvg: h.avgCost, sellPrice: price, sellDate: date, gainLoss: gain
+    });
+    saveRealized();
+
+    if (shares >= h.shares) {
+        holdings.splice(i, 1);
+    } else {
+        holdings[i] = { ...h, shares: h.shares - shares };
+    }
+    save();
+    document.getElementById('sell-overlay').classList.remove('open');
+    render();
+    toast(`Sold ${shares} shares · P&L: ${money(gain, h.currency)}`);
+});
+const closeSellModal = () => document.getElementById('sell-overlay').classList.remove('open');
+document.getElementById('sell-modal-close').addEventListener('click', closeSellModal);
+document.getElementById('sell-cancel').addEventListener('click', closeSellModal);
+document.getElementById('sell-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeSellModal(); });
+
+function renderRealizedPanel() {
+    const el = document.getElementById('realized-body');
+    if (!realized.length) {
+        el.innerHTML = `<div class="card"><div class="empty" style="padding:60px 20px">
+            <div class="empty-icon">📉</div><h3>No realized gains yet</h3>
+            <p>Sell shares from your holdings to record realized P&L.</p>
+        </div></div>`;
+        return;
+    }
+    const sorted = [...realized].sort((a,b) => (b.sellDate||'').localeCompare(a.sellDate||''));
+    const totalGain = realized.reduce((s,r) => s + (r.gainLoss||0), 0);
+    const wins = realized.filter(r => r.gainLoss >= 0).length;
+    const thS = 'padding:10px 16px;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)';
+    el.innerHTML = `
+    <div class="kpi-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:20px">
+        <div class="kpi-card"><div class="kpi-label">Total Realized P&L</div><div class="kpi-value ${cc(totalGain)}" style="font-size:24px">${money(totalGain,'USD')}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Trades</div><div class="kpi-value" style="font-size:24px">${realized.length}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Win Rate</div><div class="kpi-value" style="font-size:24px">${realized.length > 0 ? (wins/realized.length*100).toFixed(0) : 0}%</div></div>
+    </div>
+    <div class="card"><table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr>
+            <th style="${thS};text-align:left">Date</th>
+            <th style="${thS};text-align:left">Holding</th>
+            <th style="${thS};text-align:right">Shares</th>
+            <th style="${thS};text-align:right">Buy Avg</th>
+            <th style="${thS};text-align:right">Sell Price</th>
+            <th style="${thS};text-align:right">P&L</th>
+            <th style="border-bottom:1px solid var(--sep)"></th>
+        </tr></thead>
+        <tbody>${sorted.map(r => {
+            const gPct = r.buyAvg > 0 ? ((r.sellPrice - r.buyAvg) / r.buyAvg * 100) : 0;
+            return `<tr style="border-bottom:1px solid var(--sep)">
+                <td style="padding:14px 16px">${r.sellDate||'—'}</td>
+                <td style="padding:14px 16px"><strong>${r.name}</strong><div style="font-size:11px;color:var(--label2)">${r.ticker}</div></td>
+                <td style="padding:14px 16px;text-align:right">${r.shares}</td>
+                <td style="padding:14px 16px;text-align:right">${money(r.buyAvg, r.currency)}</td>
+                <td style="padding:14px 16px;text-align:right">${money(r.sellPrice, r.currency)}</td>
+                <td style="padding:14px 16px;text-align:right"><span class="${cc(r.gainLoss)}" style="font-weight:600">${signed(r.gainLoss, r.currency)}</span><div style="font-size:11px;color:var(--label2)">${pct(gPct)}</div></td>
+                <td style="padding:14px 16px"><button class="row-btn del" onclick="delRealized('${r.id}')">×</button></td>
+            </tr>`;
+        }).join('')}</tbody>
+    </table></div>`;
+}
+function delRealized(id) {
+    realized = realized.filter(r => r.id !== id);
+    saveRealized(); renderRealizedPanel();
+}
+document.getElementById('realized-nav-btn').addEventListener('click', () => showPanel('realized'));
+
 // ── Init ──
 function init() {
+    initTheme();
     load();
     loadWatchlist();
+    loadDividends();
+    loadRealized();
     setGreeting();
     render();
     fetchPrices();
