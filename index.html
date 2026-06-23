@@ -971,6 +971,44 @@
         }
         .sidebar-backdrop.open { display: block; }
 
+        /* ── Mobile Holding Cards ── */
+        .mobile-cards { display: none; }
+
+        .holding-card {
+            padding: 16px;
+            border-bottom: 1px solid var(--sep);
+        }
+        .holding-card:last-child { border-bottom: none; }
+
+        .hc-top {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+        }
+        .hc-avatar {
+            width: 40px; height: 40px; border-radius: 10px;
+            background: var(--surface2); border: 1px solid var(--sep);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 800; color: var(--label2);
+            flex-shrink: 0;
+        }
+        .hc-info { flex: 1; min-width: 0; }
+        .hc-name { font-size: 15px; font-weight: 600; }
+        .hc-meta { font-size: 12px; color: var(--label2); margin-top: 1px; display: flex; gap: 6px; align-items: center; }
+        .hc-value { text-align: right; }
+        .hc-value-main { font-size: 16px; font-weight: 700; }
+        .hc-value-sub { font-size: 12px; color: var(--label2); margin-top: 1px; }
+
+        .hc-grid {
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+            background: var(--surface2); border-radius: 10px; padding: 10px 12px;
+            margin-bottom: 10px;
+        }
+        .hc-stat-label { font-size: 10px; font-weight: 600; color: var(--label3); text-transform: uppercase; letter-spacing: 0.5px; }
+        .hc-stat-value { font-size: 13px; font-weight: 600; margin-top: 2px; }
+
+        .hc-actions {
+            display: flex; gap: 6px; justify-content: flex-end;
+        }
+
         /* ── Responsive ── */
         @media (max-width: 1100px) {
             .top-section { grid-template-columns: 1fr; }
@@ -1014,18 +1052,13 @@
             /* Market cards */
             .second-row { grid-template-columns: 1fr; gap: 12px; }
 
-            /* Table */
-            .card { overflow-x: auto; }
+            /* Table → Cards on mobile */
+            .mobile-cards { display: block; }
+            table, thead, tbody { display: none; }
+            .card { overflow-x: visible; }
             .card-header { padding: 14px 16px; }
             .card-header h2 { font-size: 16px; }
-            table { min-width: 640px; }
-            thead th { font-size: 11px; padding: 10px 14px; }
-            tbody td { padding: 14px; font-size: 14px; }
-            .ticker-name { font-size: 14px; }
-            .ticker-meta { font-size: 12px; }
-            .ticker-avatar { width: 38px; height: 38px; font-size: 11px; }
             .count-badge { font-size: 13px; }
-            .weight-track { display: none; }
 
             /* Filter chips */
             .chip { font-size: 13px; padding: 6px 14px; }
@@ -1917,6 +1950,56 @@ function renderHoldingsTop(rows) {
 }
 
 
+function mobileCard(r, tot) {
+    const valueUSD = toUSD(r.value ?? r.costBasis, r.currency);
+    const wt = tot > 0 ? (valueUSD / tot) * 100 : 0;
+    const short = r.ticker.replace('.SI','').replace('.L','');
+
+    const valDisplay = r.value != null ? money(r.value, r.currency) : money(r.costBasis, r.currency);
+
+    const gainHtml = r.gainLoss != null
+        ? `<span class="${cc(r.gainLoss)}">${r.gainLoss >= 0 ? '↑' : '↓'} ${signed(r.gainLoss, r.currency)} (${pct(r.gainPct)})</span>`
+        : '<span class="neu">—</span>';
+
+    const dayHtml = r.changePct != null
+        ? `<span class="change-pill change-${r.changePct >= 0 ? 'up' : 'down'}">${r.changePct >= 0 ? '↑' : '↓'} ${Math.abs(r.changePct).toFixed(2)}%</span>`
+        : '<span style="color:var(--label3)">—</span>';
+
+    const priceDisplay = r.price != null ? money(r.price, r.currency) : '—';
+
+    return `
+    <div class="holding-card">
+        <div class="hc-top">
+            <div class="hc-avatar">${short.slice(0,4)}</div>
+            <div class="hc-info">
+                <div class="hc-name">${r.name}</div>
+                <div class="hc-meta">
+                    <span class="mkt-pill mkt-${r.market.toLowerCase()}">${r.market}</span>
+                    ${r.account === 'SRS' ? '<span class="mkt-pill" style="background:rgba(139,92,246,0.12);color:#7c3aed">SRS</span>' : ''}
+                    <span>${r.type}</span>
+                </div>
+            </div>
+            <div class="hc-value">
+                <div class="hc-value-main">${valDisplay}</div>
+                <div class="hc-value-sub">${gainHtml}</div>
+            </div>
+        </div>
+        <div class="hc-grid">
+            <div><div class="hc-stat-label">Price</div><div class="hc-stat-value">${priceDisplay}</div></div>
+            <div><div class="hc-stat-label">Shares</div><div class="hc-stat-value">${Number(r.shares).toLocaleString('en-US', { maximumFractionDigits: 4 })}</div></div>
+            <div><div class="hc-stat-label">Avg Cost</div><div class="hc-stat-value">${money(r.avgCost, r.currency)}</div></div>
+            <div><div class="hc-stat-label">Today</div><div class="hc-stat-value">${dayHtml}</div></div>
+            <div><div class="hc-stat-label">Weight</div><div class="hc-stat-value">${wt.toFixed(1)}%</div></div>
+            <div><div class="hc-stat-label">Cost Basis</div><div class="hc-stat-value">${money(r.costBasis, r.currency)}</div></div>
+        </div>
+        <div class="hc-actions">
+            <button class="row-btn buy" onclick="openBuyModal('${r.id}')">Buy</button>
+            <button class="row-btn" onclick="openModal('${r.id}')">Edit</button>
+            <button class="row-btn del" onclick="del('${r.id}')">Remove</button>
+        </div>
+    </div>`;
+}
+
 function renderTable(rows, tot) {
     document.getElementById('count').textContent =
         rows.length === 1 ? '1 holding' : `${rows.length} holdings`;
@@ -1978,7 +2061,8 @@ function renderTable(rows, tot) {
             </thead>
             <tbody>${sortedRows.map(r => tableRow(r, tot)).join('')}</tbody>
         </table>
-        </div>`;
+        </div>
+        <div class="mobile-cards">${sortedRows.map(r => mobileCard(r, tot)).join('')}</div>`;
 
     body.querySelectorAll('th.sortable').forEach(th => {
         th.addEventListener('click', () => {
