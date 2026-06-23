@@ -3511,6 +3511,7 @@ function getAutoVestedUnits(grants) {
         const grantDate = new Date(g.grantDate + 'T00:00:00');
         const baseUnits = Math.floor(g.units / totalTranches);
         const remainder = g.units - baseUnits * totalTranches;
+        const va = g.vestAmounts || [];
         const useFixedDates = g.vestFreq === 'semi-annually';
         let vestDates = [];
         if (useFixedDates) {
@@ -3529,7 +3530,7 @@ function getAutoVestedUnits(grants) {
             if (useFixedDates) { d = vestDates[i]; }
             else { d = new Date(grantDate); d.setMonth(d.getMonth() + (i + 1) * freqMonths); }
             if (d <= now) {
-                vested += baseUnits + (i >= totalTranches - remainder ? 1 : 0);
+                vested += va[i] != null ? va[i] : (baseUnits + (i >= totalTranches - remainder ? 1 : 0));
             }
         }
     });
@@ -3581,6 +3582,7 @@ function renderEspp() {
         // Distribute units with rounding: later tranches get the extra shares
         const baseUnits = Math.floor(g.units / totalTranches);
         const remainder = g.units - baseUnits * totalTranches;
+        const va = g.vestAmounts || [];
 
         // For semi-annual: use Apple's fixed vest dates (Feb 15 & Aug 15)
         const useFixedDates = g.vestFreq === 'semi-annually';
@@ -3607,7 +3609,7 @@ function renderEspp() {
                 d = new Date(grantDate);
                 d.setMonth(d.getMonth() + (i + 1) * freqMonths);
             }
-            const units = baseUnits + (i >= totalTranches - remainder ? 1 : 0);
+            const units = va[i] != null ? va[i] : (baseUnits + (i >= totalTranches - remainder ? 1 : 0));
             allVestEvents.push({
                 date: d, isPast: d <= now,
                 units,

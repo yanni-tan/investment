@@ -215,7 +215,11 @@
         "grantValue": 132000,
         "grantDate": "2024-07-14",
         "vestYears": 4,
-        "vestFreq": "semi-annually"
+        "vestFreq": "semi-annually",
+        "vestAmounts": [
+          35.149,
+          72
+        ]
       }
     ],
     "vestedUnits": 107.149,
