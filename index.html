@@ -290,7 +290,6 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 16px;
-            margin-bottom: 24px;
         }
 
         .kpi-card {
@@ -542,30 +541,65 @@
         }
         /* ── Top section layout ── */
         .top-section {
-            display: grid;
-            grid-template-columns: 1fr 300px;
-            gap: 20px;
-            margin-bottom: 24px;
-            align-items: start;
-        }
-        .top-left {
             display: flex;
             flex-direction: column;
             gap: 16px;
-            min-width: 0;
+            margin-bottom: 24px;
         }
-        .top-left .kpi-grid,
-        .top-left .second-row { margin-bottom: 0; }
-        .top-right { overflow-y: auto; }
 
-        .second-row {
+        .stats-row {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
         }
 
-        /* ── Market breakdown row ── */
-        .mkt-grid { display: contents; }
+        .stat-mini {
+            background: var(--surface);
+            border-radius: var(--radius-sm);
+            padding: 16px 18px;
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+            transition: box-shadow .15s;
+        }
+        .stat-mini:hover { box-shadow: var(--shadow); }
+        .stat-mini .stat-head {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .stat-mini .stat-icon {
+            width: 28px; height: 28px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center; font-size: 13px;
+        }
+        .stat-mini .stat-flag { font-size: 18px; }
+        .stat-mini .stat-label {
+            font-size: 10px; font-weight: 600; color: var(--label3);
+            text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px;
+        }
+        .stat-mini .stat-value {
+            font-size: 20px; font-weight: 300; letter-spacing: -0.5px; line-height: 1.2;
+        }
+        .stat-mini .stat-badges {
+            display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap;
+        }
+        .stat-mini .stat-sub {
+            font-size: 10px; color: var(--label3); margin-top: 4px;
+        }
+
+        /* ── Breakdown card (full width) ── */
+        .breakdown-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+        }
+        .breakdown-header {
+            display: flex; align-items: center; gap: 16px;
+            padding: 14px 22px 0;
+        }
+        .breakdown-header h2 { font-size: 15px; font-weight: 600; flex-shrink: 0; }
+        .breakdown-body {
+            padding: 0 6px;
+        }
 
         /* ── Filter chips ── */
         .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
@@ -597,15 +631,15 @@
         .perf-pct { font-size: 11px; font-weight: 600; min-width: 56px; text-align: right; flex-shrink: 0; }
 
         /* ── Breakdown (Top Categories) ── */
-        .breakdown-tabs { display: flex; gap: 4px; padding: 10px 16px 8px; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .breakdown-tabs { display: flex; gap: 4px; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
         .breakdown-tabs::-webkit-scrollbar { display: none; }
         .bk-tab {
-            padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+            padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
             border: none; background: transparent; color: var(--label2);
             cursor: pointer; font-family: inherit; transition: all .15s;
         }
         .bk-tab.active { background: var(--surface2); color: var(--label); }
-        .breakdown-list { padding: 4px 0 8px; }
+        .breakdown-list { padding: 4px 0 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
         .bk-row {
             display: flex; align-items: center; gap: 12px;
             padding: 10px 16px; border-bottom: 1px solid var(--sep);
@@ -672,12 +706,12 @@
         .empty p { font-size: 13px; color: var(--label2); margin-bottom: 20px; }
 
         /* ── Chart Card ── */
-        .chart-inner { padding: 20px; }
+        .chart-inner { padding: 20px; display: flex; align-items: center; gap: 32px; flex-wrap: wrap; }
 
         .donut-wrap {
             position: relative;
             width: 160px; height: 160px;
-            margin: 0 auto 20px;
+            flex-shrink: 0;
         }
 
         .donut-ring {
@@ -706,7 +740,7 @@
             font-size: 10px; color: var(--label2); margin-top: 1px;
         }
 
-        .alloc-list { display: flex; flex-direction: column; gap: 10px; }
+        .alloc-list { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 200px; }
 
         .alloc-row {
             display: flex; align-items: center; justify-content: space-between;
@@ -1064,8 +1098,7 @@
 
         /* ── Responsive ── */
         @media (max-width: 1100px) {
-            .top-section { grid-template-columns: 1fr; }
-            .top-right { display: none; }
+            .stats-row { grid-template-columns: 1fr 1fr; }
         }
         @media (max-width: 900px) {
             .kpi-grid { grid-template-columns: 1fr 1fr; }
@@ -1102,8 +1135,14 @@
             .kpi-sub { font-size: 13px; }
             .kpi-icon { width: 28px; height: 28px; margin-bottom: 14px; }
 
-            /* Market cards */
-            .second-row { grid-template-columns: 1fr; gap: 12px; }
+            /* Stats row */
+            .stats-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .stat-mini { padding: 14px; }
+            .stat-mini .stat-value { font-size: 17px; }
+
+            /* Breakdown */
+            .breakdown-list { grid-template-columns: 1fr; }
+            .breakdown-header { flex-direction: column; align-items: flex-start; gap: 8px; }
 
             /* Table → Cards on mobile */
             .mobile-cards { display: block; }
@@ -1301,18 +1340,16 @@
         </div>
     </div>
 
-    <!-- Top section: [KPI + market cards] | [Breakdown panel] -->
+    <!-- Top section: KPI cards + stats row -->
     <div class="top-section">
-        <div class="top-left">
-            <div class="kpi-grid" id="kpi-grid"></div>
-            <div class="second-row">
-                <div id="mkt-grid" style="display:contents"></div>
-            </div>
-        </div>
-        <div class="card top-right">
-            <div class="card-header" style="border-bottom:none;padding-bottom:4px">
-                <h2>Breakdown</h2>
-            </div>
+        <div class="kpi-grid" id="kpi-grid"></div>
+        <div class="stats-row" id="stats-row"></div>
+    </div>
+
+    <!-- Breakdown (full width) -->
+    <div class="breakdown-card" id="breakdown-card">
+        <div class="breakdown-header">
+            <h2>Breakdown</h2>
             <div class="breakdown-tabs" id="bk-tabs">
                 <button class="bk-tab active" data-bk="market">Market</button>
                 <button class="bk-tab" data-bk="perf">Performance</button>
@@ -1320,9 +1357,11 @@
                 <button class="bk-tab" data-bk="type">Type</button>
                 <button class="bk-tab" data-bk="sector">Sector</button>
             </div>
-            <div id="bk-body"></div>
-            <div class="fx-note" id="fx-note" style="display:none"></div>
         </div>
+        <div class="breakdown-body">
+            <div id="bk-body"></div>
+        </div>
+        <div class="fx-note" id="fx-note" style="display:none"></div>
     </div>
 
     <!-- ── Portfolio Value Chart ── -->
@@ -1917,7 +1956,7 @@ function render() {
     const tot      = totalUSDof(all);
 
     renderKPI(all);
-    renderMarkets(all);
+    renderStatsRow(all);
     renderTypeChips(all);
     renderTable(searched, tot);
     renderChart(all, tot);
@@ -2161,43 +2200,7 @@ function renderKPI(rows) {
                 </div>
             </div>
             <div style="flex:1;min-width:0">${gainChart}</div>
-        </div>` +
-
-        // Dividend income KPI
-        (() => {
-            const totalDiv = dividends.reduce((s,d) => s + (Number(d.amount) || 0), 0);
-            const all = holdings.map(enrich);
-            const totalVal = totalUSDof(all);
-            const divYield = totalVal > 0 ? (totalDiv / totalVal * 100) : 0;
-            return `<div class="kpi-card">
-                <div class="kpi-icon green">💵</div>
-                <div class="kpi-label">Dividend Income</div>
-                <div class="kpi-value" style="font-size:26px">${dmoney(totalDiv)}</div>
-                <div><span class="kpi-badge up">Yield ${divYield.toFixed(2)}%</span></div>
-                <div class="kpi-sub">${dividends.length} payment${dividends.length !== 1 ? 's' : ''} logged</div>
-            </div>`;
-        })() +
-
-        // Performance KPI
-        (() => {
-            const snaps = loadSnapshots();
-            if (snaps.length < 2) return `<div class="kpi-card">
-                <div class="kpi-icon blue">📊</div>
-                <div class="kpi-label">Annualized Return</div>
-                <div class="kpi-value" style="font-size:26px">—</div>
-                <div class="kpi-sub">Need 2+ months of data</div>
-            </div>`;
-            const first = snaps[0], last = snaps[snaps.length - 1];
-            const months = snaps.length - 1;
-            const cagr = first.totalUSD > 0 ? (Math.pow(last.totalUSD / first.totalUSD, 12 / months) - 1) * 100 : 0;
-            const totalRealized = realized.reduce((s,r) => s + (r.gainLoss || 0), 0);
-            return `<div class="kpi-card">
-                <div class="kpi-icon blue">📊</div>
-                <div class="kpi-label">Annualized Return (CAGR)</div>
-                <div class="kpi-value" style="font-size:26px"><span class="${cc(cagr)}">${pct(cagr)}</span></div>
-                <div class="kpi-sub">Over ${months} month${months !== 1 ? 's' : ''} · Realized: ${dmoney(totalRealized)}</div>
-            </div>`;
-        })();
+        </div>`;
 }
 
 // ── Holdings top (for right panel) ──
@@ -2486,47 +2489,79 @@ function hideTooltip() { ttEl().classList.remove('show'); }
 // ── Market KPI breakdown ──
 const MKT_FLAGS = { US: '🇺🇸', SG: '🇸🇬', UK: '🇬🇧' };
 
-function renderMarkets(rows) {
-    const el = document.getElementById('mkt-grid');
+function renderStatsRow(rows) {
+    const el = document.getElementById('stats-row');
     if (!rows.length) { el.innerHTML = ''; return; }
     const s = calcSummary(rows);
-    const snaps = loadSnapshots();
     const mkts = [['US','USD',1], ['SG','SGD',1/fxSGDUSD]];
-    el.innerHTML = mkts.map(([mkt, cur, fx]) => {
+
+    // Market cards
+    let html = mkts.map(([mkt, cur, fx]) => {
         const val  = (s.byMkt[mkt]  || 0) * fx;
         const cost = (s.costByMkt[mkt] || 0) * fx;
         const gain = val - cost;
         const gPct = cost > 0 ? (gain / cost) * 100 : 0;
-        const col  = MARKET_COLORS[mkt];
         const flag = MKT_FLAGS[mkt] || '';
-
-        const mkMonth = (s) => new Date(s.month + '-01').toLocaleString('default', { month: 'short' });
-        const mktSnaps = snaps.filter(s => s.byMkt && s.byMkt[mkt] != null);
-        const mktChart = svgLine(
-            mktSnaps.map(s => ({ v: (s.byMkt[mkt] || 0) * fx, label: mkMonth(s), tip: `${s.month}<br>${money((s.byMkt[mkt]||0)*fx,cur)}` })),
-            { color: col, h: 40 }
-        );
-
-        return `
-        <div class="kpi-card" style="display:flex;gap:16px;align-items:center;cursor:pointer" onclick="setMarketTab('${mkt}')">
-            <div style="flex:1;min-width:0">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-                    <div class="kpi-icon" style="background:${col}18;margin-bottom:0">
-                        <span class="mkt-pill mkt-${mkt.toLowerCase()}">${mkt}</span>
-                    </div>
-                    <span style="font-size:20px">${flag}</span>
+        return `<div class="stat-mini" onclick="setMarketTab('${mkt}')">
+            <div class="stat-head">
+                <div class="stat-icon" style="background:${MARKET_COLORS[mkt]}18">
+                    <span class="mkt-pill mkt-${mkt.toLowerCase()}" style="font-size:10px">${mkt}</span>
                 </div>
-                <div class="kpi-label">${mkt} Holdings</div>
-                <div class="kpi-value" style="font-size:22px">${money(val, cur)}</div>
-                <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">
-                    <span class="kpi-badge ${badgeClass(gain)}">${gain >= 0 ? '↑' : '↓'} ${signed(gain, cur)}</span>
-                    <span class="kpi-badge ${badgeClass(gPct)}">${gain >= 0 ? '↑' : '↓'} ${pct(gPct)}</span>
-                </div>
-                <div class="kpi-sub">Cost: ${money(cost, cur)}</div>
+                <span class="stat-flag">${flag}</span>
             </div>
-            <div style="flex:1;min-width:0">${mktChart}</div>
+            <div class="stat-label">${mkt} Holdings</div>
+            <div class="stat-value">${money(val, cur)}</div>
+            <div class="stat-badges">
+                <span class="kpi-badge ${badgeClass(gain)}" style="font-size:10px;padding:3px 8px">${gain >= 0 ? '↑' : '↓'} ${signed(gain, cur)}</span>
+                <span class="kpi-badge ${badgeClass(gPct)}" style="font-size:10px;padding:3px 8px">${gain >= 0 ? '↑' : '↓'} ${pct(gPct)}</span>
+            </div>
+            <div class="stat-sub">Cost: ${money(cost, cur)}</div>
         </div>`;
     }).join('');
+
+    // Dividend card
+    const totalDiv = dividends.reduce((s,d) => s + (Number(d.amount) || 0), 0);
+    const totalVal = totalUSDof(rows);
+    const divYield = totalVal > 0 ? (totalDiv / totalVal * 100) : 0;
+    html += `<div class="stat-mini" onclick="showPanel('dividends')">
+        <div class="stat-head">
+            <div class="stat-icon" style="background:var(--accent-dim)">💵</div>
+        </div>
+        <div class="stat-label">Dividend Income</div>
+        <div class="stat-value">${dmoney(totalDiv)}</div>
+        <div class="stat-badges">
+            <span class="kpi-badge up" style="font-size:10px;padding:3px 8px">Yield ${divYield.toFixed(2)}%</span>
+        </div>
+        <div class="stat-sub">${dividends.length} payment${dividends.length !== 1 ? 's' : ''} logged</div>
+    </div>`;
+
+    // CAGR card
+    const snaps = loadSnapshots();
+    if (snaps.length < 2) {
+        html += `<div class="stat-mini">
+            <div class="stat-head">
+                <div class="stat-icon" style="background:rgba(59,130,246,0.1)">📊</div>
+            </div>
+            <div class="stat-label">Annualized Return</div>
+            <div class="stat-value">—</div>
+            <div class="stat-sub">Need 2+ months of data</div>
+        </div>`;
+    } else {
+        const first = snaps[0], last = snaps[snaps.length - 1];
+        const months = snaps.length - 1;
+        const cagr = first.totalUSD > 0 ? (Math.pow(last.totalUSD / first.totalUSD, 12 / months) - 1) * 100 : 0;
+        const totalRealized = realized.reduce((s,r) => s + (r.gainLoss || 0), 0);
+        html += `<div class="stat-mini">
+            <div class="stat-head">
+                <div class="stat-icon" style="background:rgba(59,130,246,0.1)">📊</div>
+            </div>
+            <div class="stat-label">CAGR</div>
+            <div class="stat-value"><span class="${cc(cagr)}">${pct(cagr)}</span></div>
+            <div class="stat-sub">Over ${months}mo · Realized: ${dmoney(totalRealized)}</div>
+        </div>`;
+    }
+
+    el.innerHTML = html;
 }
 
 // ── Type + Market filter chips ──
@@ -2648,7 +2683,7 @@ function renderBreakdown(rows) {
     if (bkTab === 'perf') {
         const sorted = [...rows].filter(r => r.gainPct != null).sort((a, b) => b.gainPct - a.gainPct);
         const maxA = Math.max(...sorted.map(r => Math.abs(r.gainPct)), 1);
-        el.innerHTML = `<div class="perf-list">${sorted.map(r => {
+        el.innerHTML = `<div class="perf-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px 24px">${sorted.map(r => {
             const w = (Math.abs(r.gainPct) / maxA * 100).toFixed(1);
             const cls = r.gainPct >= 0 ? 'pos' : 'neg';
             const short = r.ticker.replace('.SI','').replace('.L','');
