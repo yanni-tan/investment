@@ -1187,6 +1187,13 @@
                     <label>Quantity</label>
                     <input class="finput" id="w-qty" type="number" step="any" min="0" placeholder="0">
                 </div>
+                <div class="fg">
+                    <label>Account</label>
+                    <select class="finput" id="w-account">
+                        <option value="Cash">Cash</option>
+                        <option value="SRS">SRS</option>
+                    </select>
+                </div>
             </div>
             <div class="fg">
                 <label>Notes <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
@@ -2288,6 +2295,7 @@ function renderWatchlist() {
             <th style="padding:10px 16px;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)">Action</th>
             <th style="padding:10px 16px;text-align:right;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)">Target Price</th>
             <th style="padding:10px 16px;text-align:right;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)">Qty</th>
+            <th style="padding:10px 16px;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)">Account</th>
             <th style="padding:10px 16px;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)">Notes</th>
             <th style="border-bottom:1px solid var(--sep)"></th>
         </tr></thead>
@@ -2302,6 +2310,7 @@ function renderWatchlist() {
             </td>
             <td style="padding:14px 16px;text-align:right">${w.targetPrice ? '$' + Number(w.targetPrice).toFixed(2) : '—'}</td>
             <td style="padding:14px 16px;text-align:right">${w.qty || '—'}</td>
+            <td style="padding:14px 16px"><span class="mkt-pill" style="background:rgba(139,92,246,0.12);color:#7c3aed">${w.account || 'Cash'}</span></td>
             <td style="padding:14px 16px;color:var(--label2);font-size:12px">${w.notes || '—'}</td>
             <td style="padding:14px 16px">
                 <div style="display:flex;gap:4px">
@@ -2324,6 +2333,7 @@ function openWatchModal(id = null) {
         document.getElementById('w-name').value   = w.name;
         document.getElementById('w-price').value  = w.targetPrice || '';
         document.getElementById('w-qty').value    = w.qty || '';
+        document.getElementById('w-account').value = w.account || 'Cash';
         document.getElementById('w-notes').value  = w.notes || '';
     } else {
         document.getElementById('watch-form').reset();
@@ -2345,13 +2355,14 @@ document.getElementById('watch-form').addEventListener('submit', e => {
     const name   = document.getElementById('w-name').value.trim();
     const targetPrice = document.getElementById('w-price').value;
     const qty    = document.getElementById('w-qty').value;
+    const account = document.getElementById('w-account').value;
     const notes  = document.getElementById('w-notes').value.trim();
     if (watchEditId) {
         const i = watchlist.findIndex(x => x.id === watchEditId);
-        if (i !== -1) watchlist[i] = { ...watchlist[i], ticker, action, name, targetPrice, qty, notes };
+        if (i !== -1) watchlist[i] = { ...watchlist[i], ticker, action, name, targetPrice, qty, account, notes };
         toast('Updated');
     } else {
-        watchlist.push({ id: uid(), ticker, action, name, targetPrice, qty, notes });
+        watchlist.push({ id: uid(), ticker, action, name, targetPrice, qty, account, notes });
         toast('Added to watchlist');
     }
     saveWatchlist();
