@@ -2351,14 +2351,15 @@ function renderStatsRow(rows) {
     const s = calcSummary(rows);
     const mkts = [['US','USD',1], ['SG','SGD',1/fxSGDUSD]];
 
-    // Market cards
-    let html = mkts.map(([mkt, cur, fx]) => {
+    // Market cards + ESPP after US
+    let html = '';
+    mkts.forEach(([mkt, cur, fx]) => {
         const val  = (s.byMkt[mkt]  || 0) * fx;
         const cost = (s.costByMkt[mkt] || 0) * fx;
         const gain = val - cost;
         const gPct = cost > 0 ? (gain / cost) * 100 : 0;
         const flag = MKT_FLAGS[mkt] || '';
-        return `<div class="stat-mini" onclick="setMarketTab('${mkt}')">
+        html += `<div class="stat-mini" onclick="setMarketTab('${mkt}')">
             <div class="stat-head">
                 <div class="stat-icon" style="background:${MARKET_COLORS[mkt]}18">
                     <span class="mkt-pill mkt-${mkt.toLowerCase()}" style="font-size:10px">${mkt}</span>
@@ -2373,7 +2374,30 @@ function renderStatsRow(rows) {
             </div>
             <div class="stat-sub">Cost: ${money(cost, cur)}</div>
         </div>`;
-    }).join('');
+
+        // Insert ESPP card right after US
+        if (mkt === 'US' && esppData?.grants?.length) {
+            const totalUnits = esppData.grants.reduce((s,g) => s + g.units, 0);
+            const vestedU = esppData.vestedUnits || 0;
+            const aaplPrice = prices['AAPL']?.price || null;
+            const totalGrantValue = esppData.grants.reduce((s,g) => s + g.grantValue, 0);
+            const avgGrantPrice = totalGrantValue / totalUnits;
+            const vestedVal = aaplPrice ? vestedU * aaplPrice : vestedU * avgGrantPrice;
+            const currentTotal = aaplPrice ? totalUnits * aaplPrice : totalGrantValue;
+            const vestPct = totalUnits > 0 ? (vestedU / totalUnits * 100) : 0;
+            html += `<div class="stat-mini" onclick="showPanel('espp')">
+                <div class="stat-head">
+                    <div class="stat-icon" style="background:rgba(168,85,247,0.1)">🍎</div>
+                </div>
+                <div class="stat-label">ESPP Vested</div>
+                <div class="stat-value">${dmoney(vestedVal)}</div>
+                <div class="stat-badges">
+                    <span class="kpi-badge up" style="font-size:10px;padding:3px 8px">${vestPct.toFixed(1)}% of ${dmoney(currentTotal)}</span>
+                </div>
+                <div class="stat-sub">${vestedU.toFixed(1)} / ${totalUnits} shares</div>
+            </div>`;
+        }
+    });
 
     // Dividend card
     const totalDiv = dividends.reduce((s,d) => s + (Number(d.amount) || 0), 0);
@@ -2414,29 +2438,6 @@ function renderStatsRow(rows) {
             <div class="stat-label">CAGR</div>
             <div class="stat-value"><span class="${cc(cagr)}">${pct(cagr)}</span></div>
             <div class="stat-sub">Over ${months}mo · Realized: ${dmoney(totalRealized)}</div>
-        </div>`;
-    }
-
-    // ESPP vested card
-    if (esppData?.grants?.length) {
-        const totalUnits = esppData.grants.reduce((s,g) => s + g.units, 0);
-        const vestedU = esppData.vestedUnits || 0;
-        const aaplPrice = prices['AAPL']?.price || null;
-        const totalGrantValue = esppData.grants.reduce((s,g) => s + g.grantValue, 0);
-        const avgGrantPrice = totalGrantValue / totalUnits;
-        const vestedVal = aaplPrice ? vestedU * aaplPrice : vestedU * avgGrantPrice;
-        const currentTotal = aaplPrice ? totalUnits * aaplPrice : totalGrantValue;
-        const vestPct = totalUnits > 0 ? (vestedU / totalUnits * 100) : 0;
-        html += `<div class="stat-mini" onclick="showPanel('espp')">
-            <div class="stat-head">
-                <div class="stat-icon" style="background:rgba(168,85,247,0.1)">🍎</div>
-            </div>
-            <div class="stat-label">ESPP Vested</div>
-            <div class="stat-value">${dmoney(vestedVal)}</div>
-            <div class="stat-badges">
-                <span class="kpi-badge up" style="font-size:10px;padding:3px 8px">${vestPct.toFixed(1)}% of ${dmoney(currentTotal)}</span>
-            </div>
-            <div class="stat-sub">${vestedU.toFixed(1)} / ${totalUnits} shares</div>
         </div>`;
     }
 
