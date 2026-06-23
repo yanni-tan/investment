@@ -1315,7 +1315,7 @@
             </div>
             <div style="display:flex;gap:8px">
                 <button class="btn btn-secondary" id="espp-update-btn">Log Update</button>
-                <button class="btn btn-primary" id="espp-edit-btn">Edit</button>
+                <button class="btn btn-primary" id="espp-edit-btn">+ Add Grant</button>
             </div>
         </div>
         <div id="espp-body"></div>
@@ -1547,17 +1547,21 @@
     </div>
 </div>
 
-<!-- ── ESPP Edit Modal ── -->
+<!-- ── ESPP Grant Modal ── -->
 <div class="overlay" id="espp-overlay">
     <div class="modal">
         <div class="modal-hdr">
-            <h2>Edit ESPP</h2>
+            <h2 id="espp-modal-title">Add Grant</h2>
             <button class="modal-x" id="espp-modal-close">×</button>
         </div>
         <form id="espp-form" autocomplete="off">
+            <div class="fg" style="margin-bottom:14px">
+                <label>Label</label>
+                <input class="finput" id="espp-label" type="text" placeholder="e.g. Initial Grant, FY27 Refresher" required>
+            </div>
             <div class="frow">
                 <div class="fg">
-                    <label>Total Units</label>
+                    <label>Units</label>
                     <input class="finput" id="espp-units" type="number" step="any" min="0" placeholder="625" required>
                 </div>
                 <div class="fg">
@@ -1585,14 +1589,11 @@
                         <option value="annually">Annually</option>
                     </select>
                 </div>
-                <div class="fg">
-                    <label>Vested Shares (Units)</label>
-                    <input class="finput" id="espp-vested" type="number" step="any" min="0" placeholder="78.125" required>
-                </div>
+                <div class="fg"></div>
             </div>
             <div class="modal-foot">
                 <button type="button" class="btn btn-secondary" id="espp-cancel">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="submit" class="btn btn-primary" id="espp-save-btn">Add Grant</button>
             </div>
         </form>
     </div>
@@ -1861,7 +1862,7 @@ async function fetchPrices() {
     const tickers    = [...new Set(holdings.map(h => h.ticker))];
     const watchTickers = [...new Set(watchlist.map(w => w.ticker).filter(t => t && !tickers.includes(t)))];
     // Always fetch AAPL for ESPP
-    const esppTickers = esppData && !tickers.includes('AAPL') && !watchTickers.includes('AAPL') ? ['AAPL'] : [];
+    const esppTickers = esppData?.grants?.length && !tickers.includes('AAPL') && !watchTickers.includes('AAPL') ? ['AAPL'] : [];
     const allSymbols = [...tickers, ...watchTickers, ...esppTickers, 'SGDUSD=X', 'GBPUSD=X'];
 
     try {
@@ -3591,20 +3592,46 @@ document.getElementById('realized-nav-btn').addEventListener('click', () => show
 // ── ESPP ──
 const ESPP_KEY = 'portfolio_espp';
 let esppData = null;
+let esppEditId = null;
 
 function loadEspp() {
     try { esppData = JSON.parse(localStorage.getItem(ESPP_KEY)); } catch { esppData = null; }
+    // Migrate single-grant format to grants array
+    if (esppData && !esppData.grants) {
+        const old = esppData;
+        esppData = {
+            grants: [{
+                id: Date.now().toString(36),
+                label: 'Initial Grant',
+                units: old.totalUnits,
+                grantValue: old.grantValue,
+                grantDate: old.grantDate,
+                vestYears: old.vestYears,
+                vestFreq: old.vestFreq,
+            }],
+            vestedUnits: old.vestedUnits ?? 0,
+            updates: old.updates || [],
+        };
+        saveEspp();
+    }
 }
 function saveEspp() { localStorage.setItem(ESPP_KEY, JSON.stringify(esppData)); syncSave(); }
 
-function openEsppModal() {
-    if (esppData) {
-        document.getElementById('espp-units').value = esppData.totalUnits;
-        document.getElementById('espp-grant-value').value = esppData.grantValue;
-        document.getElementById('espp-grant-date').value = esppData.grantDate;
-        document.getElementById('espp-vest-years').value = esppData.vestYears;
-        document.getElementById('espp-vest-freq').value = esppData.vestFreq;
-        document.getElementById('espp-vested').value = esppData.vestedUnits ?? '';
+function openEsppModal(grantId) {
+    esppEditId = grantId || null;
+    const isEdit = !!grantId;
+    document.getElementById('espp-modal-title').textContent = isEdit ? 'Edit Grant' : 'Add Grant';
+    document.getElementById('espp-save-btn').textContent = isEdit ? 'Save Changes' : 'Add Grant';
+
+    if (isEdit) {
+        const g = esppData.grants.find(g => g.id === grantId);
+        if (!g) return;
+        document.getElementById('espp-label').value = g.label;
+        document.getElementById('espp-units').value = g.units;
+        document.getElementById('espp-grant-value').value = g.grantValue;
+        document.getElementById('espp-grant-date').value = g.grantDate;
+        document.getElementById('espp-vest-years').value = g.vestYears;
+        document.getElementById('espp-vest-freq').value = g.vestFreq;
     } else {
         document.getElementById('espp-form').reset();
         document.getElementById('espp-vest-years').value = 4;
@@ -3613,32 +3640,50 @@ function openEsppModal() {
 }
 document.getElementById('espp-form').addEventListener('submit', e => {
     e.preventDefault();
-    const vestedUnits = parseFloat(document.getElementById('espp-vested').value);
-    esppData = {
-        ...(esppData || {}),
-        totalUnits: parseFloat(document.getElementById('espp-units').value),
+    if (!esppData) esppData = { grants: [], vestedUnits: 0, updates: [] };
+
+    const grant = {
+        id: esppEditId || Date.now().toString(36),
+        label: document.getElementById('espp-label').value.trim(),
+        units: parseFloat(document.getElementById('espp-units').value),
         grantValue: parseFloat(document.getElementById('espp-grant-value').value),
         grantDate: document.getElementById('espp-grant-date').value,
         vestYears: parseInt(document.getElementById('espp-vest-years').value),
         vestFreq: document.getElementById('espp-vest-freq').value,
-        vestedUnits,
-        updates: esppData?.updates || [],
     };
+
+    if (esppEditId) {
+        const idx = esppData.grants.findIndex(g => g.id === esppEditId);
+        if (idx >= 0) esppData.grants[idx] = grant;
+    } else {
+        esppData.grants.push(grant);
+    }
+
+    esppEditId = null;
     saveEspp();
     document.getElementById('espp-overlay').classList.remove('open');
     renderEspp();
-    toast('ESPP updated');
+    toast(esppEditId ? 'Grant updated' : 'Grant added');
 });
-const closeEsppModal = () => document.getElementById('espp-overlay').classList.remove('open');
+const closeEsppModal = () => { esppEditId = null; document.getElementById('espp-overlay').classList.remove('open'); };
 document.getElementById('espp-modal-close').addEventListener('click', closeEsppModal);
 document.getElementById('espp-cancel').addEventListener('click', closeEsppModal);
 document.getElementById('espp-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeEsppModal(); });
-document.getElementById('espp-edit-btn').addEventListener('click', openEsppModal);
+document.getElementById('espp-edit-btn').addEventListener('click', () => openEsppModal());
 document.getElementById('espp-nav-btn').addEventListener('click', () => showPanel('espp'));
+
+function deleteEsppGrant(id) {
+    if (!esppData?.grants) return;
+    esppData.grants = esppData.grants.filter(g => g.id !== id);
+    if (!esppData.grants.length) { esppData = null; localStorage.removeItem(ESPP_KEY); }
+    else saveEspp();
+    renderEspp();
+    toast('Grant removed');
+}
 
 // ESPP Update log
 function openEsppUpdate() {
-    if (!esppData) { toast('Set up ESPP first'); return; }
+    if (!esppData?.grants?.length) { toast('Add a grant first'); return; }
     const today = new Date().toISOString().slice(0, 10);
     document.getElementById('espp-update-date').value = today;
     document.getElementById('espp-update-units').value = esppData.vestedUnits ?? '';
@@ -3652,7 +3697,8 @@ function openEsppUpdate() {
 function updateEsppPreview() {
     const units = parseFloat(document.getElementById('espp-update-units').value) || 0;
     const price = parseFloat(document.getElementById('espp-update-price').value) || 0;
-    const totalVal = esppData ? esppData.totalUnits * price : 0;
+    const totalUnits = esppData ? esppData.grants.reduce((s,g) => s + g.units, 0) : 0;
+    const totalVal = totalUnits * price;
     const vestedVal = units * price;
     const preview = document.getElementById('espp-update-preview');
     if (price > 0 && units > 0) {
@@ -3668,6 +3714,7 @@ document.getElementById('espp-update-price').addEventListener('input', updateEsp
 document.getElementById('espp-update-form').addEventListener('submit', e => {
     e.preventDefault();
     const vestedUnits = parseFloat(document.getElementById('espp-update-units').value);
+    const totalUnits = esppData.grants.reduce((s,g) => s + g.units, 0);
     const aaplPrice = parseFloat(document.getElementById('espp-update-price').value) || prices['AAPL']?.price || 0;
     const date = document.getElementById('espp-update-date').value;
     const note = document.getElementById('espp-update-note').value.trim();
@@ -3677,7 +3724,7 @@ document.getElementById('espp-update-form').addEventListener('submit', e => {
         date,
         vestedUnits,
         aaplPrice,
-        totalValue: esppData.totalUnits * aaplPrice,
+        totalValue: totalUnits * aaplPrice,
         vestedValue: vestedUnits * aaplPrice,
         note,
     });
@@ -3705,73 +3752,69 @@ function deleteEsppUpdate(idx) {
 
 function renderEspp() {
     const el = document.getElementById('espp-body');
-    if (!esppData) {
+    if (!esppData || !esppData.grants?.length) {
         el.innerHTML = `<div class="card"><div class="empty" style="padding:60px 20px">
             <div class="empty-icon">🍎</div><h3>No ESPP data</h3>
             <p>Add your Apple equity grant details.</p>
-            <button class="btn btn-primary" onclick="openEsppModal()">+ Setup ESPP</button>
+            <button class="btn btn-primary" onclick="openEsppModal()">+ Add Grant</button>
         </div></div>`;
         return;
     }
 
-    // Migrate: if old vestedAmount exists but no vestedUnits, convert
-    if (esppData.vestedAmount != null && esppData.vestedUnits == null) {
-        const grantPrice = esppData.grantValue / esppData.totalUnits;
-        esppData.vestedUnits = esppData.vestedAmount / (prices['AAPL']?.price || grantPrice);
-        delete esppData.vestedAmount;
-        saveEspp();
-    }
-
-    const { totalUnits, grantValue, grantDate, vestYears, vestFreq, vestedUnits } = esppData;
-    const updates = esppData.updates || [];
-    const grantPrice = grantValue / totalUnits;
-
-    // AAPL live price
+    const { grants, vestedUnits, updates = [] } = esppData;
+    const fmtUSD = v => '$' + v.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
     const aaplPrice = prices['AAPL']?.price || null;
     const aaplChange = prices['AAPL']?.changePct || null;
-
-    // Current values based on live price
-    const currentTotal = aaplPrice ? totalUnits * aaplPrice : null;
-    const unrealizedGain = currentTotal ? currentTotal - grantValue : null;
-    const gainPctTotal = grantValue > 0 && unrealizedGain != null ? (unrealizedGain / grantValue * 100) : null;
-
-    // Vested in dollars
-    const vestedValue = aaplPrice ? vestedUnits * aaplPrice : vestedUnits * grantPrice;
-    const unvestedUnits = totalUnits - vestedUnits;
-    const unvestedValue = aaplPrice ? unvestedUnits * aaplPrice : unvestedUnits * grantPrice;
-    const vestPct = totalUnits > 0 ? (vestedUnits / totalUnits * 100) : 0;
-
-    // Vest schedule
-    const freqMonths = vestFreq === 'semi-annually' ? 6 : vestFreq === 'quarterly' ? 3 : vestFreq === 'monthly' ? 1 : 12;
-    const totalTranches = Math.round((vestYears * 12) / freqMonths);
-    const unitsPerTranche = totalUnits / totalTranches;
-    const grant = new Date(grantDate + 'T00:00:00');
     const now = new Date();
 
-    const vestEvents = [];
-    for (let i = 1; i <= totalTranches; i++) {
-        const d = new Date(grant);
-        d.setMonth(d.getMonth() + i * freqMonths);
-        const isPast = d <= now;
-        const units = unitsPerTranche;
-        const dollarVal = aaplPrice ? units * aaplPrice : units * grantPrice;
-        vestEvents.push({ date: d, isPast, units, dollarVal });
-    }
+    // Combined totals
+    const totalUnits = grants.reduce((s,g) => s + g.units, 0);
+    const totalGrantValue = grants.reduce((s,g) => s + g.grantValue, 0);
+    const avgGrantPrice = totalGrantValue / totalUnits;
+    const currentTotal = aaplPrice ? totalUnits * aaplPrice : null;
+    const unrealizedGain = currentTotal ? currentTotal - totalGrantValue : null;
+    const gainPctTotal = totalGrantValue > 0 && unrealizedGain != null ? (unrealizedGain / totalGrantValue * 100) : null;
 
-    const vestedTranches = vestEvents.filter(v => v.isPast).length;
-    const nextVest = vestEvents.find(v => !v.isPast);
+    const vestedValue = aaplPrice ? vestedUnits * aaplPrice : vestedUnits * avgGrantPrice;
+    const unvestedUnits = totalUnits - vestedUnits;
+    const unvestedValue = aaplPrice ? unvestedUnits * aaplPrice : unvestedUnits * avgGrantPrice;
+    const vestPct = totalUnits > 0 ? (vestedUnits / totalUnits * 100) : 0;
+
+    // Merge vesting events from all grants
+    const allVestEvents = [];
+    grants.forEach(g => {
+        const freqMonths = g.vestFreq === 'semi-annually' ? 6 : g.vestFreq === 'quarterly' ? 3 : g.vestFreq === 'monthly' ? 1 : 12;
+        const totalTranches = Math.round((g.vestYears * 12) / freqMonths);
+        const unitsPerTranche = g.units / totalTranches;
+        const grantDate = new Date(g.grantDate + 'T00:00:00');
+        const grantPrice = g.grantValue / g.units;
+        for (let i = 1; i <= totalTranches; i++) {
+            const d = new Date(grantDate);
+            d.setMonth(d.getMonth() + i * freqMonths);
+            allVestEvents.push({
+                date: d, isPast: d <= now,
+                units: unitsPerTranche,
+                dollarVal: aaplPrice ? unitsPerTranche * aaplPrice : unitsPerTranche * grantPrice,
+                grantLabel: g.label,
+            });
+        }
+    });
+    allVestEvents.sort((a, b) => a.date - b.date);
+
+    const nextVest = allVestEvents.find(v => !v.isPast);
     const nextVestDays = nextVest ? Math.ceil((nextVest.date - now) / (1000*60*60*24)) : null;
+    const vestedTranches = allVestEvents.filter(v => v.isPast).length;
+    const totalTranches = allVestEvents.length;
 
-    const fmtUSD = v => '$' + v.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
-
-    el.innerHTML = `
+    // Hero card
+    let html = `
         <div class="espp-hero">
             <div style="position:relative;z-index:1">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
                     <span style="font-size:28px">🍎</span>
                     <div>
                         <div style="font-size:16px;font-weight:600">Apple Inc.</div>
-                        <div style="font-size:12px;color:rgba(255,255,255,0.5)">AAPL · ${totalUnits} units · Grant price ${fmtUSD(grantPrice)}</div>
+                        <div style="font-size:12px;color:rgba(255,255,255,0.5)">AAPL · ${totalUnits} units across ${grants.length} grant${grants.length!==1?'s':''}</div>
                     </div>
                     ${aaplPrice ? `<div style="margin-left:auto;text-align:right">
                         <div style="font-size:18px;font-weight:600">${fmtUSD(aaplPrice)}</div>
@@ -3779,15 +3822,12 @@ function renderEspp() {
                     </div>` : ''}
                 </div>
                 <div class="espp-hero-label">Current Total Value</div>
-                <div class="espp-hero-value">${currentTotal ? fmtUSD(currentTotal) : fmtUSD(grantValue) + ' (grant)'}</div>
+                <div class="espp-hero-value">${currentTotal ? fmtUSD(currentTotal) : fmtUSD(totalGrantValue) + ' (grant)'}</div>
                 <div style="display:flex;gap:12px;margin-top:4px">
-                    <div class="espp-hero-sub">Grant: ${fmtUSD(grantValue)}</div>
+                    <div class="espp-hero-sub">Total grant: ${fmtUSD(totalGrantValue)}</div>
                     ${unrealizedGain != null ? `<div class="espp-hero-sub" style="color:${unrealizedGain >= 0 ? '#4ade80' : '#f87171'}">
                         ${unrealizedGain >= 0 ? '↑' : '↓'} ${fmtUSD(Math.abs(unrealizedGain))} (${gainPctTotal.toFixed(1)}%)
                     </div>` : ''}
-                </div>
-                <div class="espp-hero-sub" style="margin-top:4px">
-                    ${new Date(grantDate+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})} · ${vestYears}-year ${vestFreq} vest
                 </div>
                 <div class="espp-progress"><div class="espp-progress-fill" style="width:${vestPct.toFixed(1)}%"></div></div>
                 <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.5)">
@@ -3811,30 +3851,60 @@ function renderEspp() {
             <div class="espp-stat">
                 <div class="espp-stat-label">Next Vest</div>
                 <div class="espp-stat-value">${nextVest ? nextVest.date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'Fully vested'}</div>
-                ${nextVestDays != null ? `<div class="espp-stat-sub">${nextVestDays} day${nextVestDays!==1?'s':''} · ${unitsPerTranche.toFixed(1)} units (${fmtUSD(nextVest.dollarVal)})</div>` : ''}
+                ${nextVestDays != null ? `<div class="espp-stat-sub">${nextVestDays} day${nextVestDays!==1?'s':''} · ${nextVest.units.toFixed(1)} units (${nextVest.grantLabel})</div>` : ''}
             </div>
-        </div>
+        </div>`;
 
-        <div class="card espp-vest-timeline" style="margin-top:20px">
-            <div class="card-header"><h2>Vesting Schedule</h2><span class="count-badge">${vestedTranches} / ${totalTranches} vested</span></div>
-            ${vestEvents.map((v, i) => {
-                const isNext = !v.isPast && (i === 0 || vestEvents[i-1].isPast);
-                const dotCls = v.isPast ? 'done' : isNext ? 'next' : 'future';
-                const statusHtml = v.isPast
-                    ? '<span class="espp-vest-status" style="background:var(--green-bg);color:var(--green)">Vested</span>'
-                    : isNext
-                    ? '<span class="espp-vest-status" style="background:rgba(245,158,11,0.12);color:var(--amber)">Next</span>'
-                    : '<span class="espp-vest-status" style="background:var(--surface2);color:var(--label3)">Pending</span>';
-                return `<div class="espp-vest-item">
-                    <div class="espp-vest-dot ${dotCls}"></div>
-                    <span class="espp-vest-date">${v.date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>
-                    ${statusHtml}
-                    <span class="espp-vest-amt" style="margin-left:auto">${v.units.toFixed(1)} units · ${fmtUSD(v.dollarVal)}</span>
-                </div>`;
-            }).join('')}
-        </div>
+    // Individual grant cards
+    html += `<div class="card" style="margin-top:20px">
+        <div class="card-header"><h2>Grants</h2><span class="count-badge">${grants.length} grant${grants.length!==1?'s':''}</span></div>
+        ${grants.map(g => {
+            const grantPrice = g.grantValue / g.units;
+            const curVal = aaplPrice ? g.units * aaplPrice : g.grantValue;
+            const gGain = aaplPrice ? curVal - g.grantValue : 0;
+            const gGainPct = g.grantValue > 0 && aaplPrice ? (gGain / g.grantValue * 100) : 0;
+            return `<div style="display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--sep)">
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:14px;font-weight:600;margin-bottom:2px">${g.label}</div>
+                    <div style="font-size:12px;color:var(--label2)">${new Date(g.grantDate+'T00:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'})} · ${g.units} units · ${g.vestYears}yr ${g.vestFreq}</div>
+                </div>
+                <div style="text-align:right;min-width:100px">
+                    <div style="font-size:14px;font-weight:600">${fmtUSD(curVal)}</div>
+                    <div style="font-size:11px;color:var(--label3)">Grant: ${fmtUSD(g.grantValue)}</div>
+                    ${aaplPrice ? `<div style="font-size:11px;color:${gGain >= 0 ? 'var(--green)' : 'var(--red)'}">${gGain >= 0 ? '↑' : '↓'} ${gGainPct.toFixed(1)}%</div>` : ''}
+                </div>
+                <div style="display:flex;gap:4px">
+                    <button class="row-btn" onclick="openEsppModal('${g.id}')">Edit</button>
+                    <button class="row-btn del" onclick="deleteEsppGrant('${g.id}')">×</button>
+                </div>
+            </div>`;
+        }).join('')}
+    </div>`;
 
-        ${updates.length ? `<div class="card" style="margin-top:20px">
+    // Combined vesting schedule
+    html += `<div class="card espp-vest-timeline" style="margin-top:20px">
+        <div class="card-header"><h2>Vesting Schedule</h2><span class="count-badge">${vestedTranches} / ${totalTranches} vested</span></div>
+        ${allVestEvents.map((v, i) => {
+            const isNext = !v.isPast && (i === 0 || allVestEvents[i-1].isPast);
+            const dotCls = v.isPast ? 'done' : isNext ? 'next' : 'future';
+            const statusHtml = v.isPast
+                ? '<span class="espp-vest-status" style="background:var(--green-bg);color:var(--green)">Vested</span>'
+                : isNext
+                ? '<span class="espp-vest-status" style="background:rgba(245,158,11,0.12);color:var(--amber)">Next</span>'
+                : '<span class="espp-vest-status" style="background:var(--surface2);color:var(--label3)">Pending</span>';
+            return `<div class="espp-vest-item">
+                <div class="espp-vest-dot ${dotCls}"></div>
+                <span class="espp-vest-date">${v.date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>
+                ${statusHtml}
+                <span style="font-size:11px;color:var(--label3);margin-left:4px">${v.grantLabel}</span>
+                <span class="espp-vest-amt" style="margin-left:auto">${v.units.toFixed(1)} units · ${fmtUSD(v.dollarVal)}</span>
+            </div>`;
+        }).join('')}
+    </div>`;
+
+    // Update history
+    if (updates.length) {
+        html += `<div class="card" style="margin-top:20px">
             <div class="card-header"><h2>Update History</h2><span class="count-badge">${updates.length} update${updates.length!==1?'s':''}</span></div>
             <table style="width:100%;border-collapse:collapse">
                 <thead><tr>
@@ -3859,7 +3929,10 @@ function renderEspp() {
                     </tr>`;
                 }).join('')}</tbody>
             </table>
-        </div>` : ''}`;
+        </div>`;
+    }
+
+    el.innerHTML = html;
 }
 
 // ── Init ──
