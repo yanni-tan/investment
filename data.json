@@ -169,15 +169,6 @@
       "targetPrice": "322",
       "qty": "1",
       "notes": ""
-    },
-    {
-      "id": "nnmmuix7hdmqq1sltm",
-      "ticker": "A35",
-      "action": "Buy",
-      "name": "A35",
-      "targetPrice": "",
-      "qty": "",
-      "notes": "Bond"
     }
   ],
   "snapshots": [
@@ -197,5 +188,5 @@
       }
     }
   ],
-  "updatedAt": "2026-06-23T02:51:25.691Z"
+  "updatedAt": "2026-06-23T11:38:47.502Z"
 }
