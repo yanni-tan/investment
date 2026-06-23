@@ -182,12 +182,19 @@
   "dividends": [],
   "realized": [],
   "espp": {
-    "totalUnits": 625,
-    "grantValue": 181892.73,
-    "grantDate": "2027-06-23",
-    "vestYears": 4,
-    "vestFreq": "semi-annually",
-    "vestedUnits": 110.42449305148149
+    "grants": [
+      {
+        "id": "mqqt706i",
+        "label": "Initial Grant",
+        "units": 625,
+        "grantValue": 181892.73,
+        "grantDate": "2027-06-23",
+        "vestYears": 4,
+        "vestFreq": "semi-annually"
+      }
+    ],
+    "vestedUnits": 110.42449305148149,
+    "updates": []
   },
-  "updatedAt": "2026-06-23T14:07:30.933Z"
+  "updatedAt": "2026-06-23T15:38:27.120Z"
 }
