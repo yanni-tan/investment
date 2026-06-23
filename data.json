@@ -165,19 +165,29 @@
   "snapshots": [
     {
       "month": "2026-06",
-      "gainUSD": 6211.869999999995,
-      "totalUSD": 22689.566,
+      "gainUSD": 6261.761599999998,
+      "totalUSD": 23124.678809999998,
       "byMkt": {
         "US": 12596.039999999999,
-        "SG": 10093.526000000002,
+        "SG": 10528.63881,
         "UK": 0
       },
       "costByMkt": {
         "US": 7541.530000000001,
-        "SG": 8936.166000000001,
+        "SG": 9321.387209999999,
         "UK": 0
       }
     }
   ],
-  "updatedAt": "2026-06-23T12:56:46.336Z"
+  "dividends": [],
+  "realized": [],
+  "espp": {
+    "totalUnits": 625,
+    "grantValue": 132000,
+    "grantDate": "2026-06-14",
+    "vestYears": 4,
+    "vestFreq": "semi-annually",
+    "vestedAmount": 31824
+  },
+  "updatedAt": "2026-06-23T13:50:37.712Z"
 }
