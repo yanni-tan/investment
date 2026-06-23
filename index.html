@@ -2361,38 +2361,9 @@ function renderStatsRow(rows) {
     const s = calcSummary(rows);
     const mkts = [['US','USD',1], ['SG','SGD',1/fxSGDUSD]];
 
-    // Market cards + Grand Total + ESPP before US
+    // Market cards + ESPP before US
     let html = '';
-
-    // Grand Total card (portfolio + vested ESPP + dividends)
-    const portfolioVal = totalUSDof(rows);
     const totalDiv = dividends.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
-    let esppVestedVal = 0;
-    if (esppData?.grants?.length) {
-        const vestedU = getAutoVestedUnits(esppData.grants);
-        const totalUnitsGT = esppData.grants.reduce((s,g) => s + g.units, 0);
-        const totalGrantVal = esppData.grants.reduce((s,g) => s + g.grantValue, 0);
-        const avgGP = totalGrantVal / totalUnitsGT;
-        const ap = prices['AAPL']?.price || parseFloat(localStorage.getItem('espp_aapl_price')) || null;
-        esppVestedVal = ap ? vestedU * ap : vestedU * avgGP;
-    }
-    const grandTotal = portfolioVal + esppVestedVal + totalDiv;
-    const totalCost = rows.reduce((s, r) => s + toUSD(r.costBasis, r.currency), 0);
-    const grandCost = totalCost + (esppData?.grants?.length ? getAutoVestedUnits(esppData.grants) * (esppData.grants.reduce((s,g) => s + g.grantValue, 0) / esppData.grants.reduce((s,g) => s + g.units, 0)) : 0);
-    const grandGain = grandTotal - grandCost;
-    const grandGainPct = grandCost > 0 ? (grandGain / grandCost * 100) : 0;
-    html += `<div class="stat-mini">
-        <div class="stat-head">
-            <div class="stat-icon" style="background:rgba(59,130,246,0.1)">💰</div>
-        </div>
-        <div class="stat-label">Net Worth</div>
-        <div class="stat-value">${dmoney(grandTotal)}</div>
-        <div class="stat-badges">
-            <span class="kpi-badge ${badgeClass(grandGain)}" style="font-size:10px;padding:3px 8px">${grandGain >= 0 ? '↑' : '↓'} ${dmoney(Math.abs(grandGain))}</span>
-            <span class="kpi-badge ${badgeClass(grandGainPct)}" style="font-size:10px;padding:3px 8px">${grandGain >= 0 ? '↑' : '↓'} ${pct(grandGainPct)}</span>
-        </div>
-        <div class="stat-sub">Portfolio + ESPP + Dividends</div>
-    </div>`;
 
     mkts.forEach(([mkt, cur, fx]) => {
         // Insert ESPP card before US
