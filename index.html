@@ -549,7 +549,7 @@
 
         .stats-row {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 12px;
         }
 
@@ -585,22 +585,6 @@
             font-size: 10px; color: var(--label3); margin-top: 4px;
         }
 
-        /* ── Breakdown card (full width) ── */
-        .breakdown-card {
-            background: var(--surface);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            margin-bottom: 24px;
-        }
-        .breakdown-header {
-            display: flex; align-items: center; gap: 16px;
-            padding: 14px 22px 0;
-        }
-        .breakdown-header h2 { font-size: 15px; font-weight: 600; flex-shrink: 0; }
-        .breakdown-body {
-            padding: 0 6px;
-        }
-
         /* ── Filter chips ── */
         .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
         .chip {
@@ -629,31 +613,6 @@
         .perf-bar.pos { background: var(--green); }
         .perf-bar.neg { background: var(--red); }
         .perf-pct { font-size: 11px; font-weight: 600; min-width: 56px; text-align: right; flex-shrink: 0; }
-
-        /* ── Breakdown (Top Categories) ── */
-        .breakdown-tabs { display: flex; gap: 4px; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-        .breakdown-tabs::-webkit-scrollbar { display: none; }
-        .bk-tab {
-            padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
-            border: none; background: transparent; color: var(--label2);
-            cursor: pointer; font-family: inherit; transition: all .15s;
-        }
-        .bk-tab.active { background: var(--surface2); color: var(--label); }
-        .breakdown-list { padding: 4px 0 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
-        .bk-row {
-            display: flex; align-items: center; gap: 12px;
-            padding: 10px 16px; border-bottom: 1px solid var(--sep);
-        }
-        .bk-row:last-child { border-bottom: none; }
-        .bk-icon {
-            width: 36px; height: 36px; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 15px; flex-shrink: 0;
-        }
-        .bk-label { font-size: 11px; color: var(--label2); margin-bottom: 1px; }
-        .bk-value { font-size: 14px; font-weight: 700; }
-        .bk-right { margin-left: auto; text-align: right; }
-        .bk-gain  { font-size: 12px; font-weight: 600; }
 
         /* ── Sync indicator ── */
         .sync-dot {
@@ -1097,9 +1056,6 @@
         }
 
         /* ── Responsive ── */
-        @media (max-width: 1100px) {
-            .stats-row { grid-template-columns: 1fr 1fr; }
-        }
         @media (max-width: 900px) {
             .kpi-grid { grid-template-columns: 1fr 1fr; }
         }
@@ -1139,10 +1095,6 @@
             .stats-row { grid-template-columns: 1fr 1fr; gap: 10px; }
             .stat-mini { padding: 14px; }
             .stat-mini .stat-value { font-size: 17px; }
-
-            /* Breakdown */
-            .breakdown-list { grid-template-columns: 1fr; }
-            .breakdown-header { flex-direction: column; align-items: flex-start; gap: 8px; }
 
             /* Table → Cards on mobile */
             .mobile-cards { display: block; }
@@ -1349,24 +1301,6 @@
     <div class="top-section">
         <div class="kpi-grid" id="kpi-grid"></div>
         <div class="stats-row" id="stats-row"></div>
-    </div>
-
-    <!-- Breakdown (full width) -->
-    <div class="breakdown-card" id="breakdown-card">
-        <div class="breakdown-header">
-            <h2>Breakdown</h2>
-            <div class="breakdown-tabs" id="bk-tabs">
-                <button class="bk-tab active" data-bk="market">Market</button>
-                <button class="bk-tab" data-bk="perf">Performance</button>
-                <button class="bk-tab" data-bk="alloc">Allocation</button>
-                <button class="bk-tab" data-bk="type">Type</button>
-                <button class="bk-tab" data-bk="sector">Sector</button>
-            </div>
-        </div>
-        <div class="breakdown-body">
-            <div id="bk-body"></div>
-        </div>
-        <div class="fx-note" id="fx-note" style="display:none"></div>
     </div>
 
     <!-- ── Portfolio Value Chart ── -->
@@ -1790,7 +1724,6 @@ let typeFilter = 'all';
 let accountFilter = 'all';
 let sortCol  = null;
 let sortDir  = 'desc';
-let bkTab    = 'type';
 let fetching = false;
 let displayCur = 'USD'; // 'USD' or 'SGD'
 let searchQuery = '';
@@ -2003,7 +1936,6 @@ function render() {
     renderTypeChips(all);
     renderTable(searched, tot);
     renderChart(all, tot);
-    renderBreakdown(all);
     renderValueChart();
 }
 
@@ -2460,7 +2392,7 @@ function tableRow(r, tot) {
 
 function renderChart(rows, tot) {
     const body = document.getElementById('chart-body');
-    if (!body) return;  // allocation now handled inside renderBreakdown
+    if (!body) return;
 
     const byMkt = {};
     rows.forEach(r => {
@@ -2604,10 +2536,30 @@ function renderStatsRow(rows) {
         </div>`;
     }
 
-    el.innerHTML = html;
-}
+    // ESPP vested card
+    if (esppData?.grants?.length) {
+        const totalUnits = esppData.grants.reduce((s,g) => s + g.units, 0);
+        const vestedU = esppData.vestedUnits || 0;
+        const aaplPrice = prices['AAPL']?.price || null;
+        const totalGrantValue = esppData.grants.reduce((s,g) => s + g.grantValue, 0);
+        const avgGrantPrice = totalGrantValue / totalUnits;
+        const vestedVal = aaplPrice ? vestedU * aaplPrice : vestedU * avgGrantPrice;
+        const currentTotal = aaplPrice ? totalUnits * aaplPrice : totalGrantValue;
+        const vestPct = totalUnits > 0 ? (vestedU / totalUnits * 100) : 0;
+        html += `<div class="stat-mini" onclick="showPanel('espp')">
+            <div class="stat-head">
+                <div class="stat-icon" style="background:rgba(168,85,247,0.1)">🍎</div>
+            </div>
+            <div class="stat-label">ESPP Vested</div>
+            <div class="stat-value">${dmoney(vestedVal)}</div>
+            <div class="stat-badges">
+                <span class="kpi-badge up" style="font-size:10px;padding:3px 8px">${vestPct.toFixed(1)}% of ${dmoney(currentTotal)}</span>
+            </div>
+            <div class="stat-sub">${vestedU.toFixed(1)} / ${totalUnits} shares</div>
+        </div>`;
+    }
 
-// ── Type + Market filter chips ──
+    el.innerHTML = html;
 function renderTypeChips(rows) {
     const el = document.getElementById('type-chips');
     const types   = ['all', ...new Set(holdings.map(r => r.type))].filter(Boolean);
@@ -2654,124 +2606,6 @@ function renderPerformance(rows) {
             <span class="perf-ticker">${short.slice(0,5)}</span>
             <div class="perf-bar-wrap"><div class="perf-bar ${cls}" style="width:${w}%"></div></div>
             <span class="perf-pct ${cls}">${pct(r.gainPct)}</span>
-        </div>`;
-    }).join('')}</div>`;
-}
-
-// ── Breakdown by type / market / sector / allocation ──
-const BK_ICONS = {
-    Stock:       { icon: '📈', bg: 'rgba(59,130,246,0.1)' },
-    ETF:         { icon: '🗂', bg: 'rgba(34,197,94,0.1)' },
-    REIT:        { icon: '🏢', bg: 'rgba(245,158,11,0.1)' },
-    US:          { icon: '🇺🇸', bg: 'rgba(59,130,246,0.1)' },
-    SG:          { icon: '🇸🇬', bg: 'rgba(245,158,11,0.1)' },
-    UK:          { icon: '🇬🇧', bg: 'rgba(139,92,246,0.1)' },
-    Tech:        { icon: '💻', bg: 'rgba(99,102,241,0.1)' },
-    Finance:     { icon: '🏦', bg: 'rgba(59,130,246,0.1)' },
-    Healthcare:  { icon: '🏥', bg: 'rgba(34,197,94,0.1)' },
-    Consumer:    { icon: '🛍', bg: 'rgba(245,158,11,0.1)' },
-    Energy:      { icon: '⚡', bg: 'rgba(234,179,8,0.1)' },
-    Industrials: { icon: '🏭', bg: 'rgba(107,114,128,0.1)' },
-    'Real Estate':{ icon: '🏘', bg: 'rgba(245,158,11,0.1)' },
-    Utilities:   { icon: '💡', bg: 'rgba(16,185,129,0.1)' },
-    'Broad Market':{ icon: '🌐', bg: 'rgba(59,130,246,0.1)' },
-};
-
-function renderBreakdown(rows) {
-    const el = document.getElementById('bk-body');
-    const fxNote = document.getElementById('fx-note');
-    if (!rows.length) { el.innerHTML = ''; return; }
-
-    // Allocation tab — render donut chart
-    if (bkTab === 'alloc') {
-        fxNote.style.display = 'block';
-        fxNote.textContent = `1 SGD = ${fxSGDUSD.toFixed(4)} USD · 1 GBP = ${fxGBPUSD.toFixed(4)} USD`;
-        const byMkt = {};
-        rows.forEach(r => {
-            const v = toUSD(r.value ?? r.costBasis, r.currency);
-            byMkt[r.market] = (byMkt[r.market] || 0) + v;
-        });
-        const markets = Object.entries(byMkt).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
-        const total = markets.reduce((s, [, v]) => s + v, 0);
-        let angle = 0;
-        const stops = markets.map(([mkt, v]) => {
-            const deg = (v / total) * 360;
-            const stop = `${MARKET_COLORS[mkt] || '#94a3b8'} ${angle.toFixed(1)}deg ${(angle + deg).toFixed(1)}deg`;
-            angle += deg; return stop;
-        });
-        const gradient = stops.length > 1 ? `conic-gradient(${stops.join(', ')})` : `conic-gradient(${MARKET_COLORS[markets[0][0]]} 0deg 360deg)`;
-        const allocRows = markets.map(([mkt, v]) => {
-            const p = (v / total) * 100;
-            return `<div class="alloc-row" style="flex-direction:column;align-items:stretch;gap:5px">
-                <div style="display:flex;justify-content:space-between;align-items:center">
-                    <div class="alloc-left"><div class="alloc-dot" style="background:${MARKET_COLORS[mkt]||'#94a3b8'}"></div><span class="alloc-market">${MKT_FLAGS[mkt]||''} ${mkt}</span></div>
-                    <span class="alloc-pct">${p.toFixed(1)}%</span>
-                </div>
-                <div class="alloc-bar-wrap" style="margin:0;flex:none;width:100%"><div class="alloc-bar" style="width:${p.toFixed(1)}%;background:${MARKET_COLORS[mkt]||'#94a3b8'}"></div></div>
-            </div>`;
-        }).join('');
-        el.innerHTML = `<div class="chart-inner">
-            <div class="donut-wrap">
-                <div class="donut-ring" style="background:${gradient}"></div>
-                <div class="donut-hole"><div class="donut-total">${money(total,'USD')}</div><div class="donut-label">Total USD</div></div>
-            </div>
-            <div class="alloc-list">${allocRows}</div>
-        </div>`;
-        return;
-    }
-
-    fxNote.style.display = 'none';
-
-    // Performance tab
-    if (bkTab === 'perf') {
-        const sorted = [...rows].filter(r => r.gainPct != null).sort((a, b) => b.gainPct - a.gainPct);
-        const maxA = Math.max(...sorted.map(r => Math.abs(r.gainPct)), 1);
-        el.innerHTML = `<div class="perf-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px 24px">${sorted.map(r => {
-            const w = (Math.abs(r.gainPct) / maxA * 100).toFixed(1);
-            const cls = r.gainPct >= 0 ? 'pos' : 'neg';
-            const short = r.ticker.replace('.SI','').replace('.L','');
-            const tip = [
-                `<strong>${r.name}</strong>`,
-                `Value: ${money(r.value ?? r.costBasis, r.currency)}`,
-                `Gain: ${signed(r.gainLoss, r.currency)} (${pct(r.gainPct)})`,
-                `Cost: ${money(r.costBasis, r.currency)}`,
-            ].join('<br>').replace(/'/g, '&#39;');
-            return `<div class="perf-row" style="cursor:default"
-                onmouseenter="showTooltip(event,'${tip}')"
-                onmousemove="moveTooltip(event)"
-                onmouseleave="hideTooltip()">
-                <span class="perf-ticker">${short.slice(0,5)}</span>
-                <div class="perf-bar-wrap"><div class="perf-bar ${cls}" style="width:${w}%"></div></div>
-                <span class="perf-pct ${cls}">${pct(r.gainPct)}</span>
-            </div>`;
-        }).join('')}</div>`;
-        return;
-    }
-
-    const groups = {};
-    rows.forEach(r => {
-        const key = bkTab === 'type' ? r.type : bkTab === 'sector' ? (r.sector || 'Other') : r.market;
-        const v    = r.value ?? r.costBasis;
-        const val  = bkTab === 'market' ? v : toUSD(v, r.currency);
-        const cost = bkTab === 'market' ? r.costBasis : toUSD(r.costBasis, r.currency);
-        const cur  = bkTab === 'market' ? r.currency : 'USD';
-        if (!groups[key]) groups[key] = { val: 0, cost: 0, cur };
-        groups[key].val  += val;
-        groups[key].cost += cost;
-    });
-
-    const entries = Object.entries(groups).sort((a, b) => b[1].val - a[1].val);
-    el.innerHTML = `<div class="breakdown-list">${entries.map(([key, g]) => {
-        const gain = g.val - g.cost;
-        const gPct = g.cost > 0 ? (gain / g.cost) * 100 : 0;
-        const meta = BK_ICONS[key] || { icon: '📊', bg: 'rgba(148,163,184,0.1)' };
-        return `<div class="bk-row">
-            <div class="bk-icon" style="background:${meta.bg}">${meta.icon}</div>
-            <div><div class="bk-label">${key}</div><div class="bk-value">${money(g.val, g.cur)}</div></div>
-            <div class="bk-right">
-                <div class="bk-gain ${cc(gain)}">${signed(gain, g.cur)}</div>
-                <div style="font-size:11px;color:var(--label3)">${pct(gPct)}</div>
-            </div>
         </div>`;
     }).join('')}</div>`;
 }
@@ -2885,15 +2719,6 @@ document.getElementById('f-ticker').addEventListener('input', e => {
     const s = e.target.selectionStart;
     e.target.value = e.target.value.toUpperCase();
     e.target.setSelectionRange(s, s);
-});
-
-document.getElementById('bk-tabs').addEventListener('click', e => {
-    const btn = e.target.closest('.bk-tab');
-    if (!btn) return;
-    document.querySelectorAll('.bk-tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    bkTab = btn.dataset.bk;
-    render();
 });
 
 document.querySelectorAll('.nav-item[data-tab]').forEach(btn => {
