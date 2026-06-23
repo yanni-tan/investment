@@ -3531,40 +3531,37 @@ function deleteEsppUpdate(idx) {
     toast('Update removed');
 }
 
+function getVestEvents(g) {
+    const grantPrice = g.grantValue / g.units;
+    const now = new Date();
+    // Use explicit vestSchedule if available
+    if (g.vestSchedule && g.vestSchedule.length) {
+        return g.vestSchedule.map(v => {
+            const d = new Date(v.date + 'T00:00:00');
+            return { date: d, isPast: d <= now, units: v.units, grantLabel: g.label, grantPrice };
+        });
+    }
+    // Fallback: calculate from frequency
+    const freqMonths = g.vestFreq === 'semi-annually' ? 6 : g.vestFreq === 'quarterly' ? 3 : g.vestFreq === 'monthly' ? 1 : 12;
+    const totalTranches = Math.round((g.vestYears * 12) / freqMonths);
+    const grantDate = new Date(g.grantDate + 'T00:00:00');
+    const baseUnits = Math.floor(g.units / totalTranches);
+    const remainder = g.units - baseUnits * totalTranches;
+    const events = [];
+    for (let i = 0; i < totalTranches; i++) {
+        const d = new Date(grantDate);
+        d.setMonth(d.getMonth() + (i + 1) * freqMonths);
+        const units = baseUnits + (i >= totalTranches - remainder ? 1 : 0);
+        events.push({ date: d, isPast: d <= now, units, grantLabel: g.label, grantPrice });
+    }
+    return events;
+}
+
 function getAutoVestedUnits(grants) {
     if (!grants || !grants.length) return 0;
-    const now = new Date();
-    let vested = 0;
-    grants.forEach(g => {
-        const freqMonths = g.vestFreq === 'semi-annually' ? 6 : g.vestFreq === 'quarterly' ? 3 : g.vestFreq === 'monthly' ? 1 : 12;
-        const totalTranches = Math.round((g.vestYears * 12) / freqMonths);
-        const grantDate = new Date(g.grantDate + 'T00:00:00');
-        const baseUnits = Math.floor(g.units / totalTranches);
-        const remainder = g.units - baseUnits * totalTranches;
-        const va = g.vestAmounts || [];
-        const useFixedDates = g.vestFreq === 'semi-annually';
-        let vestDates = [];
-        if (useFixedDates) {
-            let yr = grantDate.getFullYear();
-            while (vestDates.length < totalTranches) {
-                for (const m of [1, 7]) {
-                    const vd = new Date(yr, m, 15);
-                    const minVest = new Date(grantDate); minVest.setMonth(minVest.getMonth() + 6);
-                    if (vd >= minVest && vestDates.length < totalTranches) vestDates.push(vd);
-                }
-                yr++;
-            }
-        }
-        for (let i = 0; i < totalTranches; i++) {
-            let d;
-            if (useFixedDates) { d = vestDates[i]; }
-            else { d = new Date(grantDate); d.setMonth(d.getMonth() + (i + 1) * freqMonths); }
-            if (d <= now) {
-                vested += va[i] != null ? va[i] : (baseUnits + (i >= totalTranches - remainder ? 1 : 0));
-            }
-        }
-    });
-    return vested;
+    return grants.reduce((sum, g) => {
+        return sum + getVestEvents(g).filter(v => v.isPast).reduce((s, v) => s + v.units, 0);
+    }, 0);
 }
 
 function renderEspp() {
@@ -3604,49 +3601,13 @@ function renderEspp() {
     // Merge vesting events from all grants
     const allVestEvents = [];
     grants.forEach(g => {
-        const freqMonths = g.vestFreq === 'semi-annually' ? 6 : g.vestFreq === 'quarterly' ? 3 : g.vestFreq === 'monthly' ? 1 : 12;
-        const totalTranches = Math.round((g.vestYears * 12) / freqMonths);
-        const grantDate = new Date(g.grantDate + 'T00:00:00');
-        const grantPrice = g.grantValue / g.units;
-
-        // Distribute units with rounding: later tranches get the extra shares
-        const baseUnits = Math.floor(g.units / totalTranches);
-        const remainder = g.units - baseUnits * totalTranches;
-        const va = g.vestAmounts || [];
-
-        // For semi-annual: use Apple's fixed vest dates (Feb 15 & Aug 15)
-        const useFixedDates = g.vestFreq === 'semi-annually';
-        let vestDates = [];
-        if (useFixedDates) {
-            let yr = grantDate.getFullYear();
-            while (vestDates.length < totalTranches) {
-                for (const m of [1, 7]) { // Feb=1, Aug=7
-                    const vd = new Date(yr, m, 15);
-                    const minVest = new Date(grantDate); minVest.setMonth(minVest.getMonth() + 6);
-                    if (vd >= minVest && vestDates.length < totalTranches) {
-                        vestDates.push(vd);
-                    }
-                }
-                yr++;
-            }
-        }
-
-        for (let i = 0; i < totalTranches; i++) {
-            let d;
-            if (useFixedDates) {
-                d = vestDates[i];
-            } else {
-                d = new Date(grantDate);
-                d.setMonth(d.getMonth() + (i + 1) * freqMonths);
-            }
-            const units = va[i] != null ? va[i] : (baseUnits + (i >= totalTranches - remainder ? 1 : 0));
+        const events = getVestEvents(g);
+        events.forEach(ev => {
             allVestEvents.push({
-                date: d, isPast: d <= now,
-                units,
-                dollarVal: aaplPrice ? units * aaplPrice : units * grantPrice,
-                grantLabel: g.label,
+                ...ev,
+                dollarVal: aaplPrice ? ev.units * aaplPrice : ev.units * ev.grantPrice,
             });
-        }
+        });
     });
     allVestEvents.sort((a, b) => a.date - b.date);
 
