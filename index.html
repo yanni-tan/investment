@@ -2120,7 +2120,6 @@ function renderTable(rows, tot) {
         const vals = {
             name:    r => r.name,
             market:  r => r.market,
-            account: r => r.account || 'Cash',
             shares:  r => r.shares,
             avgCost: r => r.avgCost,
             price:   r => r.price ?? 0,
@@ -2148,7 +2147,6 @@ function renderTable(rows, tot) {
                 <tr>
                     <th class="sortable${sortCol==='name'?' sorted':''}" data-col="name">Holding <i class="sort-icon">${sortCol==='name'?(sortDir==='asc'?'↑':'↓'):'↕'}</i></th>
                     <th class="sortable${sortCol==='market'?' sorted':''}" data-col="market">Market <i class="sort-icon">${sortCol==='market'?(sortDir==='asc'?'↑':'↓'):'↕'}</i></th>
-                    ${thSort('account','Account')}
                     ${thSort('shares','Shares')}
                     ${thSort('avgCost','Avg Cost')}
                     ${thSort('price','Price')}
@@ -2208,8 +2206,7 @@ function tableRow(r, tot) {
                     </div>
                 </div>
             </td>
-            <td><span class="mkt-pill mkt-${r.market.toLowerCase()}">${r.market}</span></td>
-            <td>${r.account === 'SRS' ? '<span class="mkt-pill" style="background:rgba(139,92,246,0.12);color:#7c3aed">SRS</span>' : 'Cash'}</td>
+            <td><span class="mkt-pill mkt-${r.market.toLowerCase()}">${r.market}</span>${r.account === 'SRS' ? ' <span class="mkt-pill" style="background:rgba(139,92,246,0.12);color:#7c3aed">SRS</span>' : ''}</td>
             <td class="r">${Number(r.shares).toLocaleString('en-US', { maximumFractionDigits: 4 })}</td>
             <td class="r">${money(r.avgCost, r.currency)}</td>
             <td class="r">${priceCell}</td>
