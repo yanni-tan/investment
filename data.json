@@ -19,8 +19,8 @@
       "name": "Vaneck Semiconductor ETF",
       "type": "ETF",
       "currency": "USD",
-      "shares": 3,
-      "avgCost": 394.83,
+      "shares": 4,
+      "avgCost": 451.1225,
       "notes": "",
       "manualPrice": 663.62
     },
@@ -288,5 +288,5 @@
       }
     ]
   },
-  "updatedAt": "2026-06-24T01:43:49.034Z"
+  "updatedAt": "2026-06-24T01:45:11.902Z"
 }
