@@ -467,7 +467,7 @@
 
         .mkt-us  { background: rgba(59,130,246,0.12);  color: #2563eb; }
         .mkt-sg  { background: rgba(236,72,153,0.12);  color: #db2777; }
-        .mkt-uk  { background: rgba(139,92,246,0.12);  color: #7c3aed; }
+        .mkt-uk  { background: rgba(217,119,6,0.12);  color: #d97706; }
 
         .price-cell { cursor: pointer; }
         .price-cell:hover { text-decoration: underline dotted var(--label3); }
@@ -1685,7 +1685,7 @@
 
 // ── Constants ──
 const KEY = 'portfolio_v1';
-const MARKET_COLORS = { US: '#3b82f6', SG: '#ec4899', UK: '#8b5cf6' };
+const MARKET_COLORS = { US: '#3b82f6', SG: '#ec4899', UK: '#d97706' };
 
 // ── State ──
 let holdings = [];
@@ -2071,7 +2071,7 @@ function mobileCard(r, tot) {
                 <div class="hc-name">${r.name}</div>
                 <div class="hc-meta">
                     <span class="mkt-pill mkt-${r.market.toLowerCase()}">${r.market}</span>
-                    ${r.account === 'SRS' ? '<span class="mkt-pill" style="background:rgba(139,92,246,0.12);color:#7c3aed">SRS</span>' : ''}
+                    ${r.account === 'SRS' ? '<span class="mkt-pill" style="background:rgba(13,148,136,0.12);color:#0d9488">SRS</span>' : ''}
                     <span>${r.type}</span>
                 </div>
             </div>
@@ -2206,7 +2206,7 @@ function tableRow(r, tot) {
                     </div>
                 </div>
             </td>
-            <td><span class="mkt-pill mkt-${r.market.toLowerCase()}">${r.market}</span>${r.account === 'SRS' ? ' <span class="mkt-pill" style="background:rgba(139,92,246,0.12);color:#7c3aed">SRS</span>' : ''}</td>
+            <td><span class="mkt-pill mkt-${r.market.toLowerCase()}">${r.market}</span>${r.account === 'SRS' ? ' <span class="mkt-pill" style="background:rgba(13,148,136,0.12);color:#0d9488">SRS</span>' : ''}</td>
             <td class="r">${Number(r.shares).toLocaleString('en-US', { maximumFractionDigits: 4 })}</td>
             <td class="r">${money(r.avgCost, r.currency)}</td>
             <td class="r">${priceCell}</td>
@@ -2370,7 +2370,7 @@ function renderStatsRow(rows) {
     const el = document.getElementById('stats-row');
     if (!rows.length) { el.innerHTML = ''; return; }
     const s = calcSummary(rows);
-    const mkts = [['US','USD',1], ['SG','SGD',1/fxSGDUSD]];
+    const mkts = [['US','USD',1], ['SG','SGD',1/fxSGDUSD], ['UK','GBP',1/fxGBPUSD]];
 
     // Market cards + ESPP before US
     let html = '';
@@ -3762,7 +3762,7 @@ function openDetail(id) {
             <span class="mkt-pill mkt-${r.market.toLowerCase()}">${r.market}</span>
             <span class="chip" style="padding:3px 10px;font-size:11px">${r.type}</span>
             ${r.sector ? `<span class="chip" style="padding:3px 10px;font-size:11px">${r.sector}</span>` : ''}
-            ${r.account === 'SRS' ? '<span class="mkt-pill" style="background:rgba(139,92,246,0.12);color:#7c3aed">SRS</span>' : '<span class="chip" style="padding:3px 10px;font-size:11px">Cash</span>'}
+            ${r.account === 'SRS' ? '<span class="mkt-pill" style="background:rgba(13,148,136,0.12);color:#0d9488">SRS</span>' : '<span class="chip" style="padding:3px 10px;font-size:11px">Cash</span>'}
         </div>
 
         ${r.notes ? `<div class="detail-section"><div class="detail-section-title">Notes</div><p style="font-size:13px;color:var(--label2);line-height:1.5">${r.notes}</p></div>` : ''}`;
