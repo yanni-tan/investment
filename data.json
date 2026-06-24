@@ -96,7 +96,7 @@
       "shares": 100,
       "avgCost": 57.53,
       "notes": "",
-      "manualPrice": 65.91
+      "manualPrice": 66.2
     },
     {
       "id": "npcpo1kt4ikmqovskq8",
@@ -333,5 +333,5 @@
       }
     ]
   },
-  "updatedAt": "2026-06-24T16:15:06.333Z"
+  "updatedAt": "2026-06-24T16:15:09.677Z"
 }
