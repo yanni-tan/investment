@@ -133,6 +133,19 @@
       "avgCost": 4.969,
       "notes": "",
       "manualPrice": 5.279
+    },
+    {
+      "id": "05sj4wbsax6rmqs6vjtb",
+      "ticker": "CSPX",
+      "market": "US",
+      "name": "iSHARES CORE S&P 500",
+      "type": "Stock",
+      "sector": "",
+      "currency": "USD",
+      "account": "Cash",
+      "shares": 1,
+      "avgCost": 765.44,
+      "notes": ""
     }
   ],
   "watchlist": [
@@ -177,6 +190,21 @@
       "costByMkt": {
         "US": 8161.530000000001,
         "SG": 8936.166000000001,
+        "UK": 0
+      }
+    },
+    {
+      "month": "2026-06-24",
+      "gainUSD": 6302.645599999996,
+      "totalUSD": 23767.838959999997,
+      "byMkt": {
+        "US": 13259.66,
+        "SG": 10508.178959999997,
+        "UK": 0
+      },
+      "costByMkt": {
+        "US": 8161.92,
+        "SG": 9303.273360000001,
         "UK": 0
       }
     }
@@ -290,5 +318,5 @@
       }
     ]
   },
-  "updatedAt": "2026-06-24T14:41:17.920Z"
+  "updatedAt": "2026-06-24T14:49:13.487Z"
 }
