@@ -145,7 +145,8 @@
       "account": "Cash",
       "shares": 1,
       "avgCost": 765.44,
-      "notes": ""
+      "notes": "",
+      "manualPrice": 769.09
     }
   ],
   "watchlist": [
@@ -318,5 +319,5 @@
       }
     ]
   },
-  "updatedAt": "2026-06-24T14:49:25.684Z"
+  "updatedAt": "2026-06-24T14:49:35.347Z"
 }
