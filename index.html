@@ -2370,7 +2370,7 @@ function renderStatsRow(rows) {
     const el = document.getElementById('stats-row');
     if (!rows.length) { el.innerHTML = ''; return; }
     const s = calcSummary(rows);
-    const mkts = [['US','USD',1], ['SG','SGD',1/fxSGDUSD], ['UK','GBP',1/fxGBPUSD]];
+    const mkts = [['US','USD',1], ['SG','SGD',1/fxSGDUSD], ['UK','USD',1]];
 
     // Market cards + ESPP before US
     let html = '';
