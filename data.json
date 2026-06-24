@@ -136,12 +136,12 @@
     },
     {
       "id": "05sj4wbsax6rmqs6vjtb",
-      "ticker": "CSPX",
-      "market": "US",
+      "ticker": "CSPX.L",
+      "market": "UK",
       "name": "iSHARES CORE S&P 500",
       "type": "Stock",
       "sector": "",
-      "currency": "USD",
+      "currency": "GBP",
       "account": "Cash",
       "shares": 1,
       "avgCost": 765.44,
@@ -213,13 +213,13 @@
       "gainUSD": 6291.966999999997,
       "totalUSD": 29618.681539999998,
       "byMkt": {
-        "US": 19107.7746,
-        "SG": 10510.906939999999,
+        "US": 14028.75,
+        "SG": 15589.931539999998,
         "UK": 0
       },
       "costByMkt": {
-        "US": 14021.026,
-        "SG": 9305.68854,
+        "US": 8927.36,
+        "SG": 14399.354539999998,
         "UK": 0
       }
     }
@@ -333,5 +333,5 @@
       }
     ]
   },
-  "updatedAt": "2026-06-24T15:26:32.841Z"
+  "updatedAt": "2026-06-24T15:26:52.212Z"
 }
