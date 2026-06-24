@@ -733,6 +733,78 @@
             border-top: 1px solid var(--sep);
         }
 
+        /* ── Sector Chart ── */
+        .sector-inner { padding: 20px; display: flex; align-items: center; gap: 32px; flex-wrap: wrap; }
+        .sector-list { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 200px; }
+        .sector-row { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0; transition: opacity .15s; }
+        .sector-row:hover { opacity: 0.75; }
+        .sector-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+        .sector-name { font-size: 13px; font-weight: 500; min-width: 80px; }
+        .sector-bar-wrap { flex: 1; height: 4px; background: var(--sep); border-radius: 2px; overflow: hidden; }
+        .sector-bar { height: 100%; border-radius: 2px; }
+        .sector-pct { font-size: 12px; font-weight: 600; min-width: 40px; text-align: right; color: var(--label2); }
+        .sector-val { font-size: 12px; min-width: 70px; text-align: right; color: var(--label3); }
+
+        /* ── Holding Detail Panel ── */
+        .detail-backdrop {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.4); z-index: 50;
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+        }
+        .detail-backdrop.open { display: block; }
+        .detail-panel {
+            position: fixed; top: 0; right: -480px; bottom: 0;
+            width: 480px; max-width: 100vw;
+            background: var(--surface);
+            box-shadow: -8px 0 40px rgba(0,0,0,0.15);
+            z-index: 51;
+            overflow-y: auto;
+            transition: right .25s cubic-bezier(.4,0,.2,1);
+        }
+        .detail-panel.open { right: 0; }
+        .detail-header {
+            position: sticky; top: 0; z-index: 2;
+            background: var(--surface);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 20px 24px; border-bottom: 1px solid var(--sep);
+        }
+        .detail-header h2 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+        .detail-close {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: var(--surface2); border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; color: var(--label2); line-height: 1;
+        }
+        .detail-body { padding: 24px; }
+        .detail-section { margin-bottom: 24px; }
+        .detail-section-title {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--label3); margin-bottom: 10px;
+        }
+        .detail-stat-grid {
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px;
+        }
+        .detail-stat {
+            background: var(--surface2); border-radius: var(--radius-sm); padding: 12px;
+        }
+        .detail-stat-label { font-size: 10px; font-weight: 600; color: var(--label3); text-transform: uppercase; letter-spacing: 0.5px; }
+        .detail-stat-value { font-size: 16px; font-weight: 600; margin-top: 4px; }
+        .detail-mini-table { width: 100%; font-size: 12px; border-collapse: collapse; }
+        .detail-mini-table th {
+            text-align: left; font-size: 10px; font-weight: 700; color: var(--label3);
+            text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 8px;
+            border-bottom: 1px solid var(--sep);
+        }
+        .detail-mini-table th.r { text-align: right; }
+        .detail-mini-table td { padding: 8px; border-bottom: 1px solid var(--sep); }
+        .detail-mini-table td.r { text-align: right; }
+        .detail-mini-table tr:last-child td { border-bottom: none; }
+        .detail-empty { font-size: 12px; color: var(--label3); padding: 12px 0; }
+        @media (max-width: 680px) {
+            .detail-panel { width: 100vw; right: -100vw; }
+            .detail-stat-grid { grid-template-columns: 1fr 1fr; }
+        }
+
         /* ── Modal ── */
         .overlay {
             display: none; position: fixed; inset: 0;
@@ -1223,6 +1295,15 @@
         <div id="value-chart-body" style="padding:24px 24px 16px;position:relative"></div>
     </div>
 
+    <!-- ── Sector Allocation Chart ── -->
+    <div class="card" id="sector-chart-card" style="margin-bottom:20px">
+        <div class="card-header">
+            <h2>Sector Allocation</h2>
+            <span class="count-badge" id="sector-count"></span>
+        </div>
+        <div id="sector-chart-body"></div>
+    </div>
+
     <!-- Full-width holdings table -->
     <div class="card">
         <div class="card-header">
@@ -1485,6 +1566,16 @@
             </div>
         </form>
     </div>
+</div>
+
+<!-- ── Holding Detail Panel ── -->
+<div class="detail-backdrop" id="detail-backdrop"></div>
+<div class="detail-panel" id="detail-panel">
+    <div class="detail-header">
+        <h2 id="detail-title">Holding Details</h2>
+        <button class="detail-close" id="detail-close">&times;</button>
+    </div>
+    <div class="detail-body" id="detail-body"></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1827,23 +1918,24 @@ function render() {
     renderTypeChips(all);
     renderTable(searched, tot);
     renderChart(all, tot);
+    renderSectorChart(all);
     renderValueChart();
 }
 
-// ── Monthly snapshots ──
+// ── Daily snapshots ──
 function loadSnapshots() {
     try { return JSON.parse(localStorage.getItem('portfolio_snapshots') || '[]'); } catch { return []; }
 }
 function saveSnapshot() {
     if (!holdings.length || !Object.keys(prices).length) return;
-    const month = new Date().toISOString().slice(0, 7);
+    const day = new Date().toISOString().slice(0, 10);
     const snaps = loadSnapshots();
     const all = holdings.map(enrich);
     const s = calcSummary(all);
-    const entry = { month, gainUSD: s.totalGain, totalUSD: s.totalUSD, byMkt: { ...s.byMkt }, costByMkt: { ...s.costByMkt } };
-    const idx = snaps.findIndex(snap => snap.month === month);
+    const entry = { month: day, gainUSD: s.totalGain, totalUSD: s.totalUSD, byMkt: { ...s.byMkt }, costByMkt: { ...s.costByMkt } };
+    const idx = snaps.findIndex(snap => snap.month === day);
     if (idx >= 0) { snaps[idx] = entry; }
-    else { snaps.push(entry); if (snaps.length > 12) snaps.shift(); }
+    else { snaps.push(entry); if (snaps.length > 90) snaps.shift(); }
     localStorage.setItem('portfolio_snapshots', JSON.stringify(snaps));
 }
 
@@ -1872,10 +1964,12 @@ function renderValueChart() {
         else yLabels.push('$' + Math.round(v));
     }
 
-    // X labels
+    // X labels — adapt to data density
     const xLabels = snaps.map(s => {
-        const d = new Date(s.month + '-15');
-        return d.toLocaleString('default', { month: 'short', year: '2-digit' });
+        const d = new Date(s.month + (s.month.length === 7 ? '-15' : 'T00:00:00'));
+        return snaps.length > 30
+            ? d.toLocaleString('default', { month: 'short', day: 'numeric' })
+            : d.toLocaleString('default', { month: 'short', day: 'numeric', year: '2-digit' });
     });
 
     // SVG dimensions
@@ -1939,7 +2033,12 @@ function renderValueChart() {
                 <div class="vchart-hover-dot" id="vchart-dot"></div>
                 <div class="vchart-tooltip" id="vchart-tip"></div>
             </div>
-            <div class="vchart-xaxis">${xLabels.map(l => `<span class="vchart-xlabel">${l}</span>`).join('')}</div>
+            <div class="vchart-xaxis">${xLabels.map((l, i) => {
+                // Show ~6-8 labels max to avoid crowding
+                const step = Math.max(1, Math.floor(xLabels.length / 7));
+                const show = i === 0 || i === xLabels.length - 1 || i % step === 0;
+                return `<span class="vchart-xlabel" style="${show ? '' : 'visibility:hidden'}">${l}</span>`;
+            }).join('')}</div>
         </div>`;
 
     // Hover interaction
@@ -2026,7 +2125,10 @@ function renderKPI(rows) {
     const snaps = loadSnapshots();
 
     // Line charts from monthly snapshots
-    const mkMonth = (s) => new Date(s.month + '-01').toLocaleString('default', { month: 'short' });
+    const mkMonth = (s) => {
+        const d = new Date(s.month + (s.month.length === 7 ? '-01' : 'T00:00:00'));
+        return d.toLocaleString('default', { month: 'short', day: 'numeric' });
+    };
     const totalChart = svgLine(
         snaps.map(s => ({ v: fromUSD(s.totalUSD), label: mkMonth(s), tip: `${s.month}<br>${dmoney(s.totalUSD)}` })),
         { color: '#c8ff00', h: 44 }
@@ -2115,7 +2217,7 @@ function mobileCard(r, tot) {
 
     return `
     <div class="holding-card">
-        <div class="hc-top">
+        <div class="hc-top" style="cursor:pointer" onclick="openDetail('${r.id}')">
             <div class="hc-avatar">${short.slice(0,4)}</div>
             <div class="hc-info">
                 <div class="hc-name">${r.name}</div>
@@ -2248,7 +2350,7 @@ function tableRow(r, tot) {
     return `
         <tr>
             <td>
-                <div class="ticker-wrap">
+                <div class="ticker-wrap" style="cursor:pointer" onclick="openDetail('${r.id}')">
                     <div class="ticker-avatar">${short.slice(0,4)}</div>
                     <div>
                         <div class="ticker-name">${r.name}</div>
@@ -2333,6 +2435,67 @@ function renderChart(rows, tot) {
                 </div>
             </div>
             <div class="alloc-list">${allocationRows}</div>
+        </div>`;
+}
+
+const SECTOR_COLORS = {
+    Tech: '#3b82f6', Finance: '#f59e0b', Healthcare: '#10b981', Consumer: '#ec4899',
+    Energy: '#ef4444', Industrials: '#6366f1', 'Real Estate': '#8b5cf6',
+    Utilities: '#06b6d4', 'Broad Market': '#94a3b8', '': '#d1d5db'
+};
+
+function renderSectorChart(rows) {
+    const card = document.getElementById('sector-chart-card');
+    const body = document.getElementById('sector-chart-body');
+    if (!rows.length) { card.style.display = 'none'; return; }
+
+    const bySector = {};
+    rows.forEach(r => {
+        const sec = r.sector || 'Uncategorized';
+        const v = toUSD(r.value ?? r.costBasis, r.currency);
+        bySector[sec] = (bySector[sec] || 0) + v;
+    });
+
+    const sectors = Object.entries(bySector).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+    if (sectors.length <= 1) { card.style.display = 'none'; return; }
+
+    card.style.display = '';
+    const total = sectors.reduce((s, [, v]) => s + v, 0);
+    document.getElementById('sector-count').textContent = `${sectors.length} sectors`;
+
+    // Donut gradient
+    let angle = 0;
+    const stops = sectors.map(([sec, v]) => {
+        const deg = (v / total) * 360;
+        const color = SECTOR_COLORS[sec] || SECTOR_COLORS[''];
+        const stop = `${color} ${angle.toFixed(1)}deg ${(angle + deg).toFixed(1)}deg`;
+        angle += deg;
+        return stop;
+    });
+    const gradient = `conic-gradient(${stops.join(', ')})`;
+
+    const sectorRows = sectors.map(([sec, v]) => {
+        const p = (v / total) * 100;
+        const color = SECTOR_COLORS[sec] || SECTOR_COLORS[''];
+        return `<div class="sector-row">
+            <div class="sector-dot" style="background:${color}"></div>
+            <span class="sector-name">${sec}</span>
+            <div class="sector-bar-wrap"><div class="sector-bar" style="width:${p.toFixed(1)}%;background:${color}"></div></div>
+            <span class="sector-pct">${p.toFixed(1)}%</span>
+            <span class="sector-val">${dmoney(v)}</span>
+        </div>`;
+    }).join('');
+
+    body.innerHTML = `
+        <div class="sector-inner">
+            <div class="donut-wrap">
+                <div class="donut-ring" style="background:${gradient}"></div>
+                <div class="donut-hole">
+                    <div class="donut-total">${sectors.length}</div>
+                    <div class="donut-label">Sectors</div>
+                </div>
+            </div>
+            <div class="sector-list">${sectorRows}</div>
         </div>`;
 }
 
@@ -3735,6 +3898,130 @@ function renderEspp() {
         });
     }
 }
+
+// ── Holding Detail Panel ──
+function openDetail(id) {
+    const h = holdings.find(x => x.id === id);
+    if (!h) return;
+    const r = enrich(h);
+    const body = document.getElementById('detail-body');
+    const title = document.getElementById('detail-title');
+    title.textContent = r.name;
+
+    // Dividends for this holding
+    const holdingDivs = dividends.filter(d => d.holdingId === id).sort((a,b) => b.date.localeCompare(a.date));
+    const totalDivs = holdingDivs.reduce((s, d) => s + (Number(d.amount) || 0), 0);
+
+    // Realized trades for this ticker
+    const holdingTrades = realized.filter(t => t.ticker === r.ticker).sort((a,b) => (b.sellDate||'').localeCompare(a.sellDate||''));
+
+    // Gain color
+    const gainCls = cc(r.gainLoss);
+    const dayCls = r.changePct != null ? (r.changePct >= 0 ? 'pos' : 'neg') : 'neu';
+
+    let html = `
+        <div class="detail-stat-grid">
+            <div class="detail-stat">
+                <div class="detail-stat-label">Current Price</div>
+                <div class="detail-stat-value">${r.price != null ? money(r.price, r.currency) : '—'}</div>
+            </div>
+            <div class="detail-stat">
+                <div class="detail-stat-label">Market Value</div>
+                <div class="detail-stat-value">${r.value != null ? money(r.value, r.currency) : '—'}</div>
+            </div>
+            <div class="detail-stat">
+                <div class="detail-stat-label">Today</div>
+                <div class="detail-stat-value ${dayCls}">${r.changePct != null ? (r.changePct >= 0 ? '+' : '') + r.changePct.toFixed(2) + '%' : '—'}</div>
+            </div>
+            <div class="detail-stat">
+                <div class="detail-stat-label">Shares</div>
+                <div class="detail-stat-value">${Number(r.shares).toLocaleString('en-US', { maximumFractionDigits: 4 })}</div>
+            </div>
+            <div class="detail-stat">
+                <div class="detail-stat-label">Avg Cost</div>
+                <div class="detail-stat-value">${money(r.avgCost, r.currency)}</div>
+            </div>
+            <div class="detail-stat">
+                <div class="detail-stat-label">Cost Basis</div>
+                <div class="detail-stat-value">${money(r.costBasis, r.currency)}</div>
+            </div>
+            <div class="detail-stat">
+                <div class="detail-stat-label">Unrealised P&L</div>
+                <div class="detail-stat-value ${gainCls}">${r.gainLoss != null ? (r.gainLoss >= 0 ? '+' : '') + money(Math.abs(r.gainLoss), r.currency) : '—'}</div>
+            </div>
+            <div class="detail-stat">
+                <div class="detail-stat-label">Return</div>
+                <div class="detail-stat-value ${gainCls}">${r.gainPct != null ? (r.gainPct >= 0 ? '+' : '') + r.gainPct.toFixed(2) + '%' : '—'}</div>
+            </div>
+            <div class="detail-stat">
+                <div class="detail-stat-label">Total Dividends</div>
+                <div class="detail-stat-value" style="color:var(--green)">${totalDivs > 0 ? money(totalDivs, r.currency) : '—'}</div>
+            </div>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px">
+            <span class="mkt-pill mkt-${r.market.toLowerCase()}">${r.market}</span>
+            <span class="chip" style="padding:3px 10px;font-size:11px">${r.type}</span>
+            ${r.sector ? `<span class="chip" style="padding:3px 10px;font-size:11px">${r.sector}</span>` : ''}
+            ${r.account === 'SRS' ? '<span class="mkt-pill" style="background:rgba(139,92,246,0.12);color:#7c3aed">SRS</span>' : '<span class="chip" style="padding:3px 10px;font-size:11px">Cash</span>'}
+        </div>
+
+        ${r.notes ? `<div class="detail-section"><div class="detail-section-title">Notes</div><p style="font-size:13px;color:var(--label2);line-height:1.5">${r.notes}</p></div>` : ''}`;
+
+    // Dividend history
+    html += `<div class="detail-section">
+        <div class="detail-section-title">Dividend History (${holdingDivs.length})</div>`;
+    if (holdingDivs.length) {
+        html += `<table class="detail-mini-table">
+            <thead><tr><th>Date</th><th class="r">Amount</th></tr></thead>
+            <tbody>${holdingDivs.map(d => `<tr>
+                <td>${d.date}</td>
+                <td class="r" style="font-weight:600;color:var(--green)">$${Number(d.amount).toFixed(2)}</td>
+            </tr>`).join('')}</tbody>
+        </table>`;
+    } else {
+        html += `<div class="detail-empty">No dividends logged for this holding.</div>`;
+    }
+    html += `</div>`;
+
+    // Realized trades
+    html += `<div class="detail-section">
+        <div class="detail-section-title">Realized Trades (${holdingTrades.length})</div>`;
+    if (holdingTrades.length) {
+        html += `<table class="detail-mini-table">
+            <thead><tr><th>Date</th><th class="r">Shares</th><th class="r">Sell Price</th><th class="r">P&L</th></tr></thead>
+            <tbody>${holdingTrades.map(t => `<tr>
+                <td>${t.sellDate || '—'}</td>
+                <td class="r">${t.shares}</td>
+                <td class="r">${money(t.sellPrice, t.currency)}</td>
+                <td class="r ${cc(t.gainLoss)}" style="font-weight:600">${signed(t.gainLoss, t.currency)}</td>
+            </tr>`).join('')}</tbody>
+        </table>`;
+    } else {
+        html += `<div class="detail-empty">No realized trades for this ticker.</div>`;
+    }
+    html += `</div>`;
+
+    // Actions
+    html += `<div style="display:flex;gap:8px;padding-top:12px;border-top:1px solid var(--sep)">
+        <button class="btn btn-primary" style="flex:1" onclick="closeDetail();openBuyModal('${r.id}')">Buy More</button>
+        <button class="btn btn-secondary" style="flex:1" onclick="closeDetail();openSellModal('${r.id}')">Sell</button>
+        <button class="btn btn-secondary" onclick="closeDetail();openDivModal('${r.id}')">Log Div</button>
+        <button class="btn btn-secondary" onclick="closeDetail();openModal('${r.id}')">Edit</button>
+    </div>`;
+
+    body.innerHTML = html;
+    document.getElementById('detail-panel').classList.add('open');
+    document.getElementById('detail-backdrop').classList.add('open');
+}
+
+function closeDetail() {
+    document.getElementById('detail-panel').classList.remove('open');
+    document.getElementById('detail-backdrop').classList.remove('open');
+}
+
+document.getElementById('detail-close').addEventListener('click', closeDetail);
+document.getElementById('detail-backdrop').addEventListener('click', closeDetail);
 
 function init() {
     initTheme();
