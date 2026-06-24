@@ -147,6 +147,19 @@
       "avgCost": 765.44,
       "notes": "",
       "manualPrice": 769.09
+    },
+    {
+      "id": "4fp0ikck9jomqs7vy5g",
+      "ticker": "D05",
+      "market": "US",
+      "name": "DBS",
+      "type": "Stock",
+      "sector": "",
+      "currency": "SGD",
+      "account": "SRS",
+      "shares": 100,
+      "avgCost": 66.1,
+      "notes": ""
     }
   ],
   "watchlist": [
@@ -196,16 +209,16 @@
     },
     {
       "month": "2026-06-24",
-      "gainUSD": 6302.645599999996,
-      "totalUSD": 23767.838959999997,
+      "gainUSD": 6306.452000000005,
+      "totalUSD": 24538.292950000003,
       "byMkt": {
-        "US": 13259.66,
-        "SG": 10508.178959999997,
+        "US": 14028.75,
+        "SG": 10509.542950000001,
         "UK": 0
       },
       "costByMkt": {
-        "US": 8161.92,
-        "SG": 9303.273360000001,
+        "US": 8927.36,
+        "SG": 9304.48095,
         "UK": 0
       }
     }
@@ -319,5 +332,5 @@
       }
     ]
   },
-  "updatedAt": "2026-06-24T14:49:35.347Z"
+  "updatedAt": "2026-06-24T15:17:31.684Z"
 }
