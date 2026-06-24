@@ -141,7 +141,7 @@
       "name": "iSHARES CORE S&P 500",
       "type": "Stock",
       "sector": "",
-      "currency": "GBP",
+      "currency": "USD",
       "account": "Cash",
       "shares": 1,
       "avgCost": 765.44,
@@ -333,5 +333,5 @@
       }
     ]
   },
-  "updatedAt": "2026-06-24T16:02:26.237Z"
+  "updatedAt": "2026-06-24T16:03:07.676Z"
 }
