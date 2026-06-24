@@ -159,7 +159,8 @@
       "account": "SRS",
       "shares": 100,
       "avgCost": 66.1,
-      "notes": ""
+      "notes": "",
+      "manualPrice": 65.91
     }
   ],
   "watchlist": [
@@ -332,5 +333,5 @@
       }
     ]
   },
-  "updatedAt": "2026-06-24T15:17:41.504Z"
+  "updatedAt": "2026-06-24T15:17:43.074Z"
 }
