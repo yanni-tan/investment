@@ -20,9 +20,11 @@
       "type": "ETF",
       "currency": "USD",
       "shares": 4,
-      "avgCost": 451.1225,
+      "avgCost": 451.22,
       "notes": "",
-      "manualPrice": 663.62
+      "manualPrice": 663.62,
+      "sector": "",
+      "account": "Cash"
     },
     {
       "id": "rfwf8osbny9mqovmc03",
@@ -165,15 +167,15 @@
   "snapshots": [
     {
       "month": "2026-06",
-      "gainUSD": 6211.869999999995,
-      "totalUSD": 22689.566,
+      "gainUSD": 6255.489999999998,
+      "totalUSD": 23353.186,
       "byMkt": {
-        "US": 12596.039999999999,
+        "US": 13259.66,
         "SG": 10093.526000000002,
         "UK": 0
       },
       "costByMkt": {
-        "US": 7541.530000000001,
+        "US": 8161.530000000001,
         "SG": 8936.166000000001,
         "UK": 0
       }
@@ -288,5 +290,5 @@
       }
     ]
   },
-  "updatedAt": "2026-06-24T01:45:11.902Z"
+  "updatedAt": "2026-06-24T01:45:47.114Z"
 }
