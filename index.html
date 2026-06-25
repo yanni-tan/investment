@@ -1661,7 +1661,7 @@ let accountFilter = 'all';
 let sortCol  = null;
 let sortDir  = 'desc';
 let fetching = false;
-let displayCur = 'USD'; // 'USD' or 'SGD'
+let displayCur = localStorage.getItem('portfolio_display_cur') || 'SGD'; // 'USD' or 'SGD'
 let searchQuery = '';
 
 // Track viewport for conditional table-vs-cards rendering — avoids building both on every render.
@@ -2381,8 +2381,10 @@ document.getElementById('hform').addEventListener('submit', e => {
 // ── Events ──
 document.getElementById('add-btn').addEventListener('click', () => openModal());
 document.getElementById('refresh-btn').addEventListener('click', fetchPrices);
+document.getElementById('currency-toggle-btn').textContent = displayCur;
 document.getElementById('currency-toggle-btn').addEventListener('click', () => {
     displayCur = displayCur === 'USD' ? 'SGD' : 'USD';
+    localStorage.setItem('portfolio_display_cur', displayCur);
     document.getElementById('currency-toggle-btn').textContent = displayCur;
     render();
 });
