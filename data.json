@@ -223,6 +223,16 @@
       "qty": "100",
       "account": "SRS",
       "notes": "Sell and close FSMONE account"
+    },
+    {
+      "id": "dzx8yj67y6hmqtmwbkz",
+      "ticker": "VOO",
+      "action": "Sell",
+      "name": "VOO",
+      "targetPrice": "",
+      "qty": "",
+      "account": "Cash",
+      "notes": "CSPX"
     }
   ],
   "snapshots": [
@@ -258,16 +268,16 @@
     },
     {
       "month": "2026-06-25",
-      "gainUSD": 6349.003300000008,
-      "totalUSD": 29978.560790000003,
+      "gainUSD": 6350.125400000004,
+      "totalUSD": 29992.763020000002,
       "byMkt": {
         "US": 13564.7,
-        "SG": 15644.770790000002,
+        "SG": 15658.973020000003,
         "UK": 769.09
       },
       "costByMkt": {
         "US": 8455.42,
-        "SG": 14408.697489999999,
+        "SG": 14421.77762,
         "UK": 765.44
       }
     }
@@ -390,5 +400,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T10:45:30.202Z"
+  "updatedAt": "2026-06-25T15:05:31.009Z"
 }
