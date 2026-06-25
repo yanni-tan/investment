@@ -252,7 +252,7 @@
       "targetPrice": "",
       "qty": "",
       "account": "Cash",
-      "notes": "top up to ocbc"
+      "notes": "top up to vwra"
     }
   ],
   "snapshots": [
@@ -420,5 +420,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T15:35:33.207Z"
+  "updatedAt": "2026-06-25T15:38:37.155Z"
 }
