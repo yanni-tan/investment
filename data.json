@@ -171,7 +171,8 @@
       "name": "CSPX",
       "targetPrice": "802.85",
       "qty": "1",
-      "notes": "Replaces VOO"
+      "notes": "",
+      "account": "Cash"
     },
     {
       "id": "w859fl0q37hmqpju4e3",
@@ -358,5 +359,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T10:40:28.242Z"
+  "updatedAt": "2026-06-25T10:40:41.289Z"
 }
