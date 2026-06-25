@@ -1690,6 +1690,16 @@ function uid()  { return Math.random().toString(36).slice(2) + Date.now().toStri
 
 function loadDividends() {
     try { dividends = JSON.parse(localStorage.getItem(DIV_KEY) || '[]'); } catch { dividends = []; }
+    // One-time migration: legacy records stored no currency. Stamp from holding so totals are correct.
+    let migrated = false;
+    dividends.forEach(d => {
+        if (!d.currency) {
+            const h = holdings.find(x => x.id === d.holdingId);
+            d.currency = h?.currency || 'USD';
+            migrated = true;
+        }
+    });
+    if (migrated) localStorage.setItem(DIV_KEY, JSON.stringify(dividends));
 }
 function saveDividends() { localStorage.setItem(DIV_KEY, JSON.stringify(dividends)); syncSave(); }
 
@@ -1833,6 +1843,15 @@ function totalUSDof(rows) {
     return rows.reduce((s, r) => s + toUSD(r.value ?? r.costBasis, r.currency), 0);
 }
 
+// Dividends inherit the currency of their underlying holding. Old records stored
+// just `amount` with no currency; new ones stamp `currency` at log time.
+function divCurrency(d) {
+    return d.currency || holdings.find(x => x.id === d.holdingId)?.currency || 'USD';
+}
+function divUSD(d) {
+    return toUSD(Number(d.amount) || 0, divCurrency(d));
+}
+
 function calcSummary(rows) {
     const val = r => r.value ?? r.costBasis;
     const byMkt = { US: 0, SG: 0, UK: 0 };
@@ -1926,7 +1945,7 @@ function renderKPI(rows) {
                 <div>
                     <span class="kpi-badge ${badgeClass(s.totalGain)}">${s.totalGain >= 0 ? '↑' : '↓'} ${pct(s.totalGainPct)}</span>
                     <div class="kpi-sub" style="margin-top:6px">
-                        🇺🇸 ${dmoney(s.byMkt.US || 0)} &nbsp;+&nbsp; 🇸🇬 ~${dmoney(s.byMkt.SG || 0)}
+                        🇺🇸 ${dmoney(s.byMkt.US || 0)} &nbsp;+&nbsp; 🇸🇬 ${dmoney(s.byMkt.SG || 0)}${s.byMkt.UK ? ` &nbsp;+&nbsp; 🇬🇧 ${dmoney(s.byMkt.UK)}` : ''}
                     </div>
                     <div class="kpi-sub">Cost: ${dmoney(s.totalCostUSD)} · 1 SGD = ${fxSGDUSD.toFixed(4)} USD</div>
                 </div>
@@ -2212,17 +2231,17 @@ function renderStatsRow(rows) {
     const el = document.getElementById('stats-row');
     if (!rows.length) { el.innerHTML = ''; return; }
     const s = calcSummary(rows);
-    const mkts = [['US','USD',1], ['SG','SGD',1/fxSGDUSD], ['UK','USD',1]];
 
-    // Market cards + ESPP before US
+    // Market cards display all values in the user's chosen display currency (USD/SGD).
+    // The flag conveys origin market — no need to lock each card to its native currency.
     let html = '';
-    const totalDiv = dividends.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
+    const totalDivUSD = dividends.reduce((sum, d) => sum + divUSD(d), 0);
 
-    mkts.forEach(([mkt, cur, fx]) => {
-        const val  = (s.byMkt[mkt]  || 0) * fx;
-        const cost = (s.costByMkt[mkt] || 0) * fx;
-        const gain = val - cost;
-        const gPct = cost > 0 ? (gain / cost) * 100 : 0;
+    ['US', 'SG', 'UK'].forEach(mkt => {
+        const valUSD  = s.byMkt[mkt]    || 0;
+        const costUSD = s.costByMkt[mkt] || 0;
+        const gainUSD = valUSD - costUSD;
+        const gPct = costUSD > 0 ? (gainUSD / costUSD) * 100 : 0;
         const flag = MKT_FLAGS[mkt] || '';
         html += `<div class="stat-mini" onclick="setMarketTab('${mkt}')">
             <div class="stat-head">
@@ -2232,24 +2251,24 @@ function renderStatsRow(rows) {
                 <span class="stat-flag">${flag}</span>
             </div>
             <div class="stat-label">${mkt} Holdings</div>
-            <div class="stat-value">${money(val, cur)}</div>
+            <div class="stat-value">${dmoney(valUSD)}</div>
             <div class="stat-badges">
-                <span class="kpi-badge ${badgeClass(gain)}" style="font-size:10px;padding:3px 8px">${gain >= 0 ? '↑' : '↓'} ${signed(gain, cur)}</span>
-                <span class="kpi-badge ${badgeClass(gPct)}" style="font-size:10px;padding:3px 8px">${gain >= 0 ? '↑' : '↓'} ${pct(gPct)}</span>
+                <span class="kpi-badge ${badgeClass(gainUSD)}" style="font-size:10px;padding:3px 8px">${gainUSD >= 0 ? '↑' : '↓'} ${dsigned(gainUSD)}</span>
+                <span class="kpi-badge ${badgeClass(gPct)}" style="font-size:10px;padding:3px 8px">${gainUSD >= 0 ? '↑' : '↓'} ${pct(gPct)}</span>
             </div>
-            <div class="stat-sub">Cost: ${money(cost, cur)}</div>
+            <div class="stat-sub">Cost: ${dmoney(costUSD)}</div>
         </div>`;
     });
 
     // Dividend card
     const totalVal = totalUSDof(rows);
-    const divYield = totalVal > 0 ? (totalDiv / totalVal * 100) : 0;
+    const divYield = totalVal > 0 ? (totalDivUSD / totalVal * 100) : 0;
     html += `<div class="stat-mini" onclick="showPanel('dividends')">
         <div class="stat-head">
             <div class="stat-icon" style="background:var(--accent-dim)">💵</div>
         </div>
         <div class="stat-label">Dividend Income</div>
-        <div class="stat-value">${dmoney(totalDiv)}</div>
+        <div class="stat-value">${dmoney(totalDivUSD)}</div>
         <div class="stat-badges">
             <span class="kpi-badge up" style="font-size:10px;padding:3px 8px">Yield ${divYield.toFixed(2)}%</span>
         </div>
@@ -2986,14 +3005,16 @@ function renderDividends() {
         return;
     }
     const sorted = [...dividends].sort((a,b) => b.date.localeCompare(a.date));
-    const totalDiv = dividends.reduce((s,d) => s + (Number(d.amount)||0), 0);
+    const totalDivUSD = dividends.reduce((s,d) => s + divUSD(d), 0);
+    const year = new Date().getFullYear().toString();
+    const ytdUSD = dividends.filter(d => d.date?.startsWith(year)).reduce((s,d) => s + divUSD(d), 0);
     // Group by year
     const byYear = {};
     sorted.forEach(d => { const y = d.date.slice(0,4); (byYear[y] = byYear[y]||[]).push(d); });
     el.innerHTML = `
     <div class="kpi-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:20px">
-        <div class="kpi-card"><div class="kpi-label">Total Income</div><div class="kpi-value" style="font-size:24px;color:var(--green)">$${totalDiv.toFixed(2)}</div></div>
-        <div class="kpi-card"><div class="kpi-label">This Year</div><div class="kpi-value" style="font-size:24px">$${(byYear[new Date().getFullYear()]||[]).reduce((s,d)=>s+(Number(d.amount)||0),0).toFixed(2)}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Total Income</div><div class="kpi-value" style="font-size:24px;color:var(--green)">${dmoney(totalDivUSD)}</div></div>
+        <div class="kpi-card"><div class="kpi-label">This Year</div><div class="kpi-value" style="font-size:24px">${dmoney(ytdUSD)}</div></div>
         <div class="kpi-card"><div class="kpi-label">Payments</div><div class="kpi-value" style="font-size:24px">${dividends.length}</div></div>
     </div>
     <div class="card"><table style="width:100%;border-collapse:collapse;font-size:13px">
@@ -3008,7 +3029,7 @@ function renderDividends() {
             return `<tr>
                 <td>${d.date}</td>
                 <td><strong>${h?.name || '—'}</strong><div style="font-size:11px;color:var(--label2)">${h?.ticker||''}</div></td>
-                <td style="padding:14px 16px;text-align:right;font-weight:600;color:var(--green)">$${Number(d.amount).toFixed(2)}</td>
+                <td class="r" style="font-weight:600;color:var(--green)">${money(Number(d.amount)||0, divCurrency(d))}</td>
                 <td><button class="row-btn del" onclick="delDividend('${d.id}')">×</button></td>
             </tr>`;
         }).join('')}</tbody>
@@ -3024,7 +3045,8 @@ document.getElementById('div-form').addEventListener('submit', e => {
     const date = document.getElementById('div-date').value;
     const amount = parseFloat(document.getElementById('div-amount').value);
     if (!holdingId || !date || isNaN(amount)) return;
-    dividends.push({ id: uid(), holdingId, date, amount });
+    const h = holdings.find(x => x.id === holdingId);
+    dividends.push({ id: uid(), holdingId, date, amount, currency: h?.currency || 'USD' });
     saveDividends();
     document.getElementById('div-overlay').classList.remove('open');
     toast('Dividend logged');
@@ -3047,7 +3069,8 @@ function calcDivFromPerShare() {
     if (!h || !h.shares) { info.textContent = 'No shares found for this holding'; return; }
     const total = perShare * h.shares;
     amountEl.value = total.toFixed(2);
-    info.textContent = `$${perShare.toFixed(4)} × ${h.shares} shares = $${total.toFixed(2)}`;
+    const sym = h.currency === 'SGD' ? 'S$' : h.currency === 'GBP' ? '£' : '$';
+    info.textContent = `${sym}${perShare.toFixed(4)} × ${h.shares} shares = ${money(total, h.currency)}`;
 }
 document.getElementById('div-per-share').addEventListener('input', calcDivFromPerShare);
 document.getElementById('div-holding-select').addEventListener('change', calcDivFromPerShare);
@@ -3680,11 +3703,11 @@ function renderSrs() {
     sorted.forEach(c => { const y = c.date.slice(0, 4); (byYear[y] = byYear[y] || []).push(c); });
     const years = Object.keys(byYear).sort((a, b) => b.localeCompare(a));
 
-    // Dividends from SRS holdings
-    const srsDivs = dividends.filter(d => {
+    // Dividends from SRS holdings — sum to SGD since this panel is SGD-themed.
+    const srsDivsSGD = dividends.filter(d => {
         const h = holdings.find(x => x.id === d.holdingId);
         return h && (h.account || 'Cash') === 'SRS';
-    }).reduce((s, d) => s + (Number(d.amount) || 0), 0);
+    }).reduce((s, d) => s + divUSD(d) / fxSGDUSD, 0);
 
     let html = `
         <div class="espp-hero srs-hero">
@@ -3736,7 +3759,7 @@ function renderSrs() {
             </div>
             <div class="espp-stat">
                 <div class="espp-stat-label">Dividends Earned</div>
-                <div class="espp-stat-value" style="color:var(--green)">${srsDivs > 0 ? '$' + srsDivs.toFixed(2) : '—'}</div>
+                <div class="espp-stat-value" style="color:var(--green)">${srsDivsSGD > 0 ? fmtSGD(srsDivsSGD) : '—'}</div>
                 <div class="espp-stat-sub">From SRS holdings</div>
             </div>
             <div class="espp-stat">
@@ -3909,7 +3932,7 @@ function openDetail(id) {
             <thead><tr><th>Date</th><th class="r">Amount</th></tr></thead>
             <tbody>${holdingDivs.map(d => `<tr>
                 <td>${d.date}</td>
-                <td class="r" style="font-weight:600;color:var(--green)">$${Number(d.amount).toFixed(2)}</td>
+                <td class="r" style="font-weight:600;color:var(--green)">${money(Number(d.amount)||0, r.currency)}</td>
             </tr>`).join('')}</tbody>
         </table>`;
     } else {
