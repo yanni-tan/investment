@@ -233,6 +233,16 @@
       "qty": "",
       "account": "Cash",
       "notes": "CSPX"
+    },
+    {
+      "id": "8ngroomdm8hmqtnrww7",
+      "ticker": "GOOG",
+      "action": "Sell",
+      "name": "GOOG",
+      "targetPrice": "",
+      "qty": "",
+      "account": "Cash",
+      "notes": ""
     }
   ],
   "snapshots": [
@@ -400,5 +410,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T15:05:31.009Z"
+  "updatedAt": "2026-06-25T15:30:04.964Z"
 }
