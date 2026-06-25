@@ -183,15 +183,6 @@
       "notes": ""
     },
     {
-      "id": "vca2o3dkjiimqpjv08f",
-      "ticker": "AWCD",
-      "action": "Buy",
-      "name": "AWCD",
-      "targetPrice": "322",
-      "qty": "1",
-      "notes": ""
-    },
-    {
       "id": "07r3a1immkebmqtdfbxp",
       "ticker": "AMZN",
       "action": "Sell",
@@ -367,5 +358,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T10:40:21.770Z"
+  "updatedAt": "2026-06-25T10:40:28.242Z"
 }
