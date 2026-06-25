@@ -177,6 +177,19 @@
       "avgCost": 0,
       "notes": "US (~60%), Europe, Japan, EM | ~4,000 stocks from developed and emerging markets",
       "manualPrice": 0.1
+    },
+    {
+      "id": "10ojt3lst0whmqtox4v4",
+      "ticker": "MSCI",
+      "market": "US",
+      "name": "Amundi MSCI World",
+      "type": "ETF",
+      "sector": "",
+      "currency": "SGD",
+      "account": "SRS",
+      "shares": 0,
+      "avgCost": 0,
+      "notes": "US, Europe, Japan | ~1,300 developed-market stocks"
     }
   ],
   "watchlist": [
@@ -436,5 +449,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T16:01:10.593Z"
+  "updatedAt": "2026-06-25T16:02:08.189Z"
 }
