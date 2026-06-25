@@ -178,10 +178,11 @@
       "id": "w859fl0q37hmqpju4e3",
       "ticker": "VWRA",
       "action": "Buy",
-      "name": "VWRA LONDON",
+      "name": "VWRA",
       "targetPrice": "189",
       "qty": "1",
-      "notes": ""
+      "notes": "",
+      "account": "Cash"
     },
     {
       "id": "07r3a1immkebmqtdfbxp",
@@ -359,5 +360,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T10:40:41.289Z"
+  "updatedAt": "2026-06-25T10:40:47.311Z"
 }
