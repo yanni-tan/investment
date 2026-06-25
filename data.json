@@ -212,7 +212,7 @@
       "targetPrice": "",
       "qty": "",
       "account": "SRS",
-      "notes": "SRS 30%"
+      "notes": "30%"
     }
   ],
   "snapshots": [
@@ -380,5 +380,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T10:43:47.472Z"
+  "updatedAt": "2026-06-25T10:43:51.641Z"
 }
