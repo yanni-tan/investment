@@ -161,6 +161,19 @@
       "avgCost": 66.1,
       "notes": "",
       "manualPrice": 66.2
+    },
+    {
+      "id": "a5ai6mouvtemqtorv8l",
+      "ticker": "VWRA",
+      "market": "US",
+      "name": "Vanguard FTSE All-World UCITS",
+      "type": "ETF",
+      "sector": "",
+      "currency": "USD",
+      "account": "Cash",
+      "shares": 0,
+      "avgCost": 0,
+      "notes": ""
     }
   ],
   "watchlist": [
@@ -420,5 +433,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T15:56:54.712Z"
+  "updatedAt": "2026-06-25T15:58:02.434Z"
 }
