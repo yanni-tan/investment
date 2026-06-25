@@ -213,6 +213,16 @@
       "qty": "",
       "account": "SRS",
       "notes": "30%"
+    },
+    {
+      "id": "vv9yhimyufmqtdlxx9",
+      "ticker": "D03",
+      "action": "Sell",
+      "name": "DBS",
+      "targetPrice": "",
+      "qty": "100",
+      "account": "SRS",
+      "notes": "Sell and close FSMONE account"
     }
   ],
   "snapshots": [
@@ -380,5 +390,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T10:43:51.641Z"
+  "updatedAt": "2026-06-25T10:45:30.202Z"
 }
