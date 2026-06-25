@@ -35,8 +35,10 @@
       "currency": "USD",
       "shares": 3,
       "avgCost": 265.1666666666667,
-      "notes": "",
-      "manualPrice": 305.04
+      "notes": "US | Nasdaq-100 (100 largest non-financial Nasdaq companies)",
+      "manualPrice": 305.04,
+      "sector": "",
+      "account": "Cash"
     },
     {
       "id": "jvr6bn5csgcmqovmw7m",
@@ -434,5 +436,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T15:58:53.213Z"
+  "updatedAt": "2026-06-25T16:00:14.620Z"
 }
