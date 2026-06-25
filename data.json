@@ -190,6 +190,16 @@
       "targetPrice": "322",
       "qty": "1",
       "notes": ""
+    },
+    {
+      "id": "07r3a1immkebmqtdfbxp",
+      "ticker": "AMZN",
+      "action": "Sell",
+      "name": "Amazon",
+      "targetPrice": "",
+      "qty": "2",
+      "account": "Cash",
+      "notes": ""
     }
   ],
   "snapshots": [
@@ -221,6 +231,21 @@
         "US": 8927.36,
         "SG": 14399.354539999998,
         "UK": 0
+      }
+    },
+    {
+      "month": "2026-06-25",
+      "gainUSD": 6349.003300000008,
+      "totalUSD": 29978.560790000003,
+      "byMkt": {
+        "US": 13564.7,
+        "SG": 15644.770790000002,
+        "UK": 769.09
+      },
+      "costByMkt": {
+        "US": 8455.42,
+        "SG": 14408.697489999999,
+        "UK": 765.44
       }
     }
   ],
@@ -342,5 +367,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T03:29:19.502Z"
+  "updatedAt": "2026-06-25T10:40:21.770Z"
 }
