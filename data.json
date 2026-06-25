@@ -139,7 +139,7 @@
       "ticker": "CSPX.L",
       "market": "UK",
       "name": "iSHARES CORE S&P 500",
-      "type": "Stock",
+      "type": "ETF",
       "sector": "",
       "currency": "USD",
       "account": "Cash",
@@ -420,5 +420,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T15:38:37.155Z"
+  "updatedAt": "2026-06-25T15:52:37.899Z"
 }
