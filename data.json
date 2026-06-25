@@ -21,7 +21,7 @@
       "currency": "USD",
       "shares": 4,
       "avgCost": 451.22,
-      "notes": "",
+      "notes": "US, Taiwan, Netherlands | Semiconductor companies",
       "manualPrice": 663.62,
       "sector": "",
       "account": "Cash"
@@ -436,5 +436,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T16:00:14.620Z"
+  "updatedAt": "2026-06-25T16:01:10.593Z"
 }
