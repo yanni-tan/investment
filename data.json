@@ -145,7 +145,7 @@
       "account": "Cash",
       "shares": 1,
       "avgCost": 765.44,
-      "notes": "US (~60%), Europe, Japan, EM",
+      "notes": "US (~60%), Europe, Japan, EM | ~4,000 stocks from developed and emerging markets",
       "manualPrice": 769.09
     },
     {
@@ -420,5 +420,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T15:53:38.113Z"
+  "updatedAt": "2026-06-25T15:53:47.573Z"
 }
