@@ -181,7 +181,7 @@
       "name": "VWRA",
       "targetPrice": "189",
       "qty": "1",
-      "notes": "",
+      "notes": "use amazon gains to cover vwra",
       "account": "Cash"
     },
     {
@@ -360,5 +360,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T10:40:47.311Z"
+  "updatedAt": "2026-06-25T10:41:22.865Z"
 }
