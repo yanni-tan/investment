@@ -190,6 +190,19 @@
       "shares": 0,
       "avgCost": 0,
       "notes": "US, Europe, Japan | ~1,300 developed-market stocks"
+    },
+    {
+      "id": "mbjf9qaas7amqtoy4mo",
+      "ticker": "STI",
+      "market": "US",
+      "name": "Amundi STI",
+      "type": "ETF",
+      "sector": "",
+      "currency": "SGD",
+      "account": "SRS",
+      "shares": 0,
+      "avgCost": 0,
+      "notes": "Top Singapore companies"
     }
   ],
   "watchlist": [
@@ -449,5 +462,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T16:02:08.189Z"
+  "updatedAt": "2026-06-25T16:02:54.541Z"
 }
