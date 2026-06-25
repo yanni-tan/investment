@@ -196,7 +196,7 @@
     },
     {
       "id": "h4istn7wfujmqtdj2jg",
-      "ticker": "-",
+      "ticker": "MSCI",
       "action": "Buy",
       "name": "Amundi Index MSCI World Fund",
       "targetPrice": "",
@@ -370,5 +370,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T10:43:16.217Z"
+  "updatedAt": "2026-06-25T10:43:22.414Z"
 }
