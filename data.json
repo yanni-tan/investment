@@ -145,7 +145,7 @@
       "account": "Cash",
       "shares": 1,
       "avgCost": 765.44,
-      "notes": "US (~60%), Europe, Japan, EM | ~4,000 stocks from developed and emerging markets",
+      "notes": "US | S&P 500 (500 largest US companies)",
       "manualPrice": 769.09
     },
     {
@@ -288,16 +288,16 @@
     },
     {
       "month": "2026-06-25",
-      "gainUSD": 6350.125400000004,
-      "totalUSD": 29992.763020000002,
+      "gainUSD": 6350.285700000004,
+      "totalUSD": 29994.79191,
       "byMkt": {
         "US": 13564.7,
-        "SG": 15658.973020000003,
+        "SG": 15661.001909999999,
         "UK": 769.09
       },
       "costByMkt": {
         "US": 8455.42,
-        "SG": 14421.77762,
+        "SG": 14423.646209999999,
         "UK": 765.44
       }
     }
@@ -420,5 +420,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T15:53:47.573Z"
+  "updatedAt": "2026-06-25T15:56:54.712Z"
 }
