@@ -243,6 +243,16 @@
       "qty": "",
       "account": "Cash",
       "notes": ""
+    },
+    {
+      "id": "k91vjf8wemlmqtnyy61",
+      "ticker": "UOB",
+      "action": "Sell",
+      "name": "UOB",
+      "targetPrice": "",
+      "qty": "",
+      "account": "Cash",
+      "notes": "top up to ocbc"
     }
   ],
   "snapshots": [
@@ -410,5 +420,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T15:30:04.964Z"
+  "updatedAt": "2026-06-25T15:35:33.207Z"
 }
