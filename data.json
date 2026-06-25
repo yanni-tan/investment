@@ -203,6 +203,16 @@
       "qty": "",
       "account": "SRS",
       "notes": "70%"
+    },
+    {
+      "id": "p28kl0oisbmqtdjqnn",
+      "ticker": "STI",
+      "action": "Buy",
+      "name": "Amundi Singapore Straits Times (STI) Fund",
+      "targetPrice": "",
+      "qty": "",
+      "account": "SRS",
+      "notes": "SRS 30%"
     }
   ],
   "snapshots": [
@@ -370,5 +380,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T10:43:22.414Z"
+  "updatedAt": "2026-06-25T10:43:47.472Z"
 }
