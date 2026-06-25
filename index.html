@@ -1208,6 +1208,15 @@
         <div class="stats-row" id="stats-row"></div>
     </div>
 
+    <!-- ── Market Allocation Chart ── -->
+    <div class="card" id="market-chart-card" style="margin-bottom:20px">
+        <div class="card-header">
+            <h2>Market Allocation</h2>
+            <span class="count-badge" id="market-count"></span>
+        </div>
+        <div id="market-chart-body"></div>
+    </div>
+
     <!-- ── Sector Allocation Chart ── -->
     <div class="card" id="sector-chart-card" style="margin-bottom:20px">
         <div class="card-header">
@@ -1910,6 +1919,7 @@ function render() {
     renderTypeChips(all);
     renderTable(searched, tot);
     renderSectorChart(all);
+    renderMarketChart(all);
 }
 
 // ── Daily snapshots ──
@@ -2158,6 +2168,62 @@ const SECTOR_COLORS = {
     Energy: '#ef4444', Industrials: '#6366f1', 'Real Estate': '#8b5cf6',
     Utilities: '#06b6d4', 'Broad Market': '#94a3b8', '': '#d1d5db'
 };
+
+const MARKET_LABELS = { US: 'US', SG: 'SG', UK: 'UK / LSE' };
+
+function renderMarketChart(rows) {
+    const card = document.getElementById('market-chart-card');
+    const body = document.getElementById('market-chart-body');
+    if (!rows.length) { card.style.display = 'none'; return; }
+
+    const byMkt = {};
+    rows.forEach(r => {
+        const v = toUSD(r.value ?? r.costBasis, r.currency);
+        byMkt[r.market] = (byMkt[r.market] || 0) + v;
+    });
+
+    const mkts = Object.entries(byMkt).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+    if (mkts.length <= 1) { card.style.display = 'none'; return; }
+
+    card.style.display = '';
+    const total = mkts.reduce((s, [, v]) => s + v, 0);
+    document.getElementById('market-count').textContent = `${mkts.length} market${mkts.length !== 1 ? 's' : ''}`;
+
+    let angle = 0;
+    const stops = mkts.map(([mkt, v]) => {
+        const deg = (v / total) * 360;
+        const color = MARKET_COLORS[mkt] || '#94a3b8';
+        const stop = `${color} ${angle.toFixed(1)}deg ${(angle + deg).toFixed(1)}deg`;
+        angle += deg;
+        return stop;
+    });
+    const gradient = `conic-gradient(${stops.join(', ')})`;
+
+    const mktRows = mkts.map(([mkt, v]) => {
+        const p = (v / total) * 100;
+        const color = MARKET_COLORS[mkt] || '#94a3b8';
+        const flag = MKT_FLAGS[mkt] || '';
+        return `<div class="sector-row" onclick="setMarketTab('${mkt}')">
+            <div class="sector-dot" style="background:${color}"></div>
+            <span class="sector-name">${flag} ${MARKET_LABELS[mkt] || mkt}</span>
+            <div class="sector-bar-wrap"><div class="sector-bar" style="width:${p.toFixed(1)}%;background:${color}"></div></div>
+            <span class="sector-pct">${p.toFixed(1)}%</span>
+            <span class="sector-val">${dmoney(v)}</span>
+        </div>`;
+    }).join('');
+
+    body.innerHTML = `
+        <div class="sector-inner">
+            <div class="donut-wrap">
+                <div class="donut-ring" style="background:${gradient}"></div>
+                <div class="donut-hole">
+                    <div class="donut-total">${mkts.length}</div>
+                    <div class="donut-label">Markets</div>
+                </div>
+            </div>
+            <div class="sector-list">${mktRows}</div>
+        </div>`;
+}
 
 function renderSectorChart(rows) {
     const card = document.getElementById('sector-chart-card');
