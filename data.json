@@ -193,6 +193,16 @@
       "qty": "2",
       "account": "Cash",
       "notes": ""
+    },
+    {
+      "id": "h4istn7wfujmqtdj2jg",
+      "ticker": "-",
+      "action": "Buy",
+      "name": "Amundi Index MSCI World Fund",
+      "targetPrice": "",
+      "qty": "",
+      "account": "SRS",
+      "notes": "70%"
     }
   ],
   "snapshots": [
@@ -360,5 +370,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T10:41:22.865Z"
+  "updatedAt": "2026-06-25T10:43:16.217Z"
 }
