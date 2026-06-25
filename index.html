@@ -607,15 +607,6 @@
         th.sorted .sort-icon { opacity: 1; }
 
         /* ── Performance bars ── */
-        .perf-list { padding: 14px 20px 20px; display: flex; flex-direction: column; gap: 9px; }
-        .perf-row  { display: flex; align-items: center; gap: 8px; }
-        .perf-ticker { font-size: 11px; font-weight: 700; width: 42px; flex-shrink: 0; color: var(--label2); }
-        .perf-bar-wrap { flex: 1; height: 5px; background: var(--sep); border-radius: 3px; overflow: hidden; }
-        .perf-bar { height: 100%; border-radius: 3px; transition: width .4s; }
-        .perf-bar.pos { background: var(--green); }
-        .perf-bar.neg { background: var(--red); }
-        .perf-pct { font-size: 11px; font-weight: 600; min-width: 56px; text-align: right; flex-shrink: 0; }
-
         /* ── Sync indicator ── */
         .sync-dot {
             width: 7px; height: 7px; border-radius: 50%;
@@ -636,20 +627,8 @@
             text-decoration: underline; padding: 0;
         }
         .sync-row button:hover { color: var(--sidebar-text-active); }
-        .chart-tooltip {
-            position: fixed; pointer-events: none; z-index: 500;
-            background: #111827; color: #fff;
-            padding: 8px 12px; border-radius: 10px;
-            font-size: 12px; line-height: 1.6;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-            display: none; max-width: 180px;
-        }
-        .chart-tooltip.show { display: block; }
-        .chart-tooltip strong { font-weight: 600; font-size: 13px; }
 
         /* ── Right column ── */
-        .right-col { display: flex; flex-direction: column; gap: 20px; }
-
         .skel {
             display: inline-block; border-radius: 4px;
             background: linear-gradient(90deg, var(--surface2) 25%, var(--sep) 50%, var(--surface2) 75%);
@@ -699,38 +678,6 @@
 
         .donut-label {
             font-size: 10px; color: var(--label2); margin-top: 1px;
-        }
-
-        .alloc-list { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 200px; }
-
-        .alloc-row {
-            display: flex; align-items: center; justify-content: space-between;
-        }
-
-        .alloc-left { display: flex; align-items: center; gap: 8px; }
-
-        .alloc-dot {
-            width: 10px; height: 10px;
-            border-radius: 3px;
-        }
-
-        .alloc-market { font-size: 13px; font-weight: 600; }
-        .alloc-pct    { font-size: 12px; color: var(--label2); }
-
-        .alloc-bar-wrap {
-            flex: 1; margin: 0 12px;
-            height: 4px; background: var(--sep); border-radius: 2px; overflow: hidden;
-        }
-
-        .alloc-bar { height: 100%; border-radius: 2px; }
-        .alloc-value { font-size: 12px; font-weight: 600; min-width: 60px; text-align: right; }
-
-        .fx-note {
-            font-size: 11px;
-            color: var(--label3);
-            text-align: center;
-            padding: 12px 20px;
-            border-top: 1px solid var(--sep);
         }
 
         /* ── Sector Chart ── */
@@ -889,56 +836,6 @@
         }
         .toast.show { transform: translateX(-50%) translateY(0); }
 
-        /* ── Value Chart ── */
-        .vchart-wrap {
-            position: relative;
-            width: 100%;
-            height: 280px;
-        }
-        .vchart-yaxis {
-            position: absolute; left: 0; top: 0; bottom: 30px; width: 56px;
-            display: flex; flex-direction: column-reverse; justify-content: space-between;
-        }
-        .vchart-ylabel {
-            font-size: 11px; font-weight: 500; color: var(--label3);
-            text-align: right; padding-right: 10px; line-height: 1;
-        }
-        .vchart-area {
-            position: absolute; left: 56px; right: 0; top: 0; bottom: 30px;
-        }
-        .vchart-xaxis {
-            position: absolute; left: 56px; right: 0; bottom: 0; height: 30px;
-            display: flex; justify-content: space-between; align-items: flex-start;
-        }
-        .vchart-xlabel {
-            font-size: 11px; color: var(--label3); text-align: center;
-        }
-        .vchart-hover-line {
-            position: absolute; top: 0; width: 1px;
-            border-left: 1.5px dashed var(--accent);
-            pointer-events: none; display: none;
-        }
-        .vchart-hover-dot {
-            position: absolute; width: 12px; height: 12px;
-            border-radius: 50%; background: var(--surface);
-            border: 2.5px solid var(--accent);
-            transform: translate(-50%, -50%);
-            pointer-events: none; display: none;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-        .vchart-tooltip {
-            position: absolute; transform: translateX(-50%);
-            background: var(--accent); color: #111827;
-            padding: 6px 14px; border-radius: 10px;
-            font-size: 12px; text-align: center;
-            pointer-events: none; display: none;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-            white-space: nowrap;
-        }
-        .vchart-tooltip strong {
-            display: block; font-size: 15px; font-weight: 700;
-        }
-
         /* ── Mobile Top Bar ── */
         .mobile-bar {
             display: none;
@@ -979,7 +876,7 @@
         .sidebar-backdrop.open { display: block; }
 
         /* ── ESPP ── */
-        .espp-hero {
+        .espp-hero, .srs-hero {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             border-radius: var(--radius); padding: 32px; color: #fff;
             margin-bottom: 20px; position: relative; overflow: hidden;
@@ -989,11 +886,18 @@
             width: 160px; height: 160px; border-radius: 50%;
             background: rgba(168,85,247,0.15);
         }
+        .srs-hero { background: linear-gradient(135deg, #042f2e 0%, #0f3b3a 50%, #134e4a 100%); }
+        .srs-hero::after {
+            content: ''; position: absolute; top: -40px; right: -40px;
+            width: 160px; height: 160px; border-radius: 50%;
+            background: rgba(13,148,136,0.15);
+        }
         .espp-hero-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
         .espp-hero-value { font-size: 36px; font-weight: 300; letter-spacing: -1px; margin-bottom: 4px; }
         .espp-hero-sub { font-size: 13px; color: rgba(255,255,255,0.5); }
         .espp-progress { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin: 20px 0 12px; overflow: hidden; }
         .espp-progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #a855f7, #c084fc); transition: width .4s; }
+        .srs-progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #0d9488, #2dd4bf); transition: width .4s; }
         .espp-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
         .espp-stat { background: var(--surface); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
         .espp-stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--label3); margin-bottom: 6px; }
@@ -1180,6 +1084,10 @@
         <button class="nav-item" id="realized-nav-btn">
             <span class="nav-dot" style="background:#ef4444"></span>Realized Gains
         </button>
+        <div class="nav-section" style="margin-top:16px">Accounts</div>
+        <button class="nav-item" id="srs-nav-btn">
+            <span class="nav-dot" style="background:#0d9488"></span>SRS
+        </button>
         <div class="nav-section" style="margin-top:16px">Watchlist</div>
         <button class="nav-item" id="watchlist-nav-btn">
             <span class="nav-dot" style="background:#c8ff00"></span>Watchlist
@@ -1200,7 +1108,6 @@
                 <button id="sync-setup-btn">Setup sync</button>
             </div>
         </div>
-    </div>
     </div>
 </aside>
 
@@ -1255,6 +1162,20 @@
             </div>
         </div>
         <div id="espp-body"></div>
+    </div>
+
+    <!-- ── SRS Panel ── -->
+    <div id="srs-panel" style="display:none">
+        <div class="page-header">
+            <div>
+                <div class="greeting">SRS Account</div>
+                <div class="greeting-sub">Supplementary Retirement Scheme</div>
+            </div>
+            <div style="display:flex;gap:8px">
+                <button class="btn btn-primary" id="srs-contrib-btn">+ Log Contribution</button>
+            </div>
+        </div>
+        <div id="srs-body"></div>
     </div>
 
     <!-- ── Main Dashboard ── -->
@@ -1571,7 +1492,6 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="chart-tooltip" id="chart-tooltip"></div>
 
 <!-- ── Sync Setup Modal ── -->
 <div class="overlay" id="sync-overlay">
@@ -1589,7 +1509,11 @@
             </label>
             <input class="finput" id="sync-token-input" type="password" placeholder="ghp_xxxxxxxxxxxx">
         </div>
-        <p style="font-size:11px;color:var(--label3);margin-top:-8px;margin-bottom:18px">Token needs <strong>repo</strong> scope. Stored only in this browser.</p>
+        <p style="font-size:11px;color:var(--label3);margin-top:-8px;margin-bottom:14px">Token needs <strong>repo</strong> scope. Stored only in this browser.</p>
+        <div id="sync-bookmark-row" style="display:none;font-size:12px;background:var(--surface2);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:14px;line-height:1.5">
+            <strong style="font-weight:600">Tip:</strong> Bookmark a recovery URL so you don't have to re-enter your token if storage gets cleared.
+            <button type="button" id="sync-copy-link-btn" class="btn btn-secondary" style="margin-top:8px;width:100%;justify-content:center;font-size:12px;padding:8px">Copy sync link</button>
+        </div>
         <div class="modal-foot">
             <button type="button" class="btn btn-secondary" id="sync-modal-cancel">Cancel</button>
             <button type="button" class="btn btn-primary" id="sync-connect-btn">Connect</button>
@@ -1681,6 +1605,44 @@
     </div>
 </div>
 
+<!-- ── SRS Contribution Modal ── -->
+<div class="overlay" id="srs-overlay">
+    <div class="modal">
+        <div class="modal-hdr">
+            <h2 id="srs-modal-title">Log SRS Contribution</h2>
+            <button class="modal-x" id="srs-modal-close">&times;</button>
+        </div>
+        <form id="srs-form" autocomplete="off">
+            <div class="frow">
+                <div class="fg">
+                    <label>Date</label>
+                    <input class="finput" id="srs-date" type="date" required>
+                </div>
+                <div class="fg">
+                    <label>Amount (SGD)</label>
+                    <input class="finput" id="srs-amount" type="number" step="any" min="0" placeholder="0.00" required>
+                </div>
+            </div>
+            <div class="fg">
+                <label>Type</label>
+                <select class="finput" id="srs-type">
+                    <option value="Contribution">Contribution</option>
+                    <option value="Withdrawal">Withdrawal</option>
+                </select>
+            </div>
+            <div class="fg">
+                <label>Notes <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+                <input class="finput" id="srs-notes" type="text" placeholder="e.g. Annual top-up, Tax relief">
+            </div>
+            <div id="srs-cap-info" style="font-size:12px;color:var(--label2);margin-bottom:12px;min-height:16px"></div>
+            <div class="modal-foot">
+                <button type="button" class="btn btn-secondary" id="srs-cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary">Log</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 
 // ── Constants ──
@@ -1701,11 +1663,22 @@ let sortDir  = 'desc';
 let fetching = false;
 let displayCur = 'USD'; // 'USD' or 'SGD'
 let searchQuery = '';
+
+// Track viewport for conditional table-vs-cards rendering — avoids building both on every render.
+const _mobileMQ = window.matchMedia('(max-width: 680px)');
+let isMobileView = _mobileMQ.matches;
+_mobileMQ.addEventListener('change', e => {
+    isMobileView = e.matches;
+    if (activePanel === 'dashboard') render();
+});
 let dividends = [];
 let realized = [];
 let watchPrices = {}; // live prices for watchlist tickers
+let srsContributions = [];
 const DIV_KEY = 'portfolio_dividends';
 const REALIZED_KEY = 'portfolio_realized';
+const SRS_KEY = 'portfolio_srs';
+const SRS_ANNUAL_CAP = 15300; // SGD cap for citizens/PRs
 
 // ── Storage ──
 function load() {
@@ -1724,6 +1697,11 @@ function loadRealized() {
     try { realized = JSON.parse(localStorage.getItem(REALIZED_KEY) || '[]'); } catch { realized = []; }
 }
 function saveRealized() { localStorage.setItem(REALIZED_KEY, JSON.stringify(realized)); syncSave(); }
+
+function loadSrs() {
+    try { srsContributions = JSON.parse(localStorage.getItem(SRS_KEY) || '[]'); } catch { srsContributions = []; }
+}
+function saveSrs() { localStorage.setItem(SRS_KEY, JSON.stringify(srsContributions)); syncSave(); }
 
 // ── Greeting ──
 function setGreeting() {
@@ -1749,7 +1727,7 @@ async function fetchSymbol(symbol) {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
     for (const proxy of PROXIES) {
         try {
-            const res = await fetch(proxy(url), { credentials: 'include', headers: { Accept: 'application/json' } });
+            const res = await fetch(proxy(url), { headers: { Accept: 'application/json' } });
             if (!res.ok) continue;
             const data = await res.json();
             const meta = data?.chart?.result?.[0]?.meta;
@@ -1760,16 +1738,18 @@ async function fetchSymbol(symbol) {
 }
 
 async function fetchPrices() {
-    if (!holdings.length || fetching) return;
+    if (fetching) return;
+
+    const tickers    = [...new Set(holdings.map(h => h.ticker))];
+    const watchTickers = [...new Set(watchlist.map(w => w.ticker).filter(t => t && !tickers.includes(t)))];
+    const esppTickers = esppData?.grants?.length && !tickers.includes('AAPL') && !watchTickers.includes('AAPL') ? ['AAPL'] : [];
+    if (!tickers.length && !watchTickers.length && !esppTickers.length) return;
+
     fetching = true;
     const icon = document.getElementById('refresh-icon');
     icon.classList.add('spinning');
     document.getElementById('last-updated').textContent = 'Updating…';
 
-    const tickers    = [...new Set(holdings.map(h => h.ticker))];
-    const watchTickers = [...new Set(watchlist.map(w => w.ticker).filter(t => t && !tickers.includes(t)))];
-    // Always fetch AAPL for ESPP
-    const esppTickers = esppData?.grants?.length && !tickers.includes('AAPL') && !watchTickers.includes('AAPL') ? ['AAPL'] : [];
     const allSymbols = [...tickers, ...watchTickers, ...esppTickers, 'SGDUSD=X', 'GBPUSD=X'];
 
     try {
@@ -1796,7 +1776,7 @@ async function fetchPrices() {
             }
         });
 
-        if (!Object.keys(prices).length) throw new Error('no prices');
+        if (!results.some(Boolean)) throw new Error('no prices');
 
         const t = new Date();
         const fmtTime = `Last updated on ${t.toLocaleDateString('en-US',{month:'short',day:'numeric'})}, ${t.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
@@ -1813,6 +1793,7 @@ async function fetchPrices() {
         render();
         if (activePanel === 'espp') renderEspp();
         if (activePanel === 'watchlist') renderWatchlist();
+        if (activePanel === 'srs') renderSrs();
     }
 }
 
@@ -1909,7 +1890,6 @@ function render() {
     renderStatsRow(all);
     renderTypeChips(all);
     renderTable(searched, tot);
-    renderChart(all, tot);
     renderSectorChart(all);
 }
 
@@ -1967,32 +1947,6 @@ function renderKPI(rows) {
 }
 
 // ── Holdings top (for right panel) ──
-function renderHoldingsTop(rows) {
-    const el = document.getElementById('holdings-top');
-    if (!el) return;
-    const sorted = [...rows].filter(r => r.gainPct != null).sort((a, b) => b.gainPct - a.gainPct);
-    const maxA = Math.max(...sorted.map(r => Math.abs(r.gainPct)), 1);
-    el.innerHTML = `
-        <div class="kpi-label" style="margin-bottom:6px">Holdings · ${rows.length}</div>
-        <div style="margin-bottom:14px">
-            ${[...new Set(rows.map(r => r.market))].map(m =>
-                `<span class="mkt-pill mkt-${m.toLowerCase()}">${MKT_FLAGS[m]||''} ${m}</span>`).join(' ')}
-        </div>
-        <div class="perf-list" style="padding:0">
-            ${sorted.map(r => {
-                const w = (Math.abs(r.gainPct) / maxA * 100).toFixed(1);
-                const cls = r.gainPct >= 0 ? 'pos' : 'neg';
-                const short = r.ticker.replace('.SI','').replace('.L','');
-                return `<div class="perf-row">
-                    <span class="perf-ticker">${short.slice(0,5)}</span>
-                    <div class="perf-bar-wrap"><div class="perf-bar ${cls}" style="width:${w}%"></div></div>
-                    <span class="perf-pct ${cls}">${pct(r.gainPct)}</span>
-                </div>`;
-            }).join('')}
-        </div>`;
-}
-
-
 function mobileCard(r, tot) {
     const valueUSD = toUSD(r.value ?? r.costBasis, r.currency);
     const wt = tot > 0 ? (valueUSD / tot) * 100 : 0;
@@ -2087,8 +2041,9 @@ function renderTable(rows, tot) {
         return `<th class="r sortable${active ? ' sorted' : ''}" data-col="${col}">${label} <i class="sort-icon">${icon}</i></th>`;
     };
 
-    body.innerHTML = `
-        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+    body.innerHTML = isMobileView
+        ? `<div class="mobile-cards">${sortedRows.map(r => mobileCard(r, tot)).join('')}</div>`
+        : `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
         <table>
             <thead>
                 <tr>
@@ -2106,17 +2061,18 @@ function renderTable(rows, tot) {
             </thead>
             <tbody>${sortedRows.map(r => tableRow(r, tot)).join('')}</tbody>
         </table>
-        </div>
-        <div class="mobile-cards">${sortedRows.map(r => mobileCard(r, tot)).join('')}</div>`;
+        </div>`;
 
-    body.querySelectorAll('th.sortable').forEach(th => {
-        th.addEventListener('click', () => {
-            const col = th.dataset.col;
-            if (sortCol === col) { sortDir = sortDir === 'asc' ? 'desc' : 'asc'; }
-            else { sortCol = col; sortDir = 'desc'; }
-            render();
+    if (!isMobileView) {
+        body.querySelectorAll('th.sortable').forEach(th => {
+            th.addEventListener('click', () => {
+                const col = th.dataset.col;
+                if (sortCol === col) { sortDir = sortDir === 'asc' ? 'desc' : 'asc'; }
+                else { sortCol = col; sortDir = 'desc'; }
+                render();
+            });
         });
-    });
+    }
 }
 
 function tableRow(r, tot) {
@@ -2176,61 +2132,6 @@ function tableRow(r, tot) {
                 </div>
             </td>
         </tr>`;
-}
-
-function renderChart(rows, tot) {
-    const body = document.getElementById('chart-body');
-    if (!body) return;
-
-    const byMkt = {};
-    rows.forEach(r => {
-        const v = toUSD(r.value ?? r.costBasis, r.currency);
-        byMkt[r.market] = (byMkt[r.market] || 0) + v;
-    });
-
-    const markets = Object.entries(byMkt).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
-    const total = markets.reduce((s, [, v]) => s + v, 0);
-
-    // Build conic-gradient for donut
-    let angle = 0;
-    const stops = markets.map(([mkt, v]) => {
-        const deg = (v / total) * 360;
-        const stop = `${MARKET_COLORS[mkt] || '#94a3b8'} ${angle.toFixed(1)}deg ${(angle + deg).toFixed(1)}deg`;
-        angle += deg;
-        return stop;
-    });
-
-    // Add a gap between segments visually by slightly shrinking each arc
-    const gradient = stops.length > 1
-        ? `conic-gradient(${stops.join(', ')})`
-        : `conic-gradient(${MARKET_COLORS[markets[0][0]]} 0deg 360deg)`;
-
-    const allocationRows = markets.map(([mkt, v]) => {
-        const p = (v / total) * 100;
-        return `
-            <div class="alloc-row">
-                <div class="alloc-left">
-                    <div class="alloc-dot" style="background:${MARKET_COLORS[mkt] || '#94a3b8'}"></div>
-                    <span class="alloc-market">${mkt}</span>
-                </div>
-                <div class="alloc-bar-wrap">
-                    <div class="alloc-bar" style="width:${p.toFixed(1)}%;background:${MARKET_COLORS[mkt] || '#94a3b8'}"></div>
-                </div>
-                <span class="alloc-pct">${p.toFixed(1)}%</span>
-            </div>`;
-    }).join('');
-
-    body.innerHTML = `
-        <div class="chart-inner">
-            <div class="donut-wrap">
-                <div class="donut-ring" style="background:${gradient}"></div>
-                <div class="donut-hole">
-                    <div class="donut-total">${dmoney(total)}</div>
-                    <div class="donut-label">Total USD</div>
-                </div>
-            </div>
-            <div class="alloc-list">${allocationRows}</div>
-        </div>`;
 }
 
 const SECTOR_COLORS = {
@@ -2303,12 +2204,6 @@ function setMarketTab(mkt) {
         ({ all:'All Holdings', US:'US Holdings', SG:'SG Holdings', UK:'UK Holdings' })[tab];
     render();
 }
-
-// ── Tooltip ──
-const ttEl = () => document.getElementById('chart-tooltip');
-function showTooltip(e, html) { const t = ttEl(); t.innerHTML = html; t.classList.add('show'); moveTooltip(e); }
-function moveTooltip(e) { const t = ttEl(); t.style.left = (e.clientX + 14) + 'px'; t.style.top = (e.clientY - 10) + 'px'; }
-function hideTooltip() { ttEl().classList.remove('show'); }
 
 // ── Market KPI breakdown ──
 const MKT_FLAGS = { US: '🇺🇸', SG: '🇸🇬', UK: '🇬🇧' };
@@ -2395,25 +2290,6 @@ function renderTypeChips(rows) {
     });
 }
 
-// ── Performance bars ──
-function renderPerformance(rows) {
-    const el = document.getElementById('perf-body');
-    if (!rows.length) { el.innerHTML = '<div class="chart-inner"><div class="empty"><div class="empty-icon">📉</div><p>No data yet</p></div></div>'; return; }
-    const sorted = [...rows].filter(r => r.gainPct != null).sort((a, b) => b.gainPct - a.gainPct);
-    const maxAbs = Math.max(...sorted.map(r => Math.abs(r.gainPct)), 1);
-    el.innerHTML = `<div class="perf-list">${sorted.map(r => {
-        const w = (Math.abs(r.gainPct) / maxAbs * 100).toFixed(1);
-        const cls = r.gainPct >= 0 ? 'pos' : 'neg';
-        const short = r.ticker.replace('.SI','').replace('.L','');
-        return `
-        <div class="perf-row">
-            <span class="perf-ticker">${short.slice(0,5)}</span>
-            <div class="perf-bar-wrap"><div class="perf-bar ${cls}" style="width:${w}%"></div></div>
-            <span class="perf-pct ${cls}">${pct(r.gainPct)}</span>
-        </div>`;
-    }).join('')}</div>`;
-}
-
 // ── Modal ──
 function openModal(id = null) {
     editId = id;
@@ -2491,9 +2367,11 @@ document.getElementById('currency-toggle-btn').addEventListener('click', () => {
     document.getElementById('currency-toggle-btn').textContent = displayCur;
     render();
 });
+let searchTimer = null;
 document.getElementById('search-input').addEventListener('input', e => {
-    searchQuery = e.target.value.trim();
-    render();
+    const value = e.target.value.trim();
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => { searchQuery = value; render(); }, 180);
 });
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal-cancel').addEventListener('click', closeModal);
@@ -2510,7 +2388,7 @@ function closeSidebar() {
 }
 document.getElementById('hamburger-btn').addEventListener('click', toggleSidebar);
 document.getElementById('sidebar-backdrop').addEventListener('click', closeSidebar);
-document.querySelectorAll('.nav-item, .sidebar-add, .util-btn, #sync-setup-btn, #sync-pull-btn, #watchlist-nav-btn, #dividends-nav-btn, #realized-nav-btn, #espp-nav-btn').forEach(el => {
+document.querySelectorAll('.nav-item, .sidebar-add, .util-btn, #sync-setup-btn, #sync-pull-btn, #watchlist-nav-btn, #dividends-nav-btn, #realized-nav-btn, #espp-nav-btn, #srs-nav-btn').forEach(el => {
     el.addEventListener('click', closeSidebar);
 });
 
@@ -2709,15 +2587,18 @@ function showPanel(which) {
     document.getElementById('dividends-panel').style.display = which === 'dividends' ? '' : 'none';
     document.getElementById('realized-panel').style.display = which === 'realized' ? '' : 'none';
     document.getElementById('espp-panel').style.display = which === 'espp' ? '' : 'none';
+    document.getElementById('srs-panel').style.display = which === 'srs' ? '' : 'none';
     document.getElementById('watchlist-nav-btn').classList.toggle('active', which === 'watchlist');
     document.getElementById('dividends-nav-btn').classList.toggle('active', which === 'dividends');
     document.getElementById('realized-nav-btn').classList.toggle('active', which === 'realized');
     document.getElementById('espp-nav-btn').classList.toggle('active', which === 'espp');
+    document.getElementById('srs-nav-btn').classList.toggle('active', which === 'srs');
     document.querySelectorAll('.nav-item[data-tab]').forEach(n => n.classList.toggle('active', which === 'dashboard' && n.dataset.tab === tab));
     if (which === 'watchlist') renderWatchlist();
     if (which === 'dividends') renderDividends();
     if (which === 'realized') renderRealizedPanel();
     if (which === 'espp') { renderEspp(); if (!prices['AAPL']) fetchPrices(); }
+    if (which === 'srs') renderSrs();
 }
 
 const ACTION_COLORS = { Buy: '#22c55e', Sell: '#ef4444', Watch: '#f59e0b' };
@@ -2733,17 +2614,16 @@ function renderWatchlist() {
         </div></div>`;
         return;
     }
-    const thStyle = 'padding:10px 16px;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)';
     el.innerHTML = `<div class="card"><table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead><tr>
-            <th style="${thStyle};text-align:left">Item</th>
-            <th style="${thStyle}">Action</th>
-            <th style="${thStyle};text-align:right">Current</th>
-            <th style="${thStyle};text-align:right">Target</th>
-            <th style="${thStyle};text-align:right">Qty</th>
-            <th style="${thStyle}">Account</th>
-            <th style="${thStyle}">Notes</th>
-            <th style="border-bottom:1px solid var(--sep)"></th>
+            <th>Item</th>
+            <th>Action</th>
+            <th class="r">Current</th>
+            <th class="r">Target</th>
+            <th class="r">Qty</th>
+            <th>Account</th>
+            <th>Notes</th>
+            <th></th>
         </tr></thead>
         <tbody>${watchlist.map(w => {
             const lp = prices[w.ticker] || watchPrices[w.ticker];
@@ -2754,20 +2634,20 @@ function renderWatchlist() {
                 (w.action === 'Sell' && curPrice >= target)
             );
             return `
-        <tr style="border-bottom:1px solid var(--sep)" class="${hit ? 'watch-hit' : ''}">
-            <td style="padding:14px 16px">
+        <tr class="${hit ? 'watch-hit' : ''}">
+            <td>
                 <div style="font-weight:600">${w.ticker}</div>
                 <div style="font-size:11px;color:var(--label2)">${w.name}</div>
             </td>
-            <td style="padding:14px 16px">
+            <td>
                 <span style="background:${ACTION_COLORS[w.action]}18;color:${ACTION_COLORS[w.action]};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">${w.action}</span>
             </td>
-            <td style="padding:14px 16px;text-align:right">${curPrice != null ? '$' + curPrice.toFixed(2) : '<span class="skel" style="width:48px;height:13px;display:inline-block"></span>'}${hit ? ' <span style="color:var(--green);font-weight:700;font-size:11px">TARGET HIT</span>' : ''}</td>
-            <td style="padding:14px 16px;text-align:right">${w.targetPrice ? '$' + Number(w.targetPrice).toFixed(2) : '—'}</td>
-            <td style="padding:14px 16px;text-align:right">${w.qty || '—'}</td>
-            <td style="padding:14px 16px"><span class="mkt-pill" style="background:rgba(139,92,246,0.12);color:#7c3aed">${w.account || 'Cash'}</span></td>
+            <td class="r">${curPrice != null ? '$' + curPrice.toFixed(2) : '<span class="skel" style="width:48px;height:13px;display:inline-block"></span>'}${hit ? ' <span style="color:var(--green);font-weight:700;font-size:11px">TARGET HIT</span>' : ''}</td>
+            <td class="r">${w.targetPrice ? '$' + Number(w.targetPrice).toFixed(2) : '—'}</td>
+            <td class="r">${w.qty || '—'}</td>
+            <td><span class="mkt-pill" style="background:rgba(139,92,246,0.12);color:#7c3aed">${w.account || 'Cash'}</span></td>
             <td style="padding:14px 16px;color:var(--label2);font-size:12px">${w.notes || '—'}</td>
-            <td style="padding:14px 16px">
+            <td>
                 <div style="display:flex;gap:4px">
                     <button class="row-btn" onclick="openWatchModal('${w.id}')">Edit</button>
                     <button class="row-btn del" onclick="delWatch('${w.id}')">Remove</button>
@@ -2838,7 +2718,21 @@ document.getElementById('watchlist-nav-btn').addEventListener('click', () => sho
 const SYNC_REPO  = 'yanni-tan/investment';
 const SYNC_FILE  = 'data.json';
 const SYNC_TOKEN_KEY = 'gh_sync_token';
-let ghToken = localStorage.getItem(SYNC_TOKEN_KEY) || '';
+
+// Pull token from URL hash (#token=ghp_...) for one-click restore from a bookmark.
+// This lets the user reconnect on a fresh browser/storage clear by visiting their bookmarked URL.
+function readTokenFromHash() {
+    const hash = window.location.hash || '';
+    const m = hash.match(/(?:^#|&)token=([^&]+)/);
+    if (!m) return null;
+    const token = decodeURIComponent(m[1]);
+    const cleaned = hash.replace(/(?:^#|&)token=[^&]+/, '').replace(/^&/, '#');
+    history.replaceState(null, '', window.location.pathname + (cleaned && cleaned !== '#' ? cleaned : ''));
+    return token;
+}
+const _hashToken = readTokenFromHash();
+if (_hashToken) localStorage.setItem(SYNC_TOKEN_KEY, _hashToken);
+let ghToken = _hashToken || localStorage.getItem(SYNC_TOKEN_KEY) || '';
 let syncSha  = null;   // current file SHA from GitHub
 let syncBusy = false;
 
@@ -2914,6 +2808,10 @@ async function syncLoad() {
             }
             localStorage.setItem(ESPP_KEY, JSON.stringify(esppData));
         }
+        if (Array.isArray(payload.srsContributions)) {
+            srsContributions = payload.srsContributions;
+            localStorage.setItem(SRS_KEY, JSON.stringify(srsContributions));
+        }
         setSyncStatus('synced', 'Synced');
         return true;
     } catch (e) {
@@ -2922,7 +2820,16 @@ async function syncLoad() {
     }
 }
 
-async function syncSave() {
+let syncSaveTimer = null;
+function syncSave() {
+    if (!ghToken) return;
+    clearTimeout(syncSaveTimer);
+    syncSaveTimer = setTimeout(syncSaveNow, 1500);
+}
+
+async function syncSaveNow() {
+    clearTimeout(syncSaveTimer);
+    syncSaveTimer = null;
     if (!ghToken || syncBusy) return;
     syncBusy = true;
     setSyncStatus('syncing', 'Saving…');
@@ -2934,6 +2841,7 @@ async function syncSave() {
             dividends,
             realized,
             espp: esppData,
+            srsContributions,
             updatedAt: new Date().toISOString(),
         };
         const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
@@ -2955,7 +2863,19 @@ async function syncSave() {
 document.getElementById('sync-setup-btn').addEventListener('click', () => {
     document.getElementById('sync-token-input').value = ghToken;
     document.getElementById('sync-modal-status').textContent = '';
+    document.getElementById('sync-bookmark-row').style.display = ghToken ? '' : 'none';
     document.getElementById('sync-overlay').classList.add('open');
+});
+document.getElementById('sync-copy-link-btn').addEventListener('click', async () => {
+    if (!ghToken) { toast('Connect first to generate a link'); return; }
+    const url = `${location.origin}${location.pathname}#token=${encodeURIComponent(ghToken)}`;
+    try {
+        await navigator.clipboard.writeText(url);
+        toast('Sync link copied — bookmark it on each device');
+    } catch {
+        // Fallback: surface the URL in the status line so the user can copy manually.
+        document.getElementById('sync-modal-status').textContent = url;
+    }
 });
 const closeSyncModal = () => document.getElementById('sync-overlay').classList.remove('open');
 document.getElementById('sync-modal-close').addEventListener('click', closeSyncModal);
@@ -2975,7 +2895,7 @@ document.getElementById('sync-connect-btn').addEventListener('click', async () =
     if (res.status === 404) {
         // No remote data — push local data up
         statusEl.textContent = 'No remote data found — uploading local data…';
-        await syncSave();
+        await syncSaveNow();
         statusEl.textContent = '';
         closeSyncModal();
         toast('Sync connected — local data uploaded ✓');
@@ -3070,7 +2990,6 @@ function renderDividends() {
     // Group by year
     const byYear = {};
     sorted.forEach(d => { const y = d.date.slice(0,4); (byYear[y] = byYear[y]||[]).push(d); });
-    const thS = 'padding:10px 16px;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)';
     el.innerHTML = `
     <div class="kpi-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:20px">
         <div class="kpi-card"><div class="kpi-label">Total Income</div><div class="kpi-value" style="font-size:24px;color:var(--green)">$${totalDiv.toFixed(2)}</div></div>
@@ -3079,18 +2998,18 @@ function renderDividends() {
     </div>
     <div class="card"><table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead><tr>
-            <th style="${thS};text-align:left">Date</th>
-            <th style="${thS};text-align:left">Holding</th>
-            <th style="${thS};text-align:right">Amount</th>
-            <th style="border-bottom:1px solid var(--sep)"></th>
+            <th>Date</th>
+            <th>Holding</th>
+            <th class="r">Amount</th>
+            <th></th>
         </tr></thead>
         <tbody>${sorted.map(d => {
             const h = holdings.find(x => x.id === d.holdingId);
-            return `<tr style="border-bottom:1px solid var(--sep)">
-                <td style="padding:14px 16px">${d.date}</td>
-                <td style="padding:14px 16px"><strong>${h?.name || '—'}</strong><div style="font-size:11px;color:var(--label2)">${h?.ticker||''}</div></td>
+            return `<tr>
+                <td>${d.date}</td>
+                <td><strong>${h?.name || '—'}</strong><div style="font-size:11px;color:var(--label2)">${h?.ticker||''}</div></td>
                 <td style="padding:14px 16px;text-align:right;font-weight:600;color:var(--green)">$${Number(d.amount).toFixed(2)}</td>
-                <td style="padding:14px 16px"><button class="row-btn del" onclick="delDividend('${d.id}')">×</button></td>
+                <td><button class="row-btn del" onclick="delDividend('${d.id}')">×</button></td>
             </tr>`;
         }).join('')}</tbody>
     </table></div>`;
@@ -3216,7 +3135,6 @@ function renderRealizedPanel() {
     const sorted = [...realized].sort((a,b) => (b.sellDate||'').localeCompare(a.sellDate||''));
     const totalGain = realized.reduce((s,r) => s + (r.gainLoss||0), 0);
     const wins = realized.filter(r => r.gainLoss >= 0).length;
-    const thS = 'padding:10px 16px;font-size:10.5px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--sep)';
     el.innerHTML = `
     <div class="kpi-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:20px">
         <div class="kpi-card"><div class="kpi-label">Total Realized P&L</div><div class="kpi-value ${cc(totalGain)}" style="font-size:24px">${money(totalGain,'USD')}</div></div>
@@ -3225,24 +3143,24 @@ function renderRealizedPanel() {
     </div>
     <div class="card"><table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead><tr>
-            <th style="${thS};text-align:left">Date</th>
-            <th style="${thS};text-align:left">Holding</th>
-            <th style="${thS};text-align:right">Shares</th>
-            <th style="${thS};text-align:right">Buy Avg</th>
-            <th style="${thS};text-align:right">Sell Price</th>
-            <th style="${thS};text-align:right">P&L</th>
-            <th style="border-bottom:1px solid var(--sep)"></th>
+            <th>Date</th>
+            <th>Holding</th>
+            <th class="r">Shares</th>
+            <th class="r">Buy Avg</th>
+            <th class="r">Sell Price</th>
+            <th class="r">P&L</th>
+            <th></th>
         </tr></thead>
         <tbody>${sorted.map(r => {
             const gPct = r.buyAvg > 0 ? ((r.sellPrice - r.buyAvg) / r.buyAvg * 100) : 0;
-            return `<tr style="border-bottom:1px solid var(--sep)">
-                <td style="padding:14px 16px">${r.sellDate||'—'}</td>
-                <td style="padding:14px 16px"><strong>${r.name}</strong><div style="font-size:11px;color:var(--label2)">${r.ticker}</div></td>
-                <td style="padding:14px 16px;text-align:right">${r.shares}</td>
-                <td style="padding:14px 16px;text-align:right">${money(r.buyAvg, r.currency)}</td>
-                <td style="padding:14px 16px;text-align:right">${money(r.sellPrice, r.currency)}</td>
-                <td style="padding:14px 16px;text-align:right"><span class="${cc(r.gainLoss)}" style="font-weight:600">${signed(r.gainLoss, r.currency)}</span><div style="font-size:11px;color:var(--label2)">${pct(gPct)}</div></td>
-                <td style="padding:14px 16px"><button class="row-btn del" onclick="delRealized('${r.id}')">×</button></td>
+            return `<tr>
+                <td>${r.sellDate||'—'}</td>
+                <td><strong>${r.name}</strong><div style="font-size:11px;color:var(--label2)">${r.ticker}</div></td>
+                <td class="r">${r.shares}</td>
+                <td class="r">${money(r.buyAvg, r.currency)}</td>
+                <td class="r">${money(r.sellPrice, r.currency)}</td>
+                <td class="r"><span class="${cc(r.gainLoss)}" style="font-weight:600">${signed(r.gainLoss, r.currency)}</span><div style="font-size:11px;color:var(--label2)">${pct(gPct)}</div></td>
+                <td><button class="row-btn del" onclick="delRealized('${r.id}')">×</button></td>
             </tr>`;
         }).join('')}</tbody>
     </table></div>`;
@@ -3323,11 +3241,12 @@ document.getElementById('espp-form').addEventListener('submit', e => {
         esppData.grants.push(grant);
     }
 
+    const wasEdit = !!esppEditId;
     esppEditId = null;
     saveEspp();
     document.getElementById('espp-overlay').classList.remove('open');
     renderEspp();
-    toast(esppEditId ? 'Grant updated' : 'Grant added');
+    toast(wasEdit ? 'Grant updated' : 'Grant added');
 });
 const closeEsppModal = () => { esppEditId = null; document.getElementById('espp-overlay').classList.remove('open'); };
 document.getElementById('espp-modal-close').addEventListener('click', closeEsppModal);
@@ -3605,17 +3524,17 @@ function renderEspp() {
             <div class="card-header"><h2>Update History</h2><span class="count-badge">${updates.length} update${updates.length!==1?'s':''}</span></div>
             <table style="width:100%;border-collapse:collapse">
                 <thead><tr>
-                    <th style="text-align:left;padding:10px 16px;font-size:11px;color:var(--label3);border-bottom:1px solid var(--sep)">Date</th>
-                    <th style="text-align:right;padding:10px 16px;font-size:11px;color:var(--label3);border-bottom:1px solid var(--sep)">Vested Shares</th>
-                    <th style="text-align:right;padding:10px 16px;font-size:11px;color:var(--label3);border-bottom:1px solid var(--sep)">AAPL Price</th>
-                    <th style="text-align:right;padding:10px 16px;font-size:11px;color:var(--label3);border-bottom:1px solid var(--sep)">Vested Value</th>
-                    <th style="text-align:right;padding:10px 16px;font-size:11px;color:var(--label3);border-bottom:1px solid var(--sep)">Total Value</th>
-                    <th style="text-align:left;padding:10px 16px;font-size:11px;color:var(--label3);border-bottom:1px solid var(--sep)">Note</th>
-                    <th style="width:40px;border-bottom:1px solid var(--sep)"></th>
+                    <th>Date</th>
+                    <th class="r">Vested Shares</th>
+                    <th class="r">AAPL Price</th>
+                    <th class="r">Vested Value</th>
+                    <th class="r">Total Value</th>
+                    <th>Note</th>
+                    <th style="width:40px"></th>
                 </tr></thead>
                 <tbody>${[...updates].reverse().map((u, idx) => {
                     const realIdx = updates.length - 1 - idx;
-                    return `<tr style="border-bottom:1px solid var(--sep)">
+                    return `<tr>
                         <td style="padding:10px 16px;font-size:13px">${new Date(u.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</td>
                         <td style="padding:10px 16px;font-size:13px;text-align:right;font-weight:600">${u.vestedUnits.toFixed(1)}</td>
                         <td style="padding:10px 16px;font-size:13px;text-align:right">${fmtUSD(u.aaplPrice)}</td>
@@ -3643,6 +3562,274 @@ function renderEspp() {
             }
         });
     }
+}
+
+// ── SRS ──
+document.getElementById('srs-nav-btn').addEventListener('click', () => showPanel('srs'));
+document.getElementById('srs-contrib-btn').addEventListener('click', () => openSrsModal());
+
+let srsEditId = null;
+
+function openSrsModal(id = null) {
+    srsEditId = id;
+    document.getElementById('srs-modal-title').textContent = id ? 'Edit Entry' : 'Log SRS Contribution';
+    if (id) {
+        const c = srsContributions.find(x => x.id === id);
+        if (!c) return;
+        document.getElementById('srs-date').value = c.date;
+        document.getElementById('srs-amount').value = c.amount;
+        document.getElementById('srs-type').value = c.type || 'Contribution';
+        document.getElementById('srs-notes').value = c.notes || '';
+    } else {
+        document.getElementById('srs-form').reset();
+        document.getElementById('srs-date').value = new Date().toISOString().slice(0, 10);
+    }
+    updateSrsCapInfo();
+    document.getElementById('srs-overlay').classList.add('open');
+    setTimeout(() => document.getElementById('srs-amount').focus(), 50);
+}
+
+function updateSrsCapInfo() {
+    const year = (document.getElementById('srs-date').value || '').slice(0, 4) || new Date().getFullYear().toString();
+    const ytd = srsContributions
+        .filter(c => c.date?.startsWith(year) && c.type !== 'Withdrawal')
+        .reduce((s, c) => s + (Number(c.amount) || 0), 0);
+    const remaining = Math.max(SRS_ANNUAL_CAP - ytd, 0);
+    document.getElementById('srs-cap-info').textContent =
+        `${year} contributions: S$${ytd.toLocaleString('en-US', {minimumFractionDigits:2})} / S$${SRS_ANNUAL_CAP.toLocaleString()} · S$${remaining.toLocaleString('en-US', {minimumFractionDigits:2})} remaining`;
+}
+
+document.getElementById('srs-date').addEventListener('change', updateSrsCapInfo);
+
+document.getElementById('srs-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const date = document.getElementById('srs-date').value;
+    const amount = parseFloat(document.getElementById('srs-amount').value);
+    const type = document.getElementById('srs-type').value;
+    const notes = document.getElementById('srs-notes').value.trim();
+    if (!date || isNaN(amount) || amount <= 0) return;
+
+    if (srsEditId) {
+        const i = srsContributions.findIndex(x => x.id === srsEditId);
+        if (i !== -1) srsContributions[i] = { ...srsContributions[i], date, amount, type, notes };
+        toast('Entry updated');
+    } else {
+        srsContributions.push({ id: uid(), date, amount, type, notes });
+        toast(type === 'Withdrawal' ? 'Withdrawal logged' : 'Contribution logged');
+    }
+    saveSrs();
+    document.getElementById('srs-overlay').classList.remove('open');
+    srsEditId = null;
+    renderSrs();
+});
+
+function delSrsEntry(id) {
+    srsContributions = srsContributions.filter(c => c.id !== id);
+    saveSrs(); renderSrs();
+}
+
+const closeSrsModal = () => { document.getElementById('srs-overlay').classList.remove('open'); srsEditId = null; };
+document.getElementById('srs-modal-close').addEventListener('click', closeSrsModal);
+document.getElementById('srs-cancel').addEventListener('click', closeSrsModal);
+document.getElementById('srs-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeSrsModal(); });
+
+function renderSrs() {
+    const el = document.getElementById('srs-body');
+    const srsHoldings = holdings.map(enrich).filter(h => (h.account || 'Cash') === 'SRS');
+
+    const totalContribs = srsContributions
+        .filter(c => c.type !== 'Withdrawal')
+        .reduce((s, c) => s + (Number(c.amount) || 0), 0);
+    const totalWithdrawals = srsContributions
+        .filter(c => c.type === 'Withdrawal')
+        .reduce((s, c) => s + (Number(c.amount) || 0), 0);
+    const netContribs = totalContribs - totalWithdrawals;
+
+    const year = new Date().getFullYear().toString();
+    const ytdContribs = srsContributions
+        .filter(c => c.date?.startsWith(year) && c.type !== 'Withdrawal')
+        .reduce((s, c) => s + (Number(c.amount) || 0), 0);
+    const capPct = Math.min((ytdContribs / SRS_ANNUAL_CAP) * 100, 100);
+
+    // Portfolio value of SRS holdings in SGD
+    const srsValueSGD = srsHoldings.reduce((s, h) => {
+        const val = h.value ?? h.costBasis;
+        if (h.currency === 'SGD') return s + val;
+        if (h.currency === 'USD') return s + val / fxSGDUSD;
+        if (h.currency === 'GBP') return s + val * fxGBPUSD / fxSGDUSD;
+        return s + val;
+    }, 0);
+    const srsCostSGD = srsHoldings.reduce((s, h) => {
+        if (h.currency === 'SGD') return s + h.costBasis;
+        if (h.currency === 'USD') return s + h.costBasis / fxSGDUSD;
+        if (h.currency === 'GBP') return s + h.costBasis * fxGBPUSD / fxSGDUSD;
+        return s + h.costBasis;
+    }, 0);
+    const srsGain = srsValueSGD - srsCostSGD;
+    const srsGainPct = srsCostSGD > 0 ? (srsGain / srsCostSGD * 100) : 0;
+
+    // Cash balance estimate (contributions - cost of investments - withdrawals)
+    const srsCash = Math.max(netContribs - srsCostSGD, 0);
+    const totalSrsValue = srsValueSGD + srsCash;
+
+    const fmtSGD = v => 'S$' + Math.abs(v).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+    // Group contributions by year
+    const sorted = [...srsContributions].sort((a, b) => b.date.localeCompare(a.date));
+    const byYear = {};
+    sorted.forEach(c => { const y = c.date.slice(0, 4); (byYear[y] = byYear[y] || []).push(c); });
+    const years = Object.keys(byYear).sort((a, b) => b.localeCompare(a));
+
+    // Dividends from SRS holdings
+    const srsDivs = dividends.filter(d => {
+        const h = holdings.find(x => x.id === d.holdingId);
+        return h && (h.account || 'Cash') === 'SRS';
+    }).reduce((s, d) => s + (Number(d.amount) || 0), 0);
+
+    let html = `
+        <div class="espp-hero srs-hero">
+            <div style="position:relative;z-index:1">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+                    <span style="font-size:28px">🏦</span>
+                    <div>
+                        <div style="font-size:16px;font-weight:600">SRS Account</div>
+                        <div style="font-size:12px;color:rgba(255,255,255,0.5)">Supplementary Retirement Scheme · ${srsHoldings.length} holding${srsHoldings.length !== 1 ? 's' : ''}</div>
+                    </div>
+                </div>
+                <div class="espp-hero-label">Total SRS Value (Est.)</div>
+                <div class="espp-hero-value">${fmtSGD(totalSrsValue)}</div>
+                <div style="display:flex;gap:12px;margin-top:4px">
+                    <div class="espp-hero-sub">Invested: ${fmtSGD(srsValueSGD)}</div>
+                    <div class="espp-hero-sub">Cash: ~${fmtSGD(srsCash)}</div>
+                    ${srsGain !== 0 ? `<div class="espp-hero-sub" style="color:${srsGain >= 0 ? '#4ade80' : '#f87171'}">
+                        ${srsGain >= 0 ? '↑' : '↓'} ${fmtSGD(srsGain)} (${srsGainPct.toFixed(1)}%)
+                    </div>` : ''}
+                </div>
+                <div class="espp-progress"><div class="srs-progress-fill" style="width:${capPct.toFixed(1)}%"></div></div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.5)">
+                    <span>${year} contribution: ${fmtSGD(ytdContribs)} / ${fmtSGD(SRS_ANNUAL_CAP)}</span>
+                    <span>${capPct.toFixed(0)}% of annual cap</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="espp-stats">
+            <div class="espp-stat">
+                <div class="espp-stat-label">Net Contributions</div>
+                <div class="espp-stat-value" style="color:#0d9488">${fmtSGD(netContribs)}</div>
+                <div class="espp-stat-sub">${srsContributions.filter(c => c.type !== 'Withdrawal').length} deposit${srsContributions.filter(c => c.type !== 'Withdrawal').length !== 1 ? 's' : ''}</div>
+            </div>
+            <div class="espp-stat">
+                <div class="espp-stat-label">Portfolio Value</div>
+                <div class="espp-stat-value">${fmtSGD(srsValueSGD)}</div>
+                <div class="espp-stat-sub">${srsHoldings.length} holding${srsHoldings.length !== 1 ? 's' : ''} invested</div>
+            </div>
+            <div class="espp-stat">
+                <div class="espp-stat-label">Unrealised Gain</div>
+                <div class="espp-stat-value ${cc(srsGain)}">${srsGain >= 0 ? '+' : '-'}${fmtSGD(srsGain)}</div>
+                <div class="espp-stat-sub">${srsGainPct.toFixed(2)}% return on invested</div>
+            </div>
+            <div class="espp-stat">
+                <div class="espp-stat-label">${year} Cap Remaining</div>
+                <div class="espp-stat-value">${fmtSGD(Math.max(SRS_ANNUAL_CAP - ytdContribs, 0))}</div>
+                <div class="espp-stat-sub">of ${fmtSGD(SRS_ANNUAL_CAP)} annual limit</div>
+            </div>
+            <div class="espp-stat">
+                <div class="espp-stat-label">Dividends Earned</div>
+                <div class="espp-stat-value" style="color:var(--green)">${srsDivs > 0 ? '$' + srsDivs.toFixed(2) : '—'}</div>
+                <div class="espp-stat-sub">From SRS holdings</div>
+            </div>
+            <div class="espp-stat">
+                <div class="espp-stat-label">Est. Cash Balance</div>
+                <div class="espp-stat-value">${fmtSGD(srsCash)}</div>
+                <div class="espp-stat-sub">Uninvested SRS cash</div>
+            </div>
+        </div>`;
+
+    // SRS Holdings
+    if (srsHoldings.length) {
+        html += `<div class="card" style="margin-top:20px">
+            <div class="card-header"><h2>SRS Holdings</h2><span class="count-badge">${srsHoldings.length}</span></div>
+            <table style="width:100%;border-collapse:collapse;font-size:13px">
+                <thead><tr>
+                    <th>Holding</th>
+                    <th class="r">Shares</th>
+                    <th class="r">Avg Cost</th>
+                    <th class="r">Price</th>
+                    <th class="r">Value</th>
+                    <th class="r">Gain / Loss</th>
+                </tr></thead>
+                <tbody>${srsHoldings.map(r => {
+                    const valDisplay = r.value != null ? money(r.value, r.currency) : money(r.costBasis, r.currency);
+                    const gainCls = cc(r.gainLoss);
+                    return `<tr style="cursor:pointer" onclick="openDetail('${r.id}')">
+                        <td>
+                            <div style="font-weight:600">${r.name}</div>
+                            <div style="font-size:11px;color:var(--label2)">${r.ticker} · ${r.type}${r.sector ? ' · ' + r.sector : ''}</div>
+                        </td>
+                        <td class="r">${Number(r.shares).toLocaleString('en-US', { maximumFractionDigits: 4 })}</td>
+                        <td class="r">${money(r.avgCost, r.currency)}</td>
+                        <td class="r">${r.price != null ? money(r.price, r.currency) : '—'}</td>
+                        <td style="padding:14px 16px;text-align:right;font-weight:600">${valDisplay}</td>
+                        <td class="r">
+                            ${r.gainLoss != null ? `<span class="${gainCls}" style="font-weight:600">${r.gainLoss >= 0 ? '+' : ''}${money(Math.abs(r.gainLoss), r.currency)}</span><div style="font-size:11px;color:var(--label2)">${pct(r.gainPct)}</div>` : '<span style="color:var(--label3)">—</span>'}
+                        </td>
+                    </tr>`;
+                }).join('')}</tbody>
+            </table>
+        </div>`;
+    } else {
+        html += `<div class="card" style="margin-top:20px">
+            <div class="card-header"><h2>SRS Holdings</h2></div>
+            <div class="empty" style="padding:40px 20px">
+                <div class="empty-icon">📊</div>
+                <h3>No SRS holdings</h3>
+                <p>Add holdings with the "SRS" account type from the main dashboard.</p>
+            </div>
+        </div>`;
+    }
+
+    // Contribution History
+    html += `<div class="card" style="margin-top:20px">
+        <div class="card-header"><h2>Contribution History</h2><span class="count-badge">${srsContributions.length} entries</span></div>`;
+
+    if (srsContributions.length) {
+        html += years.map(y => {
+            const yearEntries = byYear[y];
+            const yearTotal = yearEntries.filter(c => c.type !== 'Withdrawal').reduce((s, c) => s + (Number(c.amount) || 0), 0);
+            const yearWithdrawals = yearEntries.filter(c => c.type === 'Withdrawal').reduce((s, c) => s + (Number(c.amount) || 0), 0);
+            return `
+            <div style="padding:10px 20px 4px;font-size:12px;font-weight:700;color:var(--label3);display:flex;justify-content:space-between;border-bottom:1px solid var(--sep);background:var(--surface2)">
+                <span>${y}</span>
+                <span>Contributed: ${fmtSGD(yearTotal)}${yearWithdrawals > 0 ? ' · Withdrawn: ' + fmtSGD(yearWithdrawals) : ''} · Cap: ${(yearTotal / SRS_ANNUAL_CAP * 100).toFixed(0)}%</span>
+            </div>
+            ${yearEntries.map(c => `<div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--sep)">
+                <div style="width:10px;height:10px;border-radius:50%;background:${c.type === 'Withdrawal' ? 'var(--red)' : '#0d9488'};flex-shrink:0"></div>
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:500">${new Date(c.date + 'T00:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'})}</div>
+                    ${c.notes ? `<div style="font-size:11px;color:var(--label2)">${c.notes}</div>` : ''}
+                </div>
+                <div style="text-align:right;margin-right:8px">
+                    <span style="font-size:14px;font-weight:600;color:${c.type === 'Withdrawal' ? 'var(--red)' : '#0d9488'}">${c.type === 'Withdrawal' ? '-' : '+'}${fmtSGD(c.amount)}</span>
+                    <div style="font-size:10px;color:var(--label3)">${c.type}</div>
+                </div>
+                <div style="display:flex;gap:4px">
+                    <button class="row-btn" onclick="openSrsModal('${c.id}')">Edit</button>
+                    <button class="row-btn del" onclick="delSrsEntry('${c.id}')">×</button>
+                </div>
+            </div>`).join('')}`;
+        }).join('');
+    } else {
+        html += `<div class="empty" style="padding:40px 20px">
+            <div class="empty-icon">🏦</div>
+            <h3>No contributions logged</h3>
+            <p>Log your SRS contributions to track your annual cap usage.</p>
+            <button class="btn btn-primary" onclick="openSrsModal()">+ Log Contribution</button>
+        </div>`;
+    }
+    html += `</div>`;
+
+    el.innerHTML = html;
 }
 
 // ── Holding Detail Panel ──
@@ -3776,6 +3963,7 @@ function init() {
     loadDividends();
     loadRealized();
     loadEspp();
+    loadSrs();
     setGreeting();
     render();
     fetchPrices();
@@ -3785,16 +3973,37 @@ function init() {
         document.getElementById('sync-setup-btn').textContent = 'Manage sync';
         setSyncStatus('syncing', 'Syncing…');
         syncLoad().then(loaded => {
-            if (loaded) { render(); if (showingWatchlist) renderWatchlist(); fetchPrices(); syncSave(); }
+            if (loaded) { render(); if (showingWatchlist) renderWatchlist(); fetchPrices(); }
         });
-        // Auto-poll every 30s for changes from other devices
-        setInterval(async () => {
-            const updated = await syncLoad();
-            if (updated) { render(); if (showingWatchlist) renderWatchlist(); }
-        }, 30_000);
+        startPolling();
+        // Pull immediately when the user comes back to the tab/window — much faster than waiting for the next tick.
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) stopPolling();
+            else { pollSync(); startPolling(); }
+        });
+        window.addEventListener('focus', pollSync);
     } else {
         setSyncStatus('offline', 'Not synced');
     }
+}
+
+let pollBusy = false;
+let pollTimer = null;
+const POLL_MS = 20_000;
+async function pollSync() {
+    if (pollBusy || !ghToken || document.hidden) return;
+    pollBusy = true;
+    try {
+        const updated = await syncLoad();
+        if (updated) { render(); if (showingWatchlist) renderWatchlist(); }
+    } finally { pollBusy = false; }
+}
+function startPolling() {
+    stopPolling();
+    pollTimer = setInterval(pollSync, POLL_MS);
+}
+function stopPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
 }
 
 document.getElementById('sync-pull-btn').addEventListener('click', async () => {
