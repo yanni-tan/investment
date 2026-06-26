@@ -2511,6 +2511,8 @@ function renderStatsRow(rows) {
     ['US', 'SG', 'UK'].forEach(mkt => {
         const valUSD  = s.byMkt[mkt]    || 0;
         const costUSD = s.costByMkt[mkt] || 0;
+        // Hide markets with no position (e.g. UK before any UK holding is added).
+        if (valUSD === 0 && costUSD === 0) return;
         const gainUSD = valUSD - costUSD;
         const gPct = costUSD > 0 ? (gainUSD / costUSD) * 100 : 0;
         const flag = MKT_FLAGS[mkt] || '';
