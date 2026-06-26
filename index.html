@@ -2435,6 +2435,33 @@ const MKT_FLAGS = {
     TW: '🇹🇼', Global: '🌏',
 };
 
+// Total ESPP value in USD (AAPL-denominated). Returns null if no grants.
+function esppTotalUSD() {
+    if (!esppData?.grants?.length) return null;
+    const totalUnits = esppData.grants.reduce((s, g) => s + g.units, 0);
+    const totalGrantValue = esppData.grants.reduce((s, g) => s + g.grantValue, 0);
+    const avgGrantPrice = totalUnits > 0 ? totalGrantValue / totalUnits : 0;
+    const manualPrice = parseFloat(localStorage.getItem('espp_aapl_price')) || null;
+    const lastLogged = esppData.updates?.length ? esppData.updates[esppData.updates.length - 1].aaplPrice : null;
+    const aaplPrice = prices['AAPL']?.price || manualPrice || lastLogged || null;
+    const value = totalUnits * (aaplPrice || avgGrantPrice);
+    return { valueUSD: value, costUSD: totalGrantValue, units: totalUnits };
+}
+
+// Total SRS value (holdings + cash) converted to USD. Returns null if no SRS activity.
+function srsTotalUSD() {
+    const srsHoldings = holdings.map(enrich).filter(h => (h.account || 'Cash') === 'SRS');
+    const sgdOf = (v, cur) => cur === 'SGD' ? v : cur === 'USD' ? v / fxSGDUSD : cur === 'GBP' ? v * fxGBPUSD / fxSGDUSD : v;
+    const valueSGD = srsHoldings.reduce((s, h) => s + sgdOf(h.value ?? h.costBasis, h.currency), 0);
+    const costSGD  = srsHoldings.reduce((s, h) => s + sgdOf(h.costBasis, h.currency), 0);
+    const netContribs = srsContributions.filter(c => c.type !== 'Withdrawal').reduce((s, c) => s + (Number(c.amount) || 0), 0)
+                      - srsContributions.filter(c => c.type === 'Withdrawal').reduce((s, c) => s + (Number(c.amount) || 0), 0);
+    if (!srsHoldings.length && !srsContributions.length) return null;
+    const cashSGD = Math.max(netContribs - costSGD, 0);
+    const totalSGD = valueSGD + cashSGD;
+    return { valueUSD: totalSGD * fxSGDUSD, gainUSD: (valueSGD - costSGD) * fxSGDUSD, costUSD: costSGD * fxSGDUSD };
+}
+
 function renderStatsRow(rows) {
     const el = document.getElementById('stats-row');
     if (!rows.length) { el.innerHTML = ''; return; }
@@ -2469,6 +2496,46 @@ function renderStatsRow(rows) {
             <div class="stat-sub">Cost: ${dmoney(costUSD)}</div>
         </div>`;
     });
+
+    // SRS card (only if there's SRS activity)
+    const srs = srsTotalUSD();
+    if (srs) {
+        const gPct = srs.costUSD > 0 ? (srs.gainUSD / srs.costUSD) * 100 : 0;
+        html += `<div class="stat-mini" onclick="showPanel('srs')">
+            <div class="stat-head">
+                <div class="stat-icon" style="background:rgba(13,148,136,0.12)">
+                    <span class="mkt-pill" style="font-size:10px;background:rgba(13,148,136,0.18);color:#0d9488">SRS</span>
+                </div>
+                <span class="stat-flag">🇸🇬</span>
+            </div>
+            <div class="stat-label">SRS Account</div>
+            <div class="stat-value">${dmoney(srs.valueUSD)}</div>
+            <div class="stat-badges">
+                <span class="kpi-badge ${badgeClass(srs.gainUSD)}" style="font-size:10px;padding:3px 8px">${srs.gainUSD >= 0 ? '↑' : '↓'} ${dsigned(srs.gainUSD)}</span>
+                ${srs.costUSD > 0 ? `<span class="kpi-badge ${badgeClass(gPct)}" style="font-size:10px;padding:3px 8px">${srs.gainUSD >= 0 ? '↑' : '↓'} ${pct(gPct)}</span>` : ''}
+            </div>
+            <div class="stat-sub">Holdings + cash</div>
+        </div>`;
+    }
+
+    // ESPP card (only if there are grants)
+    const espp = esppTotalUSD();
+    if (espp) {
+        const gainUSD = espp.valueUSD - espp.costUSD;
+        const gPct = espp.costUSD > 0 ? (gainUSD / espp.costUSD) * 100 : 0;
+        html += `<div class="stat-mini" onclick="showPanel('espp')">
+            <div class="stat-head">
+                <div class="stat-icon" style="background:var(--surface2)">🍎</div>
+            </div>
+            <div class="stat-label">Apple ESPP</div>
+            <div class="stat-value">${dmoney(espp.valueUSD)}</div>
+            <div class="stat-badges">
+                <span class="kpi-badge ${badgeClass(gainUSD)}" style="font-size:10px;padding:3px 8px">${gainUSD >= 0 ? '↑' : '↓'} ${dsigned(gainUSD)}</span>
+                ${espp.costUSD > 0 ? `<span class="kpi-badge ${badgeClass(gPct)}" style="font-size:10px;padding:3px 8px">${gainUSD >= 0 ? '↑' : '↓'} ${pct(gPct)}</span>` : ''}
+            </div>
+            <div class="stat-sub">${espp.units.toLocaleString('en-US', { maximumFractionDigits: 1 })} units</div>
+        </div>`;
+    }
 
     // Dividend card
     const totalVal = totalUSDof(rows);
