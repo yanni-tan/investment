@@ -74,23 +74,24 @@
       "id": "jvr6bn5csgcmqovmw7m",
       "ticker": "NBIS",
       "market": "US",
-      "name": "Nebius Group NV",
+      "name": "Nebius Group N.V.",
       "type": "Stock",
       "currency": "USD",
       "shares": 4,
       "avgCost": 97.88,
-      "notes": "",
+      "notes": "Speculative AI infrastructure growth bet",
       "manualPrice": 286.15,
       "markets": [
         "US"
       ],
       "sectors": [
-        "AI Infrastructure"
+        "AI Infrastructure",
+        "Cloud Computing"
       ],
       "sector": "AI Infrastructure",
       "account": "Cash",
       "domicile": "Netherlands",
-      "tracks": ""
+      "tracks": "Individual Stock"
     },
     {
       "id": "saqo5hfcdllmqovo48o",
@@ -583,5 +584,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T09:13:18.585Z"
+  "updatedAt": "2026-06-26T09:13:51.594Z"
 }
