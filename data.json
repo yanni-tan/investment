@@ -4,18 +4,24 @@
       "id": "rhinml0lo3fmqovitd2",
       "ticker": "MU",
       "market": "US",
-      "name": "Micron Technology Inc",
+      "name": "Micron Technology, Inc.",
       "type": "Stock",
       "currency": "USD",
       "shares": 4,
       "avgCost": 405,
-      "notes": "",
+      "notes": "High-risk, cyclical semiconductor bet",
       "manualPrice": 1171.39,
       "markets": [
         "US"
       ],
-      "sectors": [],
-      "sector": ""
+      "sectors": [
+        "Semiconductor",
+        "Memory Chips"
+      ],
+      "sector": "Semiconductor",
+      "account": "Cash",
+      "domicile": "USA",
+      "tracks": "Individual stock"
     },
     {
       "id": "m331x1l1l8mqovkw3s",
@@ -572,5 +578,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T09:11:09.298Z"
+  "updatedAt": "2026-06-26T09:12:10.135Z"
 }
