@@ -235,7 +235,8 @@
         /* ── Main ── */
         .main {
             margin-left: var(--sidebar-w);
-            flex: 1;
+            width: calc(100% - var(--sidebar-w));
+            min-width: 0;
             padding: 20px 48px 60px;
             min-height: 100vh;
         }
