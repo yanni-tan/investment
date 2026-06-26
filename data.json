@@ -202,7 +202,7 @@
       "account": "Cash",
       "shares": 0,
       "avgCost": 0,
-      "notes": "",
+      "notes": "Global core and diversification",
       "manualPrice": 0.1,
       "markets": [
         "US"
@@ -545,5 +545,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T09:04:28.359Z"
+  "updatedAt": "2026-06-26T09:04:52.947Z"
 }
