@@ -615,7 +615,7 @@
             color: var(--label2); cursor: pointer; font-family: inherit;
             transition: all .15s;
         }
-        .chip.active { background: #111827; color: #fff; border-color: #111827; font-weight: 600; }
+        .chip.active { background: var(--accent); color: #111827; border-color: var(--accent); font-weight: 600; }
         .chip:hover:not(.active) { border-color: var(--label3); color: var(--label); background: var(--surface); }
         .chip-sep { width: 1px; height: 18px; background: var(--sep); margin: 0 4px; flex-shrink: 0; }
 
@@ -2622,7 +2622,10 @@ function renderTypeChips(rows) {
     const el = document.getElementById('type-chips');
     const types   = ['all', ...new Set(holdings.map(r => r.type))].filter(Boolean);
     const accounts = [...new Set(holdings.map(r => r.account || 'Cash'))];
-    const markets = [...new Set(holdings.flatMap(getMarkets))].filter(Boolean).sort();
+    // Markets ordered: Global, US, SG first, then the rest alphabetically.
+    const mktPriority = { Global: 0, US: 1, SG: 2 };
+    const markets = [...new Set(holdings.flatMap(getMarkets))].filter(Boolean)
+        .sort((a, b) => (mktPriority[a] ?? 99) - (mktPriority[b] ?? 99) || a.localeCompare(b));
 
     el.innerHTML =
         types.map(t => `<button class="chip ${typeFilter === t ? 'active' : ''}" data-type="${t}">${t === 'all' ? 'All' : t}</button>`).join('') +
