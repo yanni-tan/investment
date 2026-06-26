@@ -37,7 +37,9 @@
       "sector": "Semiconductor",
       "account": "Cash",
       "markets": [
-        "US"
+        "US",
+        "TW",
+        "Netherlands"
       ],
       "sectors": [
         "Semiconductor",
@@ -446,12 +448,18 @@
       "byMkt": {
         "US": 14333.79,
         "SG": 12230.295600000001,
-        "UK": 0
+        "UK": 0,
+        "JP": 0,
+        "EU": 0,
+        "Global": 0
       },
       "costByMkt": {
         "US": 9220.86,
         "SG": 11146.197499999998,
-        "UK": 0
+        "UK": 0,
+        "JP": 0,
+        "EU": 0,
+        "Global": 0
       }
     }
   ],
@@ -598,5 +606,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T09:24:20.813Z"
+  "updatedAt": "2026-06-26T09:24:58.049Z"
 }
