@@ -297,18 +297,27 @@
       "id": "mbjf9qaas7amqtoy4mo",
       "ticker": "STI",
       "market": "US",
-      "name": "Amundi STI",
+      "name": "Amundi Singapore Straits Times Index Fund",
       "type": "ETF",
-      "sector": "",
+      "sector": "Finance",
       "currency": "SGD",
       "account": "SRS",
       "shares": 0,
       "avgCost": 0,
-      "notes": "Top Singapore companies",
+      "notes": "SGD exposure and dividends",
       "markets": [
-        "US"
+        "US",
+        "SG"
       ],
-      "sectors": []
+      "sectors": [
+        "Finance",
+        "Industrials",
+        "Real Estate",
+        "Banking",
+        "Telecommunications"
+      ],
+      "domicile": "Singapore",
+      "tracks": "Tracks the Straits Times Index (~30 largest Singapore companies)"
     }
   ],
   "watchlist": [
@@ -618,5 +627,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T09:26:38.415Z"
+  "updatedAt": "2026-06-26T09:27:39.117Z"
 }
