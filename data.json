@@ -113,18 +113,6 @@
       "manualPrice": 25.88
     },
     {
-      "id": "y7me9s1gjdmqovubw7",
-      "ticker": "U11.SI",
-      "market": "SG",
-      "name": "UOB",
-      "type": "Stock",
-      "currency": "SGD",
-      "shares": 100,
-      "avgCost": 37.64,
-      "notes": "",
-      "manualPrice": 39.33
-    },
-    {
       "id": "my9v538pf78mqovuzr3",
       "ticker": "ES3.SI",
       "market": "SG",
@@ -342,6 +330,21 @@
         "SG": 14423.646209999999,
         "UK": 765.44
       }
+    },
+    {
+      "month": "2026-06-26",
+      "gainUSD": 6351.568100000004,
+      "totalUSD": 30011.02303,
+      "byMkt": {
+        "US": 13564.7,
+        "SG": 15677.23303,
+        "UK": 769.09
+      },
+      "costByMkt": {
+        "US": 8455.42,
+        "SG": 14438.59493,
+        "UK": 765.44
+      }
     }
   ],
   "dividends": [
@@ -370,7 +373,20 @@
       "amount": 8.5
     }
   ],
-  "realized": [],
+  "realized": [
+    {
+      "id": "lzt0raxfakmmqunvne2",
+      "ticker": "U11.SI",
+      "name": "UOB",
+      "market": "SG",
+      "currency": "SGD",
+      "shares": 100,
+      "buyAvg": 37.64,
+      "sellPrice": 39.7,
+      "sellDate": "2026-06-26",
+      "gainLoss": 206.00000000000023
+    }
+  ],
   "espp": {
     "grants": [
       {
@@ -462,5 +478,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-25T16:02:54.541Z"
+  "updatedAt": "2026-06-26T08:20:45.447Z"
 }
