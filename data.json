@@ -206,8 +206,8 @@
       "sector": "Tech",
       "currency": "USD",
       "account": "Cash",
-      "shares": 1,
-      "avgCost": 765.44,
+      "shares": 4,
+      "avgCost": 782.36,
       "notes": "US growth engine / VOO",
       "manualPrice": 769.09,
       "markets": [
@@ -462,11 +462,11 @@
     },
     {
       "month": "2026-06-26",
-      "gainUSD": 6197.168399999999,
-      "totalUSD": 26565.668400000002,
+      "gainUSD": 6197.869899999998,
+      "totalUSD": 26573.5824,
       "byMkt": {
         "US": 11801.07,
-        "SG": 12231.878400000001,
+        "SG": 12239.7924,
         "UK": 0,
         "TW": 884.8266666666666,
         "Netherlands": 884.8266666666666,
@@ -476,7 +476,7 @@
       },
       "costByMkt": {
         "US": 7756.593333333334,
-        "SG": 11147.64,
+        "SG": 11154.852499999999,
         "UK": 0,
         "TW": 601.6266666666667,
         "Netherlands": 601.6266666666667,
@@ -629,5 +629,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T11:51:01.097Z"
+  "updatedAt": "2026-06-26T14:07:50.713Z"
 }
