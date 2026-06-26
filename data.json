@@ -274,18 +274,24 @@
       "id": "10ojt3lst0whmqtox4v4",
       "ticker": "MSCI",
       "market": "US",
-      "name": "Amundi MSCI World",
+      "name": "Amundi Index MSCI World Fund",
       "type": "ETF",
-      "sector": "",
+      "sector": "All Sectors",
       "currency": "SGD",
       "account": "SRS",
       "shares": 0,
       "avgCost": 0,
-      "notes": "US, Europe, Japan | ~1,300 developed-market stocks",
+      "notes": "Retirement core holding",
       "markets": [
-        "US"
+        "US",
+        "JP",
+        "EU"
       ],
-      "sectors": []
+      "sectors": [
+        "All Sectors"
+      ],
+      "domicile": "Singapore",
+      "tracks": "~1,300 developed-market stocks"
     },
     {
       "id": "mbjf9qaas7amqtoy4mo",
@@ -445,23 +451,27 @@
     },
     {
       "month": "2026-06-26",
-      "gainUSD": 6197.028100000003,
+      "gainUSD": 6197.0280999999995,
       "totalUSD": 26564.085600000002,
       "byMkt": {
-        "US": 14333.79,
+        "US": 11801.07,
         "SG": 12230.295600000001,
         "UK": 0,
-        "JP": 0,
-        "EU": 0,
-        "Global": 0
+        "TW": 884.8266666666666,
+        "Netherlands": 884.8266666666666,
+        "EU": 381.5333333333333,
+        "Global": 381.5333333333333,
+        "JP": 0
       },
       "costByMkt": {
-        "US": 9220.86,
+        "US": 7756.593333333334,
         "SG": 11146.197499999998,
         "UK": 0,
-        "JP": 0,
-        "EU": 0,
-        "Global": 0
+        "TW": 601.6266666666667,
+        "Netherlands": 601.6266666666667,
+        "EU": 130.50666666666666,
+        "Global": 130.50666666666666,
+        "JP": 0
       }
     }
   ],
@@ -608,5 +618,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T09:25:16.700Z"
+  "updatedAt": "2026-06-26T09:26:38.415Z"
 }
