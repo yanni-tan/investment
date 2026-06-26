@@ -157,21 +157,28 @@
     },
     {
       "id": "05sj4wbsax6rmqs6vjtb",
-      "ticker": "CSPX.L",
-      "market": "UK",
-      "name": "iSHARES CORE S&P 500",
+      "ticker": "CSPX",
+      "market": "US",
+      "name": "iShares Core S&P 500 UCITS ETF",
       "type": "ETF",
-      "sector": "",
+      "sector": "Tech",
       "currency": "USD",
       "account": "Cash",
       "shares": 1,
       "avgCost": 765.44,
-      "notes": "US | S&P 500 (500 largest US companies)",
+      "notes": "US growth engine / VOO",
       "manualPrice": 769.09,
       "markets": [
-        "UK"
+        "US"
       ],
-      "sectors": []
+      "sectors": [
+        "Tech",
+        "Finance",
+        "Healthcare",
+        "Consumer"
+      ],
+      "domicile": "Ireland",
+      "tracks": "S&P 500 (500 largest US companies)"
     },
     {
       "id": "4fp0ikck9jomqs7vy5g",
@@ -545,5 +552,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T09:04:52.947Z"
+  "updatedAt": "2026-06-26T09:06:12.614Z"
 }
