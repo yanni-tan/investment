@@ -299,7 +299,7 @@
       "ticker": "STI",
       "market": "US",
       "name": "Amundi Singapore Straits Times Index Fund",
-      "type": "ETF",
+      "type": "Index Fund",
       "sector": "Finance",
       "currency": "SGD",
       "account": "SRS",
@@ -318,7 +318,8 @@
         "Telecommunications"
       ],
       "domicile": "Singapore",
-      "tracks": "Tracks the Straits Times Index (~30 largest Singapore companies)"
+      "tracks": "Tracks the Straits Times Index (~30 largest Singapore companies)",
+      "manualPrice": null
     }
   ],
   "watchlist": [
@@ -461,11 +462,11 @@
     },
     {
       "month": "2026-06-26",
-      "gainUSD": 6197.0280999999995,
-      "totalUSD": 26564.085600000002,
+      "gainUSD": 6197.168399999999,
+      "totalUSD": 26565.668400000002,
       "byMkt": {
         "US": 11801.07,
-        "SG": 12230.295600000001,
+        "SG": 12231.878400000001,
         "UK": 0,
         "TW": 884.8266666666666,
         "Netherlands": 884.8266666666666,
@@ -475,7 +476,7 @@
       },
       "costByMkt": {
         "US": 7756.593333333334,
-        "SG": 11146.197499999998,
+        "SG": 11147.64,
         "UK": 0,
         "TW": 601.6266666666667,
         "Netherlands": 601.6266666666667,
@@ -628,5 +629,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T11:50:51.798Z"
+  "updatedAt": "2026-06-26T11:51:01.097Z"
 }
