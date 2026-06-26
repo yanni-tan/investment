@@ -275,7 +275,7 @@
       "ticker": "MSCI",
       "market": "US",
       "name": "Amundi Index MSCI World Fund",
-      "type": "ETF",
+      "type": "Index Fund",
       "sector": "All Sectors",
       "currency": "SGD",
       "account": "SRS",
@@ -291,7 +291,8 @@
         "All Sectors"
       ],
       "domicile": "Singapore",
-      "tracks": "~1,300 developed-market stocks"
+      "tracks": "~1,300 developed-market stocks",
+      "manualPrice": null
     },
     {
       "id": "mbjf9qaas7amqtoy4mo",
@@ -627,5 +628,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T09:27:39.117Z"
+  "updatedAt": "2026-06-26T11:50:51.798Z"
 }
