@@ -174,18 +174,24 @@
       "id": "npcpo1kt4ikmqovskq8",
       "ticker": "O39.SI",
       "market": "SG",
-      "name": "OCBC",
+      "name": "Oversea-Chinese Banking Corporation Limited (OCBC)",
       "type": "Stock",
       "currency": "SGD",
       "shares": 100,
       "avgCost": 20.62,
-      "notes": "",
+      "notes": "SGD dividends and local exposure",
       "manualPrice": 25.88,
       "markets": [
         "SG"
       ],
-      "sectors": [],
-      "sector": ""
+      "sectors": [
+        "Finance",
+        "Banking"
+      ],
+      "sector": "Finance",
+      "account": "Cash",
+      "domicile": "Singapore",
+      "tracks": "Individual Stock"
     },
     {
       "id": "05sj4wbsax6rmqs6vjtb",
@@ -589,5 +595,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T09:14:41.937Z"
+  "updatedAt": "2026-06-26T09:15:11.563Z"
 }
