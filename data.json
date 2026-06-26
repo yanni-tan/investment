@@ -218,17 +218,22 @@
       "market": "SG",
       "name": "DBS",
       "type": "Stock",
-      "sector": "",
+      "sector": "Finance",
       "currency": "SGD",
       "account": "SRS",
       "shares": 100,
       "avgCost": 66.1,
-      "notes": "",
+      "notes": "SGD dividends and local exposure",
       "manualPrice": 66.2,
       "markets": [
         "SG"
       ],
-      "sectors": []
+      "sectors": [
+        "Finance",
+        "Banking"
+      ],
+      "domicile": "Singapore",
+      "tracks": "Individual Stock"
     },
     {
       "id": "a5ai6mouvtemqtorv8l",
@@ -584,5 +589,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T09:13:51.594Z"
+  "updatedAt": "2026-06-26T09:14:41.937Z"
 }
