@@ -39,19 +39,25 @@
       "id": "rfwf8osbny9mqovmc03",
       "ticker": "QQQM",
       "market": "US",
-      "name": "Invesco Nasdaq 100 ETF",
+      "name": "Invesco NASDAQ 100 ETF",
       "type": "ETF",
       "currency": "USD",
       "shares": 3,
       "avgCost": 265.1666666666667,
-      "notes": "US | Nasdaq-100 (100 largest non-financial Nasdaq companies)",
+      "notes": "Aggressive growth and AI exposure",
       "manualPrice": 305.04,
-      "sector": "",
+      "sector": "Tech",
       "account": "Cash",
       "markets": [
         "US"
       ],
-      "sectors": []
+      "sectors": [
+        "Tech",
+        "Consumer",
+        "Communication Services"
+      ],
+      "domicile": "USA",
+      "tracks": "Nasdaq-100 (100 largest non-financial Nasdaq companies)"
     },
     {
       "id": "jvr6bn5csgcmqovmw7m",
@@ -398,14 +404,14 @@
       "gainUSD": 6197.028100000003,
       "totalUSD": 26564.085600000002,
       "byMkt": {
-        "US": 13564.7,
+        "US": 14333.79,
         "SG": 12230.295600000001,
-        "UK": 769.09
+        "UK": 0
       },
       "costByMkt": {
-        "US": 8455.42,
+        "US": 9220.86,
         "SG": 11146.197499999998,
-        "UK": 765.44
+        "UK": 0
       }
     }
   ],
@@ -552,5 +558,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T09:06:12.614Z"
+  "updatedAt": "2026-06-26T09:07:29.149Z"
 }
