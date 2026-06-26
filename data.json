@@ -10,7 +10,12 @@
       "shares": 4,
       "avgCost": 405,
       "notes": "",
-      "manualPrice": 1171.39
+      "manualPrice": 1171.39,
+      "markets": [
+        "US"
+      ],
+      "sectors": [],
+      "sector": ""
     },
     {
       "id": "m331x1l1l8mqovkw3s",
@@ -24,7 +29,11 @@
       "notes": "US, Taiwan, Netherlands | Semiconductor companies",
       "manualPrice": 663.62,
       "sector": "",
-      "account": "Cash"
+      "account": "Cash",
+      "markets": [
+        "US"
+      ],
+      "sectors": []
     },
     {
       "id": "rfwf8osbny9mqovmc03",
@@ -38,7 +47,11 @@
       "notes": "US | Nasdaq-100 (100 largest non-financial Nasdaq companies)",
       "manualPrice": 305.04,
       "sector": "",
-      "account": "Cash"
+      "account": "Cash",
+      "markets": [
+        "US"
+      ],
+      "sectors": []
     },
     {
       "id": "jvr6bn5csgcmqovmw7m",
@@ -50,7 +63,12 @@
       "shares": 4,
       "avgCost": 97.88,
       "notes": "",
-      "manualPrice": 286.15
+      "manualPrice": 286.15,
+      "markets": [
+        "US"
+      ],
+      "sectors": [],
+      "sector": ""
     },
     {
       "id": "saqo5hfcdllmqovo48o",
@@ -62,7 +80,12 @@
       "shares": 2,
       "avgCost": 628,
       "notes": "",
-      "manualPrice": 688.4
+      "manualPrice": 688.4,
+      "markets": [
+        "US"
+      ],
+      "sectors": [],
+      "sector": ""
     },
     {
       "id": "ohv9vplhy6lmqovoz97",
@@ -74,7 +97,12 @@
       "shares": 4,
       "avgCost": 235.88,
       "notes": "",
-      "manualPrice": 242.81
+      "manualPrice": 242.81,
+      "markets": [
+        "US"
+      ],
+      "sectors": [],
+      "sector": ""
     },
     {
       "id": "9h2pd5ui8lqmqovpxnd",
@@ -86,7 +114,12 @@
       "shares": 5,
       "avgCost": 328.8,
       "notes": "",
-      "manualPrice": 363.38
+      "manualPrice": 363.38,
+      "markets": [
+        "US"
+      ],
+      "sectors": [],
+      "sector": ""
     },
     {
       "id": "wkk7vtoidbmqovrsxc",
@@ -98,7 +131,12 @@
       "shares": 100,
       "avgCost": 57.53,
       "notes": "",
-      "manualPrice": 66.2
+      "manualPrice": 66.2,
+      "markets": [
+        "SG"
+      ],
+      "sectors": [],
+      "sector": ""
     },
     {
       "id": "npcpo1kt4ikmqovskq8",
@@ -110,7 +148,12 @@
       "shares": 100,
       "avgCost": 20.62,
       "notes": "",
-      "manualPrice": 25.88
+      "manualPrice": 25.88,
+      "markets": [
+        "SG"
+      ],
+      "sectors": [],
+      "sector": ""
     },
     {
       "id": "05sj4wbsax6rmqs6vjtb",
@@ -124,7 +167,11 @@
       "shares": 1,
       "avgCost": 765.44,
       "notes": "US | S&P 500 (500 largest US companies)",
-      "manualPrice": 769.09
+      "manualPrice": 769.09,
+      "markets": [
+        "UK"
+      ],
+      "sectors": []
     },
     {
       "id": "4fp0ikck9jomqs7vy5g",
@@ -138,7 +185,11 @@
       "shares": 100,
       "avgCost": 66.1,
       "notes": "",
-      "manualPrice": 66.2
+      "manualPrice": 66.2,
+      "markets": [
+        "SG"
+      ],
+      "sectors": []
     },
     {
       "id": "a5ai6mouvtemqtorv8l",
@@ -146,13 +197,21 @@
       "market": "US",
       "name": "Vanguard FTSE All-World UCITS",
       "type": "ETF",
-      "sector": "",
+      "sector": "All Sectors",
       "currency": "USD",
       "account": "Cash",
       "shares": 0,
       "avgCost": 0,
-      "notes": "US (~60%), Europe, Japan, EM | ~4,000 stocks from developed and emerging markets",
-      "manualPrice": 0.1
+      "notes": "",
+      "manualPrice": 0.1,
+      "markets": [
+        "US"
+      ],
+      "sectors": [
+        "All Sectors"
+      ],
+      "domicile": "Ireland",
+      "tracks": "~4,000 stocks across developed and emerging markets"
     },
     {
       "id": "10ojt3lst0whmqtox4v4",
@@ -165,7 +224,11 @@
       "account": "SRS",
       "shares": 0,
       "avgCost": 0,
-      "notes": "US, Europe, Japan | ~1,300 developed-market stocks"
+      "notes": "US, Europe, Japan | ~1,300 developed-market stocks",
+      "markets": [
+        "US"
+      ],
+      "sectors": []
     },
     {
       "id": "mbjf9qaas7amqtoy4mo",
@@ -178,7 +241,11 @@
       "account": "SRS",
       "shares": 0,
       "avgCost": 0,
-      "notes": "Top Singapore companies"
+      "notes": "Top Singapore companies",
+      "markets": [
+        "US"
+      ],
+      "sectors": []
     }
   ],
   "watchlist": [
@@ -321,16 +388,16 @@
     },
     {
       "month": "2026-06-26",
-      "gainUSD": 6256.912350000006,
-      "totalUSD": 27583.856425,
+      "gainUSD": 6197.028100000003,
+      "totalUSD": 26564.085600000002,
       "byMkt": {
         "US": 13564.7,
-        "SG": 13250.066425,
+        "SG": 12230.295600000001,
         "UK": 769.09
       },
       "costByMkt": {
         "US": 8455.42,
-        "SG": 12106.084074999999,
+        "SG": 11146.197499999998,
         "UK": 765.44
       }
     }
@@ -478,5 +545,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T08:54:02.127Z"
+  "updatedAt": "2026-06-26T09:04:28.359Z"
 }
