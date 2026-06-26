@@ -186,8 +186,14 @@
       "markets": [
         "SG"
       ],
-      "sectors": [],
-      "sector": ""
+      "sectors": [
+        "Finance",
+        "Banking"
+      ],
+      "sector": "Finance",
+      "account": "Cash",
+      "domicile": "",
+      "tracks": ""
     },
     {
       "id": "npcpo1kt4ikmqovskq8",
@@ -657,5 +663,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T15:02:27.197Z"
+  "updatedAt": "2026-06-26T15:12:33.490Z"
 }
