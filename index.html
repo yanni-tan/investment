@@ -695,13 +695,16 @@
 
         /* ── Allocation Ranked Bars ── */
         .alloc-list { padding: 18px 22px; display: flex; flex-direction: column; gap: 11px; }
+        .alloc-item { display: flex; flex-direction: column; }
         .alloc-row {
             display: grid;
-            grid-template-columns: minmax(0, 150px) minmax(40px, 1fr) auto auto;
+            grid-template-columns: 12px minmax(0, 150px) minmax(40px, 1fr) auto auto;
             align-items: center; gap: 12px;
             cursor: pointer; transition: opacity .15s;
         }
         .alloc-row:hover { opacity: 0.75; }
+        .alloc-caret { font-size: 11px; color: var(--label3); transition: transform .2s ease; }
+        .alloc-item.open .alloc-caret { transform: rotate(90deg); }
         .alloc-name {
             display: flex; align-items: center; gap: 7px;
             font-size: 13px; font-weight: 500;
@@ -712,6 +715,12 @@
         .alloc-fill { height: 100%; border-radius: 4px; min-width: 3px; transition: width .3s ease; }
         .alloc-pct { font-size: 12px; font-weight: 600; text-align: right; color: var(--label); white-space: nowrap; }
         .alloc-val { font-size: 12px; text-align: right; color: var(--label3); white-space: nowrap; min-width: 78px; }
+        .alloc-detail { display: none; margin: 6px 0 4px 24px; padding-left: 12px; border-left: 2px solid var(--sep); flex-direction: column; gap: 6px; }
+        .alloc-item.open .alloc-detail { display: flex; }
+        .alloc-sub { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; }
+        .alloc-sub-name { color: var(--label2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .alloc-sub-name b { color: var(--label); font-weight: 600; }
+        .alloc-sub-val { color: var(--label3); white-space: nowrap; }
 
         /* ── Collapsible cards ── */
         .collapsible .card-header { cursor: pointer; user-select: none; }
@@ -2355,12 +2364,14 @@ function renderMarketChart(rows) {
     if (!rows.length) { card.style.display = 'none'; return; }
 
     const byMkt = {};
+    const byMktList = {};
     rows.forEach(r => {
         const v = toUSD(r.value ?? r.costBasis, r.currency);
         const mkts = getMarkets(r);
         const share = mkts.length ? 1 / mkts.length : 1;
         (mkts.length ? mkts : ['US']).forEach(m => {
             byMkt[m] = (byMkt[m] || 0) + v * share;
+            (byMktList[m] = byMktList[m] || []).push({ name: r.name, ticker: r.ticker, val: v * share });
         });
     });
 
@@ -2377,11 +2388,15 @@ function renderMarketChart(rows) {
         const w = (v / maxV) * 100;
         const color = marketColor(mkt);
         const flag = MKT_FLAGS[mkt] || '';
-        return `<div class="alloc-row" onclick="setMarketTab('${mkt}')">
-            <span class="alloc-name"><span class="alloc-dot" style="background:${color}"></span>${flag} ${MARKET_LABELS[mkt] || mkt}</span>
-            <div class="alloc-track"><div class="alloc-fill" style="width:${w.toFixed(1)}%;background:${color}"></div></div>
-            <span class="alloc-pct">${p.toFixed(1)}%</span>
-            <span class="alloc-val">${dmoney(v)}</span>
+        return `<div class="alloc-item">
+            <div class="alloc-row" onclick="this.parentElement.classList.toggle('open')">
+                <span class="alloc-caret">▶</span>
+                <span class="alloc-name"><span class="alloc-dot" style="background:${color}"></span>${flag} ${MARKET_LABELS[mkt] || mkt}</span>
+                <div class="alloc-track"><div class="alloc-fill" style="width:${w.toFixed(1)}%;background:${color}"></div></div>
+                <span class="alloc-pct">${p.toFixed(1)}%</span>
+                <span class="alloc-val">${dmoney(v)}</span>
+            </div>
+            <div class="alloc-detail">${allocDetailRows(byMktList[mkt], v)}</div>
         </div>`;
     }).join('');
 
@@ -2394,16 +2409,19 @@ function renderSectorChart(rows) {
     if (!rows.length) { card.style.display = 'none'; return; }
 
     const bySector = {};
+    const bySectorList = {};
     rows.forEach(r => {
         const v = toUSD(r.value ?? r.costBasis, r.currency);
         const secs = getSectors(r);
         if (!secs.length) {
             bySector['Uncategorized'] = (bySector['Uncategorized'] || 0) + v;
+            (bySectorList['Uncategorized'] = bySectorList['Uncategorized'] || []).push({ name: r.name, ticker: r.ticker, val: v });
             return;
         }
         const share = 1 / secs.length;
         secs.forEach(sec => {
             bySector[sec] = (bySector[sec] || 0) + v * share;
+            (bySectorList[sec] = bySectorList[sec] || []).push({ name: r.name, ticker: r.ticker, val: v * share });
         });
     });
 
@@ -2419,15 +2437,32 @@ function renderSectorChart(rows) {
         const p = (v / total) * 100;
         const w = (v / maxV) * 100;
         const color = sectorColor(sec);
-        return `<div class="alloc-row">
-            <span class="alloc-name"><span class="alloc-dot" style="background:${color}"></span>${sec}</span>
-            <div class="alloc-track"><div class="alloc-fill" style="width:${w.toFixed(1)}%;background:${color}"></div></div>
-            <span class="alloc-pct">${p.toFixed(1)}%</span>
-            <span class="alloc-val">${dmoney(v)}</span>
+        return `<div class="alloc-item">
+            <div class="alloc-row" onclick="this.parentElement.classList.toggle('open')">
+                <span class="alloc-caret">▶</span>
+                <span class="alloc-name"><span class="alloc-dot" style="background:${color}"></span>${sec}</span>
+                <div class="alloc-track"><div class="alloc-fill" style="width:${w.toFixed(1)}%;background:${color}"></div></div>
+                <span class="alloc-pct">${p.toFixed(1)}%</span>
+                <span class="alloc-val">${dmoney(v)}</span>
+            </div>
+            <div class="alloc-detail">${allocDetailRows(bySectorList[sec], v)}</div>
         </div>`;
     }).join('');
 
     body.innerHTML = `<div class="alloc-list">${sectorRows}</div>`;
+}
+
+// Build the expanded breakdown rows for an allocation segment: each constituent
+// holding with its allocated value and share of that market/sector.
+function allocDetailRows(list, segmentTotal) {
+    if (!list || !list.length) return '';
+    return [...list].sort((a, b) => b.val - a.val).map(h => {
+        const share = segmentTotal > 0 ? (h.val / segmentTotal) * 100 : 0;
+        return `<div class="alloc-sub">
+            <span class="alloc-sub-name"><b>${h.ticker}</b> · ${h.name}</span>
+            <span class="alloc-sub-val">${dmoney(h.val)} · ${share.toFixed(0)}%</span>
+        </div>`;
+    }).join('');
 }
 
 // ── Set market tab (used by clickable market cards) ──
