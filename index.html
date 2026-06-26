@@ -245,21 +245,21 @@
             display: flex;
             align-items: flex-start;
             justify-content: space-between;
-            margin-bottom: 28px;
+            margin-bottom: 18px;
         }
 
         .greeting {
-            font-size: 36px;
+            font-size: 28px;
             font-weight: 300;
-            letter-spacing: -1px;
-            line-height: 1.1;
+            letter-spacing: -0.8px;
+            line-height: 1.15;
         }
 
         .greeting-sub {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 400;
             color: var(--label3);
-            margin-top: 12px;
+            margin-top: 6px;
             letter-spacing: 0;
         }
 
@@ -605,6 +605,36 @@
         .chip:hover:not(.active) { border-color: var(--label3); color: var(--label); background: var(--surface); }
         .chip-sep { width: 1px; height: 18px; background: var(--sep); margin: 0 4px; flex-shrink: 0; }
 
+        /* ── Multi-select chip group (Add Holding modal) ── */
+        .mchips {
+            display: flex; flex-wrap: wrap; gap: 6px;
+            padding: 8px; background: var(--surface2);
+            border: 1.5px solid var(--sep); border-radius: var(--radius-sm);
+            min-height: 42px; align-items: center;
+        }
+        .mchips:focus-within { border-color: var(--accent); background: var(--surface); }
+        .mchip {
+            padding: 5px 11px; border-radius: 16px;
+            font-size: 12px; font-weight: 500;
+            border: 1.5px solid transparent; background: var(--surface);
+            color: var(--label2); cursor: pointer; font-family: inherit;
+            transition: all .12s; display: inline-flex; align-items: center; gap: 4px;
+        }
+        [data-theme="dark"] .mchip { background: rgba(255,255,255,0.05); }
+        .mchip.active { background: var(--accent); color: #111827; border-color: var(--accent); font-weight: 600; }
+        .mchip:hover:not(.active) { color: var(--label); }
+        .mchip-x {
+            font-weight: 700; opacity: 0.5; padding: 0 0 0 2px;
+            cursor: pointer; line-height: 1;
+        }
+        .mchip-x:hover { opacity: 1; }
+        .mchip-input {
+            flex: 1; min-width: 100px; padding: 4px 6px;
+            font-size: 12px; border: none; background: transparent;
+            color: var(--label); font-family: inherit; outline: none;
+        }
+        .mchip-input::placeholder { color: var(--label3); }
+
         /* ── Sortable th ── */
         thead th.sortable { cursor: pointer; user-select: none; }
         thead th.sortable:hover { color: var(--label2); }
@@ -771,8 +801,10 @@
             background: var(--surface);
             border-radius: 20px;
             padding: 28px;
-            width: 100%; max-width: 440px; margin: 20px;
+            width: 100%; max-width: 520px; margin: 20px;
             box-shadow: 0 24px 80px rgba(0,0,0,0.25);
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
         }
 
         .modal-hdr {
@@ -1264,20 +1296,6 @@
                     <input class="finput" id="f-ticker" type="text" placeholder="AAPL, D05, SHEL" required>
                 </div>
                 <div class="fg">
-                    <label>Market</label>
-                    <select class="finput" id="f-market">
-                        <option value="US">US (NYSE / NASDAQ)</option>
-                        <option value="SG">SG (SGX)</option>
-                        <option value="UK">UK (LSE)</option>
-                    </select>
-                </div>
-            </div>
-            <div class="fg">
-                <label>Name</label>
-                <input class="finput" id="f-name" type="text" placeholder="Company or fund name" required>
-            </div>
-            <div class="frow">
-                <div class="fg">
                     <label>Type</label>
                     <select class="finput" id="f-type">
                         <option value="Stock">Stock</option>
@@ -1285,21 +1303,27 @@
                         <option value="REIT">REIT</option>
                     </select>
                 </div>
-                <div class="fg">
-                    <label>Sector</label>
-                    <select class="finput" id="f-sector">
-                        <option value="">— None —</option>
-                        <option value="Tech">Tech</option>
-                        <option value="Finance">Finance</option>
-                        <option value="Healthcare">Healthcare</option>
-                        <option value="Consumer">Consumer</option>
-                        <option value="Energy">Energy</option>
-                        <option value="Industrials">Industrials</option>
-                        <option value="Real Estate">Real Estate</option>
-                        <option value="Utilities">Utilities</option>
-                        <option value="Broad Market">Broad Market</option>
-                    </select>
+            </div>
+            <div class="fg">
+                <label>Name</label>
+                <input class="finput" id="f-name" type="text" placeholder="Company or fund name" required>
+            </div>
+            <div class="fg">
+                <label>Markets / Countries <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--label3)">(select one or more)</span></label>
+                <div class="mchips" id="f-markets">
+                    <button type="button" class="mchip" data-val="US">🇺🇸 US (NYSE / NASDAQ)</button>
+                    <button type="button" class="mchip" data-val="SG">🇸🇬 SG (SGX)</button>
+                    <button type="button" class="mchip" data-val="UK">🇬🇧 UK (LSE)</button>
                 </div>
+            </div>
+            <div class="fg">
+                <label>Sectors <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--label3)">(select or type a custom name)</span></label>
+                <div class="mchips" id="f-sectors">
+                    <!-- chips injected at openModal -->
+                    <input type="text" class="mchip-input" id="f-sector-custom" placeholder="Type custom sector + Enter">
+                </div>
+            </div>
+            <div class="frow">
                 <div class="fg">
                     <label>Currency</label>
                     <select class="finput" id="f-currency">
@@ -1314,6 +1338,25 @@
                         <option value="Cash">Cash</option>
                         <option value="SRS">SRS</option>
                     </select>
+                </div>
+            </div>
+            <div class="frow">
+                <div class="fg">
+                    <label>Domiciled Country <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--label3)">(optional)</span></label>
+                    <input class="finput" id="f-domicile" type="text" list="domicile-list" placeholder="e.g. Ireland, USA, Singapore">
+                    <datalist id="domicile-list">
+                        <option value="Ireland">
+                        <option value="USA">
+                        <option value="Singapore">
+                        <option value="UK">
+                        <option value="Luxembourg">
+                        <option value="Hong Kong">
+                        <option value="Cayman Islands">
+                    </datalist>
+                </div>
+                <div class="fg">
+                    <label>What It Tracks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--label3)">(optional)</span></label>
+                    <input class="finput" id="f-tracks" type="text" placeholder="e.g. S&P 500, MSCI World">
                 </div>
             </div>
             <div class="frow">
@@ -1663,6 +1706,26 @@
 // ── Constants ──
 const KEY = 'portfolio_v1';
 const MARKET_COLORS = { US: '#3b82f6', SG: '#ec4899', UK: '#d97706' };
+const DEFAULT_SECTORS = ['Tech','Finance','Healthcare','Consumer','Energy','Industrials','Real Estate','Utilities','Broad Market'];
+
+// Multi-value accessors: holdings store markets[]/sectors[] arrays, but legacy
+// records and external code paths still read singular market/sector. These return
+// the array form, falling back to the singular field for backward compat.
+function getMarkets(h) {
+    if (Array.isArray(h.markets) && h.markets.length) return h.markets;
+    return h.market ? [h.market] : [];
+}
+function getSectors(h) {
+    if (Array.isArray(h.sectors) && h.sectors.length) return h.sectors;
+    return h.sector ? [h.sector] : [];
+}
+// Collect every sector the user has ever used, plus the default seed list — used
+// to build the multi-chip picker so previously-typed customs come back as chips.
+function allKnownSectors() {
+    const set = new Set(DEFAULT_SECTORS);
+    holdings.forEach(h => getSectors(h).forEach(s => s && set.add(s)));
+    return [...set];
+}
 
 // ── State ──
 let holdings = [];
@@ -1699,9 +1762,34 @@ const SRS_ANNUAL_CAP = 15300; // SGD cap for citizens/PRs
 function load() {
     try { holdings = JSON.parse(localStorage.getItem(KEY) || '[]'); }
     catch { holdings = []; }
+    migrateHoldings();
 }
-function save() { localStorage.setItem(KEY, JSON.stringify(holdings)); syncSave(); }
+function save() {
+    // Keep singular market/sector in sync with arrays so legacy reads stay correct.
+    holdings.forEach(h => {
+        if (Array.isArray(h.markets) && h.markets.length) h.market = h.markets[0];
+        if (Array.isArray(h.sectors)) h.sector = h.sectors[0] || '';
+    });
+    localStorage.setItem(KEY, JSON.stringify(holdings));
+    syncSave();
+}
 function uid()  { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+
+// One-time migration: lift singular market/sector into arrays so multi-select code
+// has a uniform shape. Runs on every load (including after a sync pull) — idempotent.
+function migrateHoldings() {
+    holdings.forEach(h => {
+        if (!Array.isArray(h.markets) || !h.markets.length) {
+            h.markets = h.market ? [h.market] : ['US'];
+        }
+        if (!Array.isArray(h.sectors)) {
+            h.sectors = h.sector ? [h.sector] : [];
+        }
+        // Keep singular fields in sync (used by code that hasn't been updated yet).
+        h.market = h.markets[0];
+        h.sector = h.sectors[0] || '';
+    });
+}
 
 function loadDividends() {
     try { dividends = JSON.parse(localStorage.getItem(DIV_KEY) || '[]'); } catch { dividends = []; }
@@ -1872,9 +1960,18 @@ function calcSummary(rows) {
     const byMkt = { US: 0, SG: 0, UK: 0 };
     const costByMkt = { US: 0, SG: 0, UK: 0 };
 
+    // A holding with multiple markets has its value split evenly across them — so
+    // the market-breakdown stays additive (sum of byMkt == total) regardless of
+    // how many markets each holding lists.
     rows.forEach(r => {
-        byMkt[r.market]    = (byMkt[r.market]    || 0) + toUSD(val(r), r.currency);
-        costByMkt[r.market] = (costByMkt[r.market] || 0) + toUSD(r.costBasis, r.currency);
+        const vUSD = toUSD(val(r), r.currency);
+        const cUSD = toUSD(r.costBasis, r.currency);
+        const mkts = getMarkets(r);
+        const share = mkts.length ? 1 / mkts.length : 1;
+        (mkts.length ? mkts : ['US']).forEach(m => {
+            byMkt[m]     = (byMkt[m]     || 0) + vUSD * share;
+            costByMkt[m] = (costByMkt[m] || 0) + cUSD * share;
+        });
     });
 
     const totalUSD     = Object.values(byMkt).reduce((s, v) => s + v, 0);
@@ -1911,12 +2008,16 @@ function badgeClass(v) { return v == null ? 'neu' : v > 0 ? 'up' : v < 0 ? 'down
 // ── Render ──
 function render() {
     const all      = holdings.map(enrich);
-    const byTab    = tab === 'all' ? all : all.filter(r => r.market === tab);
+    const byTab    = tab === 'all' ? all : all.filter(r => getMarkets(r).includes(tab));
     const filtered = typeFilter === 'all' ? byTab : byTab.filter(r => r.type === typeFilter);
     const filtered2 = accountFilter === 'all' ? filtered : filtered.filter(r => (r.account || 'Cash') === accountFilter);
     const searched = searchQuery ? filtered2.filter(r => {
         const q = searchQuery.toLowerCase();
-        return r.name.toLowerCase().includes(q) || r.ticker.toLowerCase().includes(q) || (r.sector || '').toLowerCase().includes(q);
+        if (r.name.toLowerCase().includes(q) || r.ticker.toLowerCase().includes(q)) return true;
+        if (getSectors(r).some(s => s.toLowerCase().includes(q))) return true;
+        if ((r.domicile || '').toLowerCase().includes(q)) return true;
+        if ((r.tracks || '').toLowerCase().includes(q)) return true;
+        return false;
     }) : filtered2;
     const tot      = totalUSDof(all);
 
@@ -2006,7 +2107,7 @@ function mobileCard(r, tot) {
             <div class="hc-info">
                 <div class="hc-name">${r.name}</div>
                 <div class="hc-meta">
-                    <span class="mkt-pill mkt-${r.market.toLowerCase()}">${r.market}</span>
+                    ${getMarkets(r).map(m => `<span class="mkt-pill mkt-${m.toLowerCase()}">${m}</span>`).join(' ')}
                     ${r.account === 'SRS' ? '<span class="mkt-pill" style="background:rgba(13,148,136,0.12);color:#0d9488">SRS</span>' : ''}
                     <span>${r.type}</span>
                 </div>
@@ -2144,7 +2245,7 @@ function tableRow(r, tot) {
                     </div>
                 </div>
             </td>
-            <td><span class="mkt-pill mkt-${r.market.toLowerCase()}">${r.market}</span>${r.account === 'SRS' ? ' <span class="mkt-pill" style="background:rgba(13,148,136,0.12);color:#0d9488">SRS</span>' : ''}</td>
+            <td><span style="display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center">${getMarkets(r).map(m => `<span class="mkt-pill mkt-${m.toLowerCase()}">${m}</span>`).join('')}${r.account === 'SRS' ? '<span class="mkt-pill" style="background:rgba(13,148,136,0.12);color:#0d9488">SRS</span>' : ''}</span></td>
             <td class="r">${Number(r.shares).toLocaleString('en-US', { maximumFractionDigits: 4 })}</td>
             <td class="r">${money(r.avgCost, r.currency)}</td>
             <td class="r">${priceCell}</td>
@@ -2175,6 +2276,16 @@ const SECTOR_COLORS = {
     Utilities: '#06b6d4', 'Broad Market': '#94a3b8', '': '#d1d5db'
 };
 
+// Custom sectors get a deterministic hue so each one gets a distinct color in the donut.
+const CUSTOM_SECTOR_PALETTE = ['#14b8a6','#a855f7','#f97316','#eab308','#0ea5e9','#84cc16','#f43f5e','#6366f1','#22c55e','#d946ef'];
+function sectorColor(sec) {
+    if (SECTOR_COLORS[sec]) return SECTOR_COLORS[sec];
+    if (!sec) return SECTOR_COLORS[''];
+    let hash = 0;
+    for (let i = 0; i < sec.length; i++) hash = (hash * 31 + sec.charCodeAt(i)) >>> 0;
+    return CUSTOM_SECTOR_PALETTE[hash % CUSTOM_SECTOR_PALETTE.length];
+}
+
 const MARKET_LABELS = { US: 'US', SG: 'SG', UK: 'UK / LSE' };
 
 function renderMarketChart(rows) {
@@ -2185,7 +2296,11 @@ function renderMarketChart(rows) {
     const byMkt = {};
     rows.forEach(r => {
         const v = toUSD(r.value ?? r.costBasis, r.currency);
-        byMkt[r.market] = (byMkt[r.market] || 0) + v;
+        const mkts = getMarkets(r);
+        const share = mkts.length ? 1 / mkts.length : 1;
+        (mkts.length ? mkts : ['US']).forEach(m => {
+            byMkt[m] = (byMkt[m] || 0) + v * share;
+        });
     });
 
     const mkts = Object.entries(byMkt).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
@@ -2238,9 +2353,16 @@ function renderSectorChart(rows) {
 
     const bySector = {};
     rows.forEach(r => {
-        const sec = r.sector || 'Uncategorized';
         const v = toUSD(r.value ?? r.costBasis, r.currency);
-        bySector[sec] = (bySector[sec] || 0) + v;
+        const secs = getSectors(r);
+        if (!secs.length) {
+            bySector['Uncategorized'] = (bySector['Uncategorized'] || 0) + v;
+            return;
+        }
+        const share = 1 / secs.length;
+        secs.forEach(sec => {
+            bySector[sec] = (bySector[sec] || 0) + v * share;
+        });
     });
 
     const sectors = Object.entries(bySector).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
@@ -2254,7 +2376,7 @@ function renderSectorChart(rows) {
     let angle = 0;
     const stops = sectors.map(([sec, v]) => {
         const deg = (v / total) * 360;
-        const color = SECTOR_COLORS[sec] || SECTOR_COLORS[''];
+        const color = sectorColor(sec);
         const stop = `${color} ${angle.toFixed(1)}deg ${(angle + deg).toFixed(1)}deg`;
         angle += deg;
         return stop;
@@ -2263,7 +2385,7 @@ function renderSectorChart(rows) {
 
     const sectorRows = sectors.map(([sec, v]) => {
         const p = (v / total) * 100;
-        const color = SECTOR_COLORS[sec] || SECTOR_COLORS[''];
+        const color = sectorColor(sec);
         return `<div class="sector-row">
             <div class="sector-dot" style="background:${color}"></div>
             <span class="sector-name">${sec}</span>
@@ -2354,7 +2476,7 @@ function renderTypeChips(rows) {
     const el = document.getElementById('type-chips');
     const types   = ['all', ...new Set(holdings.map(r => r.type))].filter(Boolean);
     const accounts = [...new Set(holdings.map(r => r.account || 'Cash'))];
-    const markets = [...new Set(holdings.map(r => r.market))].filter(Boolean).sort();
+    const markets = [...new Set(holdings.flatMap(getMarkets))].filter(Boolean).sort();
 
     el.innerHTML =
         types.map(t => `<button class="chip ${typeFilter === t ? 'active' : ''}" data-type="${t}">${t === 'all' ? 'All' : t}</button>`).join('') +
@@ -2382,6 +2504,40 @@ function renderTypeChips(rows) {
 }
 
 // ── Modal ──
+// Re-render the sectors chip group from current state. Keeps the trailing custom-text
+// input as the last child so users can keep typing without losing focus mid-edit.
+function rebuildSectorChips(selected) {
+    const wrap = document.getElementById('f-sectors');
+    const inputEl = document.getElementById('f-sector-custom');
+    [...wrap.querySelectorAll('.mchip')].forEach(c => c.remove());
+    const knownLower = new Set(DEFAULT_SECTORS.map(s => s.toLowerCase()));
+    const all = allKnownSectors();
+    // Also include any currently-selected sectors not in the known list (custom ones).
+    selected.forEach(s => { if (s && !all.includes(s)) all.push(s); });
+    all.forEach(sec => {
+        const isCustom = !knownLower.has(sec.toLowerCase());
+        const isActive = selected.includes(sec);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'mchip' + (isActive ? ' active' : '');
+        btn.dataset.val = sec;
+        btn.innerHTML = sec + (isCustom ? ' <span class="mchip-x" data-remove="1">×</span>' : '');
+        wrap.insertBefore(btn, inputEl);
+    });
+}
+
+function setMarketChips(selected) {
+    document.querySelectorAll('#f-markets .mchip').forEach(c => {
+        c.classList.toggle('active', selected.includes(c.dataset.val));
+    });
+}
+function getSelectedMarkets() {
+    return [...document.querySelectorAll('#f-markets .mchip.active')].map(c => c.dataset.val);
+}
+function getSelectedSectors() {
+    return [...document.querySelectorAll('#f-sectors .mchip.active')].map(c => c.dataset.val);
+}
+
 function openModal(id = null) {
     editId = id;
     document.getElementById('modal-title').textContent = id ? 'Edit Holding' : 'Add Holding';
@@ -2391,18 +2547,23 @@ function openModal(id = null) {
         const h = holdings.find(x => x.id === id);
         if (!h) return;
         document.getElementById('f-ticker').value   = h.ticker;
-        document.getElementById('f-market').value   = h.market;
+        setMarketChips(getMarkets(h));
         document.getElementById('f-name').value     = h.name;
         document.getElementById('f-type').value     = h.type;
-        document.getElementById('f-sector').value   = h.sector || '';
+        rebuildSectorChips(getSectors(h));
         document.getElementById('f-currency').value = h.currency;
         document.getElementById('f-account').value  = h.account || 'Cash';
+        document.getElementById('f-domicile').value = h.domicile || '';
+        document.getElementById('f-tracks').value   = h.tracks || '';
         document.getElementById('f-shares').value   = h.shares;
         document.getElementById('f-avgcost').value  = h.avgCost;
         document.getElementById('f-notes').value    = h.notes || '';
     } else {
         document.getElementById('hform').reset();
+        setMarketChips(['US']);
+        rebuildSectorChips([]);
     }
+    document.getElementById('f-sector-custom').value = '';
 
     document.getElementById('overlay').classList.add('open');
     setTimeout(() => document.getElementById('f-ticker').focus(), 50);
@@ -2422,28 +2583,38 @@ function del(id) {
 // ── Form Submit ──
 document.getElementById('hform').addEventListener('submit', e => {
     e.preventDefault();
-    let ticker   = document.getElementById('f-ticker').value.trim().toUpperCase();
-    const market   = document.getElementById('f-market').value;
+    let ticker     = document.getElementById('f-ticker').value.trim().toUpperCase();
+    const markets  = getSelectedMarkets();
     const name     = document.getElementById('f-name').value.trim();
     const type     = document.getElementById('f-type').value;
-    const sector   = document.getElementById('f-sector').value;
+    const sectors  = getSelectedSectors();
     const currency = document.getElementById('f-currency').value;
     const account  = document.getElementById('f-account').value;
+    const domicile = document.getElementById('f-domicile').value.trim();
+    const tracks   = document.getElementById('f-tracks').value.trim();
     const shares   = parseFloat(document.getElementById('f-shares').value);
     const avgCost  = parseFloat(document.getElementById('f-avgcost').value);
     const notes    = document.getElementById('f-notes').value.trim();
 
-    if (market === 'SG' && !ticker.endsWith('.SI')) ticker += '.SI';
-    if (market === 'UK' && !ticker.endsWith('.L'))  ticker += '.L';
+    if (!markets.length) { toast('Pick at least one market'); return; }
+
+    // Primary listing drives the ticker suffix. If a user picked ['US','UK'] for a
+    // cross-listed ETF, we treat the first chip as the listing they actually own.
+    const primaryMarket = markets[0];
+    if (primaryMarket === 'SG' && !ticker.endsWith('.SI')) ticker += '.SI';
+    if (primaryMarket === 'UK' && !ticker.endsWith('.L'))  ticker += '.L';
 
     if (!ticker || !name || isNaN(shares) || isNaN(avgCost)) return;
 
+    const market = primaryMarket;
+    const sector = sectors[0] || '';
+
     if (editId) {
         const i = holdings.findIndex(h => h.id === editId);
-        if (i !== -1) holdings[i] = { ...holdings[i], ticker, market, name, type, sector, currency, account, shares, avgCost, notes };
+        if (i !== -1) holdings[i] = { ...holdings[i], ticker, market, markets, name, type, sector, sectors, currency, account, domicile, tracks, shares, avgCost, notes };
         toast('Holding updated');
     } else {
-        holdings.push({ id: uid(), ticker, market, name, type, sector, currency, account, shares, avgCost, notes });
+        holdings.push({ id: uid(), ticker, market, markets, name, type, sector, sectors, currency, account, domicile, tracks, shares, avgCost, notes });
         toast('Holding added');
     }
 
@@ -2485,9 +2656,46 @@ document.querySelectorAll('.nav-item, .sidebar-add, .util-btn, #sync-setup-btn, 
     el.addEventListener('click', closeSidebar);
 });
 
-document.getElementById('f-market').addEventListener('change', e => {
-    const cur = { SG: 'SGD', UK: 'GBP', US: 'USD' };
-    document.getElementById('f-currency').value = cur[e.target.value] || 'USD';
+document.getElementById('f-markets').addEventListener('click', e => {
+    const chip = e.target.closest('.mchip');
+    if (!chip) return;
+    chip.classList.toggle('active');
+    // Auto-set currency from the primary (first-selected) market when going 0→1.
+    const sel = getSelectedMarkets();
+    if (sel.length === 1) {
+        const cur = { SG: 'SGD', UK: 'GBP', US: 'USD' };
+        document.getElementById('f-currency').value = cur[sel[0]] || 'USD';
+    }
+});
+
+document.getElementById('f-sectors').addEventListener('click', e => {
+    // Remove a custom chip when its × is clicked.
+    if (e.target.dataset.remove) {
+        const chip = e.target.closest('.mchip');
+        chip?.remove();
+        return;
+    }
+    const chip = e.target.closest('.mchip');
+    if (!chip) return;
+    chip.classList.toggle('active');
+});
+
+document.getElementById('f-sector-custom').addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ',') return;
+    e.preventDefault();
+    const val = e.target.value.trim();
+    if (!val) return;
+    // If a chip with this label already exists, just activate it.
+    const existing = [...document.querySelectorAll('#f-sectors .mchip')].find(c =>
+        c.dataset.val.toLowerCase() === val.toLowerCase());
+    if (existing) {
+        existing.classList.add('active');
+    } else {
+        const current = getSelectedSectors();
+        current.push(val);
+        rebuildSectorChips(current);
+    }
+    e.target.value = '';
 });
 
 document.getElementById('f-ticker').addEventListener('input', e => {
@@ -2863,6 +3071,7 @@ async function syncLoad() {
         const payload = JSON.parse(atob(data.content.replace(/\n/g, '')));
         if (Array.isArray(payload.holdings)) {
             holdings = payload.holdings;
+            migrateHoldings();
             localStorage.setItem(KEY, JSON.stringify(holdings));
         }
         if (Array.isArray(payload.watchlist)) {
@@ -3039,11 +3248,11 @@ document.getElementById('theme-toggle-btn').addEventListener('click', toggleThem
 function exportCSV() {
     const all = holdings.map(enrich);
     const tot = totalUSDof(all);
-    const headers = ['Ticker','Name','Market','Type','Sector','Currency','Account','Shares','Avg Cost','Price','Value','Cost Basis','Gain/Loss','Gain %','Weight %'];
+    const headers = ['Ticker','Name','Markets','Type','Sectors','Domicile','Tracks','Currency','Account','Shares','Avg Cost','Price','Value','Cost Basis','Gain/Loss','Gain %','Weight %'];
     const rows = all.map(r => {
         const valueUSD = toUSD(r.value ?? r.costBasis, r.currency);
         const wt = tot > 0 ? (valueUSD / tot * 100) : 0;
-        return [r.ticker, `"${r.name}"`, r.market, r.type, r.sector||'', r.currency, r.account||'Cash',
+        return [r.ticker, `"${r.name}"`, `"${getMarkets(r).join(';')}"`, r.type, `"${getSectors(r).join(';')}"`, `"${r.domicile||''}"`, `"${r.tracks||''}"`, r.currency, r.account||'Cash',
             r.shares, r.avgCost, r.price??'', r.value??'', r.costBasis.toFixed(2),
             r.gainLoss!=null?r.gainLoss.toFixed(2):'', r.gainPct!=null?r.gainPct.toFixed(2):'', wt.toFixed(1)
         ].join(',');
@@ -3862,7 +4071,7 @@ function renderSrs() {
                     return `<tr style="cursor:pointer" onclick="openDetail('${r.id}')">
                         <td>
                             <div style="font-weight:600">${r.name}</div>
-                            <div style="font-size:11px;color:var(--label2)">${r.ticker} · ${r.type}${r.sector ? ' · ' + r.sector : ''}</div>
+                            <div style="font-size:11px;color:var(--label2)">${r.ticker} · ${r.type}${getSectors(r).length ? ' · ' + getSectors(r).join(', ') : ''}</div>
                         </td>
                         <td class="r">${Number(r.shares).toLocaleString('en-US', { maximumFractionDigits: 4 })}</td>
                         <td class="r">${money(r.avgCost, r.currency)}</td>
@@ -3990,12 +4199,14 @@ function openDetail(id) {
         </div>
 
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px">
-            <span class="mkt-pill mkt-${r.market.toLowerCase()}">${r.market}</span>
+            ${getMarkets(r).map(m => `<span class="mkt-pill mkt-${m.toLowerCase()}">${m}</span>`).join('')}
             <span class="chip" style="padding:3px 10px;font-size:11px">${r.type}</span>
-            ${r.sector ? `<span class="chip" style="padding:3px 10px;font-size:11px">${r.sector}</span>` : ''}
+            ${getSectors(r).map(s => `<span class="chip" style="padding:3px 10px;font-size:11px;background:${sectorColor(s)}22;color:${sectorColor(s)};border-color:${sectorColor(s)}44">${s}</span>`).join('')}
             ${r.account === 'SRS' ? '<span class="mkt-pill" style="background:rgba(13,148,136,0.12);color:#0d9488">SRS</span>' : '<span class="chip" style="padding:3px 10px;font-size:11px">Cash</span>'}
+            ${r.domicile ? `<span class="chip" style="padding:3px 10px;font-size:11px">📍 ${r.domicile}</span>` : ''}
         </div>
 
+        ${r.tracks ? `<div class="detail-section"><div class="detail-section-title">Tracks</div><p style="font-size:13px;color:var(--label2);line-height:1.5">${r.tracks}</p></div>` : ''}
         ${r.notes ? `<div class="detail-section"><div class="detail-section-title">Notes</div><p style="font-size:13px;color:var(--label2);line-height:1.5">${r.notes}</p></div>` : ''}`;
 
     // Dividend history
