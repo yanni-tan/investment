@@ -117,20 +117,29 @@
     },
     {
       "id": "9h2pd5ui8lqmqovpxnd",
-      "ticker": "GOOG",
+      "ticker": "GOOGL",
       "market": "US",
-      "name": "Google Inc",
+      "name": "Alphabet Inc. Class A",
       "type": "Stock",
       "currency": "USD",
       "shares": 5,
       "avgCost": 328.8,
-      "notes": "",
+      "notes": "Conviction bet on AI and digital advertising",
       "manualPrice": 363.38,
       "markets": [
         "US"
       ],
-      "sectors": [],
-      "sector": ""
+      "sectors": [
+        "Tech",
+        "AI Infrastructure",
+        "Communication Services",
+        "Cloud Computing",
+        "Digital Advertising"
+      ],
+      "sector": "Tech",
+      "account": "Cash",
+      "domicile": "USA",
+      "tracks": "Individual stock"
     },
     {
       "id": "wkk7vtoidbmqovrsxc",
@@ -563,5 +572,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T09:09:04.555Z"
+  "updatedAt": "2026-06-26T09:11:09.298Z"
 }
