@@ -255,7 +255,10 @@
       "notes": "Global core and diversification",
       "manualPrice": 0.1,
       "markets": [
-        "US"
+        "US",
+        "JP",
+        "EU",
+        "Global"
       ],
       "sectors": [
         "All Sectors"
@@ -595,5 +598,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T09:15:20.395Z"
+  "updatedAt": "2026-06-26T09:24:08.879Z"
 }
