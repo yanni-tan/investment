@@ -561,6 +561,14 @@
             gap: 12px;
         }
 
+        .charts-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: start;
+        }
+
         .stat-mini {
             background: var(--surface);
             border-radius: var(--radius-sm);
@@ -1246,22 +1254,23 @@
         <div class="stats-row" id="stats-row"></div>
     </div>
 
-    <!-- ── Market Allocation Chart ── -->
-    <div class="card" id="market-chart-card" style="margin-bottom:20px">
-        <div class="card-header">
-            <h2>Market Allocation</h2>
-            <span class="count-badge" id="market-count"></span>
+    <!-- ── Allocation Charts (side by side) ── -->
+    <div class="charts-row">
+        <div class="card" id="market-chart-card">
+            <div class="card-header">
+                <h2>Market Allocation</h2>
+                <span class="count-badge" id="market-count"></span>
+            </div>
+            <div id="market-chart-body"></div>
         </div>
-        <div id="market-chart-body"></div>
-    </div>
 
-    <!-- ── Sector Allocation Chart ── -->
-    <div class="card" id="sector-chart-card" style="margin-bottom:20px">
-        <div class="card-header">
-            <h2>Sector Allocation</h2>
-            <span class="count-badge" id="sector-count"></span>
+        <div class="card" id="sector-chart-card">
+            <div class="card-header">
+                <h2>Sector Allocation</h2>
+                <span class="count-badge" id="sector-count"></span>
+            </div>
+            <div id="sector-chart-body"></div>
         </div>
-        <div id="sector-chart-body"></div>
     </div>
 
     <!-- Full-width holdings table -->
