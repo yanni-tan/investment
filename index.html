@@ -693,49 +693,25 @@
         /* ── Chart Card ── */
         .chart-inner { padding: 20px; display: flex; align-items: center; gap: 32px; flex-wrap: wrap; }
 
-        .donut-wrap {
-            position: relative;
-            width: 160px; height: 160px;
-            flex-shrink: 0;
+        /* ── Allocation Ranked Bars ── */
+        .alloc-list { padding: 18px 22px; display: flex; flex-direction: column; gap: 11px; }
+        .alloc-row {
+            display: grid;
+            grid-template-columns: minmax(0, 150px) minmax(40px, 1fr) auto auto;
+            align-items: center; gap: 12px;
+            cursor: pointer; transition: opacity .15s;
         }
-
-        .donut-ring {
-            width: 100%; height: 100%;
-            border-radius: 50%;
-            position: relative;
+        .alloc-row:hover { opacity: 0.75; }
+        .alloc-name {
+            display: flex; align-items: center; gap: 7px;
+            font-size: 13px; font-weight: 500;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-
-        .donut-hole {
-            position: absolute;
-            width: 96px; height: 96px;
-            background: var(--surface);
-            border-radius: 50%;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-        }
-
-        .donut-total {
-            font-size: 13px; font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-
-        .donut-label {
-            font-size: 10px; color: var(--label2); margin-top: 1px;
-        }
-
-        /* ── Sector Chart ── */
-        .sector-inner { padding: 20px; display: flex; align-items: center; gap: 32px; flex-wrap: wrap; }
-        .sector-list { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 200px; }
-        .sector-row { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0; transition: opacity .15s; }
-        .sector-row:hover { opacity: 0.75; }
-        .sector-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
-        .sector-name { font-size: 13px; font-weight: 500; min-width: 80px; }
-        .sector-bar-wrap { flex: 1; height: 4px; background: var(--sep); border-radius: 2px; overflow: hidden; }
-        .sector-bar { height: 100%; border-radius: 2px; }
-        .sector-pct { font-size: 12px; font-weight: 600; min-width: 40px; text-align: right; color: var(--label2); }
-        .sector-val { font-size: 12px; min-width: 70px; text-align: right; color: var(--label3); }
+        .alloc-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+        .alloc-track { height: 14px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+        .alloc-fill { height: 100%; border-radius: 4px; min-width: 3px; transition: width .3s ease; }
+        .alloc-pct { font-size: 12px; font-weight: 600; text-align: right; color: var(--label); white-space: nowrap; }
+        .alloc-val { font-size: 12px; text-align: right; color: var(--label3); white-space: nowrap; min-width: 78px; }
 
         /* ── Holding Detail Panel ── */
         .detail-backdrop {
@@ -2381,42 +2357,23 @@ function renderMarketChart(rows) {
 
     card.style.display = '';
     const total = mkts.reduce((s, [, v]) => s + v, 0);
+    const maxV = mkts[0][1] || 1;
     document.getElementById('market-count').textContent = `${mkts.length} market${mkts.length !== 1 ? 's' : ''}`;
-
-    let angle = 0;
-    const stops = mkts.map(([mkt, v]) => {
-        const deg = (v / total) * 360;
-        const color = marketColor(mkt);
-        const stop = `${color} ${angle.toFixed(1)}deg ${(angle + deg).toFixed(1)}deg`;
-        angle += deg;
-        return stop;
-    });
-    const gradient = `conic-gradient(${stops.join(', ')})`;
 
     const mktRows = mkts.map(([mkt, v]) => {
         const p = (v / total) * 100;
+        const w = (v / maxV) * 100;
         const color = marketColor(mkt);
         const flag = MKT_FLAGS[mkt] || '';
-        return `<div class="sector-row" onclick="setMarketTab('${mkt}')">
-            <div class="sector-dot" style="background:${color}"></div>
-            <span class="sector-name">${flag} ${MARKET_LABELS[mkt] || mkt}</span>
-            <div class="sector-bar-wrap"><div class="sector-bar" style="width:${p.toFixed(1)}%;background:${color}"></div></div>
-            <span class="sector-pct">${p.toFixed(1)}%</span>
-            <span class="sector-val">${dmoney(v)}</span>
+        return `<div class="alloc-row" onclick="setMarketTab('${mkt}')">
+            <span class="alloc-name"><span class="alloc-dot" style="background:${color}"></span>${flag} ${MARKET_LABELS[mkt] || mkt}</span>
+            <div class="alloc-track"><div class="alloc-fill" style="width:${w.toFixed(1)}%;background:${color}"></div></div>
+            <span class="alloc-pct">${p.toFixed(1)}%</span>
+            <span class="alloc-val">${dmoney(v)}</span>
         </div>`;
     }).join('');
 
-    body.innerHTML = `
-        <div class="sector-inner">
-            <div class="donut-wrap">
-                <div class="donut-ring" style="background:${gradient}"></div>
-                <div class="donut-hole">
-                    <div class="donut-total">${mkts.length}</div>
-                    <div class="donut-label">Markets</div>
-                </div>
-            </div>
-            <div class="sector-list">${mktRows}</div>
-        </div>`;
+    body.innerHTML = `<div class="alloc-list">${mktRows}</div>`;
 }
 
 function renderSectorChart(rows) {
@@ -2443,42 +2400,22 @@ function renderSectorChart(rows) {
 
     card.style.display = '';
     const total = sectors.reduce((s, [, v]) => s + v, 0);
+    const maxV = sectors[0][1] || 1;
     document.getElementById('sector-count').textContent = `${sectors.length} sectors`;
-
-    // Donut gradient
-    let angle = 0;
-    const stops = sectors.map(([sec, v]) => {
-        const deg = (v / total) * 360;
-        const color = sectorColor(sec);
-        const stop = `${color} ${angle.toFixed(1)}deg ${(angle + deg).toFixed(1)}deg`;
-        angle += deg;
-        return stop;
-    });
-    const gradient = `conic-gradient(${stops.join(', ')})`;
 
     const sectorRows = sectors.map(([sec, v]) => {
         const p = (v / total) * 100;
+        const w = (v / maxV) * 100;
         const color = sectorColor(sec);
-        return `<div class="sector-row">
-            <div class="sector-dot" style="background:${color}"></div>
-            <span class="sector-name">${sec}</span>
-            <div class="sector-bar-wrap"><div class="sector-bar" style="width:${p.toFixed(1)}%;background:${color}"></div></div>
-            <span class="sector-pct">${p.toFixed(1)}%</span>
-            <span class="sector-val">${dmoney(v)}</span>
+        return `<div class="alloc-row">
+            <span class="alloc-name"><span class="alloc-dot" style="background:${color}"></span>${sec}</span>
+            <div class="alloc-track"><div class="alloc-fill" style="width:${w.toFixed(1)}%;background:${color}"></div></div>
+            <span class="alloc-pct">${p.toFixed(1)}%</span>
+            <span class="alloc-val">${dmoney(v)}</span>
         </div>`;
     }).join('');
 
-    body.innerHTML = `
-        <div class="sector-inner">
-            <div class="donut-wrap">
-                <div class="donut-ring" style="background:${gradient}"></div>
-                <div class="donut-hole">
-                    <div class="donut-total">${sectors.length}</div>
-                    <div class="donut-label">Sectors</div>
-                </div>
-            </div>
-            <div class="sector-list">${sectorRows}</div>
-        </div>`;
+    body.innerHTML = `<div class="alloc-list">${sectorRows}</div>`;
 }
 
 // ── Set market tab (used by clickable market cards) ──
