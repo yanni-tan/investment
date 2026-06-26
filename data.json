@@ -21,19 +21,24 @@
       "id": "m331x1l1l8mqovkw3s",
       "ticker": "SMH",
       "market": "US",
-      "name": "Vaneck Semiconductor ETF",
+      "name": "VanEck Semiconductor ETF",
       "type": "ETF",
       "currency": "USD",
       "shares": 4,
       "avgCost": 451.22,
-      "notes": "US, Taiwan, Netherlands | Semiconductor companies",
+      "notes": "High-conviction AI and semiconductor exposure",
       "manualPrice": 663.62,
-      "sector": "",
+      "sector": "Semiconductor",
       "account": "Cash",
       "markets": [
         "US"
       ],
-      "sectors": []
+      "sectors": [
+        "Semiconductor",
+        "AI Infrastructure"
+      ],
+      "domicile": "USA",
+      "tracks": "Global semiconductor companies"
     },
     {
       "id": "rfwf8osbny9mqovmc03",
@@ -558,5 +563,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T09:07:29.149Z"
+  "updatedAt": "2026-06-26T09:09:04.555Z"
 }
