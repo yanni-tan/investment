@@ -713,6 +713,12 @@
         .alloc-pct { font-size: 12px; font-weight: 600; text-align: right; color: var(--label); white-space: nowrap; }
         .alloc-val { font-size: 12px; text-align: right; color: var(--label3); white-space: nowrap; min-width: 78px; }
 
+        /* ── Collapsible cards ── */
+        .collapsible .card-header { cursor: pointer; user-select: none; }
+        .collapse-chevron { font-size: 18px; color: var(--label2); transition: transform .2s ease; line-height: 1; }
+        .collapsible.collapsed .collapse-chevron { transform: rotate(-90deg); }
+        .collapsible.collapsed .collapse-body { display: none; }
+
         /* ── Holding Detail Panel ── */
         .detail-backdrop {
             display: none; position: fixed; inset: 0;
@@ -1233,20 +1239,26 @@
 
     <!-- ── Allocation Charts (side by side) ── -->
     <div class="charts-row">
-        <div class="card" id="market-chart-card">
-            <div class="card-header">
+        <div class="card collapsible collapsed" id="market-chart-card">
+            <div class="card-header" onclick="toggleCollapse('market-chart-card')">
                 <h2>Market Allocation</h2>
-                <span class="count-badge" id="market-count"></span>
+                <div style="display:flex;align-items:center;gap:10px">
+                    <span class="count-badge" id="market-count"></span>
+                    <span class="collapse-chevron">⌄</span>
+                </div>
             </div>
-            <div id="market-chart-body"></div>
+            <div class="collapse-body" id="market-chart-body"></div>
         </div>
 
-        <div class="card" id="sector-chart-card">
-            <div class="card-header">
+        <div class="card collapsible collapsed" id="sector-chart-card">
+            <div class="card-header" onclick="toggleCollapse('sector-chart-card')">
                 <h2>Sector Allocation</h2>
-                <span class="count-badge" id="sector-count"></span>
+                <div style="display:flex;align-items:center;gap:10px">
+                    <span class="count-badge" id="sector-count"></span>
+                    <span class="collapse-chevron">⌄</span>
+                </div>
             </div>
-            <div id="sector-chart-body"></div>
+            <div class="collapse-body" id="sector-chart-body"></div>
         </div>
     </div>
 
@@ -2434,6 +2446,11 @@ const MKT_FLAGS = {
     CN: '🇨🇳', IN: '🇮🇳', EU: '🇪🇺', CA: '🇨🇦', DE: '🇩🇪', KR: '🇰🇷',
     TW: '🇹🇼', Global: '🌏',
 };
+
+// Toggle the collapsed state of a collapsible card.
+function toggleCollapse(cardId) {
+    document.getElementById(cardId)?.classList.toggle('collapsed');
+}
 
 // Total ESPP value in USD (AAPL-denominated). Returns null if no grants.
 function esppTotalUSD() {
