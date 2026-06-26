@@ -1445,6 +1445,17 @@
                 <label>Date</label>
                 <input class="finput" id="sell-date" type="date" required>
             </div>
+            <div class="fg">
+                <label>Use of Proceeds <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--label3)">(optional)</span></label>
+                <input class="finput" id="sell-disposition" type="text" list="disposition-presets" placeholder="e.g. Reinvested in NVDA, Moved to bank">
+                <datalist id="disposition-presets">
+                    <option value="Reinvested in another stock">
+                    <option value="Moved to bank">
+                    <option value="Kept as cash">
+                    <option value="Topped up SRS">
+                    <option value="Withdrew / spent">
+                </datalist>
+            </div>
             <div id="sell-preview"></div>
             <div class="modal-foot">
                 <button type="button" class="btn btn-secondary" id="sell-cancel">Cancel</button>
@@ -3493,6 +3504,7 @@ function openSellModal(holdingId) {
     document.getElementById('sell-shares').value = '';
     document.getElementById('sell-price').value = '';
     document.getElementById('sell-date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('sell-disposition').value = '';
     document.getElementById('sell-preview').innerHTML = '';
     document.getElementById('sell-overlay').classList.add('open');
     setTimeout(() => document.getElementById('sell-shares').focus(), 50);
@@ -3526,13 +3538,14 @@ document.getElementById('sell-form').addEventListener('submit', e => {
     const shares = parseFloat(document.getElementById('sell-shares').value);
     const price = parseFloat(document.getElementById('sell-price').value);
     const date = document.getElementById('sell-date').value;
+    const disposition = document.getElementById('sell-disposition').value.trim();
     if (isNaN(shares) || isNaN(price) || shares <= 0) return;
     if (shares > h.shares) { toast('Cannot sell more than you own'); return; }
 
     const gain = (price - h.avgCost) * shares;
     realized.push({
         id: uid(), ticker: h.ticker, name: h.name, market: h.market, currency: h.currency,
-        shares, buyAvg: h.avgCost, sellPrice: price, sellDate: date, gainLoss: gain
+        shares, buyAvg: h.avgCost, sellPrice: price, sellDate: date, gainLoss: gain, disposition
     });
     saveRealized();
 
@@ -3577,6 +3590,7 @@ function renderRealizedPanel() {
             <th class="r">Buy Avg</th>
             <th class="r">Sell Price</th>
             <th class="r">P&L</th>
+            <th>Use of Proceeds</th>
             <th></th>
         </tr></thead>
         <tbody>${sorted.map(r => {
@@ -3588,6 +3602,7 @@ function renderRealizedPanel() {
                 <td class="r">${money(r.buyAvg, r.currency)}</td>
                 <td class="r">${money(r.sellPrice, r.currency)}</td>
                 <td class="r"><span class="${cc(r.gainLoss)}" style="font-weight:600">${signed(r.gainLoss, r.currency)}</span><div style="font-size:11px;color:var(--label2)">${pct(gPct)}</div></td>
+                <td><span onclick="editDisposition('${r.id}')" style="cursor:pointer;${r.disposition ? 'color:var(--label)' : 'color:var(--label3)'}">${r.disposition ? r.disposition.replace(/</g,'&lt;') : '+ Add note'}</span></td>
                 <td><button class="row-btn del" onclick="delRealized('${r.id}')">×</button></td>
             </tr>`;
         }).join('')}</tbody>
@@ -3595,6 +3610,14 @@ function renderRealizedPanel() {
 }
 function delRealized(id) {
     realized = realized.filter(r => r.id !== id);
+    saveRealized(); renderRealizedPanel();
+}
+function editDisposition(id) {
+    const r = realized.find(x => x.id === id);
+    if (!r) return;
+    const val = prompt('What did you do with the proceeds?', r.disposition || '');
+    if (val === null) return;
+    r.disposition = val.trim();
     saveRealized(); renderRealizedPanel();
 }
 document.getElementById('realized-nav-btn').addEventListener('click', () => showPanel('realized'));
