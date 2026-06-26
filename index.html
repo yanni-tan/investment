@@ -1847,9 +1847,14 @@ function loadDividends() {
     // One-time migration: legacy records stored no currency. Stamp from holding so totals are correct.
     let migrated = false;
     dividends.forEach(d => {
+        const h = holdings.find(x => x.id === d.holdingId);
         if (!d.currency) {
-            const h = holdings.find(x => x.id === d.holdingId);
             d.currency = h?.currency || 'USD';
+            migrated = true;
+        }
+        // Snapshot name/ticker so the record survives the holding being sold/deleted.
+        if (h && (!d.name || !d.ticker)) {
+            d.name = h.name; d.ticker = h.ticker;
             migrated = true;
         }
     });
@@ -3442,9 +3447,11 @@ function renderDividends() {
         </tr></thead>
         <tbody>${sorted.map(d => {
             const h = holdings.find(x => x.id === d.holdingId);
+            const name = h?.name || d.name || '—';
+            const ticker = h?.ticker || d.ticker || '';
             return `<tr>
                 <td>${d.date}</td>
-                <td><strong>${h?.name || '—'}</strong><div style="font-size:11px;color:var(--label2)">${h?.ticker||''}</div></td>
+                <td><strong>${name}</strong><div style="font-size:11px;color:var(--label2)">${ticker}</div></td>
                 <td class="r" style="font-weight:600;color:var(--green)">${money(Number(d.amount)||0, divCurrency(d))}</td>
                 <td><button class="row-btn del" onclick="delDividend('${d.id}')">×</button></td>
             </tr>`;
@@ -3462,7 +3469,7 @@ document.getElementById('div-form').addEventListener('submit', e => {
     const amount = parseFloat(document.getElementById('div-amount').value);
     if (!holdingId || !date || isNaN(amount)) return;
     const h = holdings.find(x => x.id === holdingId);
-    dividends.push({ id: uid(), holdingId, date, amount, currency: h?.currency || 'USD' });
+    dividends.push({ id: uid(), holdingId, date, amount, currency: h?.currency || 'USD', name: h?.name, ticker: h?.ticker });
     saveDividends();
     document.getElementById('div-overlay').classList.remove('open');
     toast('Dividend logged');
