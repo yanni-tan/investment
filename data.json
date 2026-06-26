@@ -119,10 +119,12 @@
       "name": "SS SPDR STI ETF",
       "type": "ETF",
       "currency": "SGD",
-      "shares": 100,
+      "shares": 250,
       "avgCost": 4.969,
       "notes": "",
-      "manualPrice": 5.279
+      "manualPrice": 5.279,
+      "sector": "",
+      "account": "Cash"
     },
     {
       "id": "05sj4wbsax6rmqs6vjtb",
@@ -333,16 +335,16 @@
     },
     {
       "month": "2026-06-26",
-      "gainUSD": 6351.568100000004,
-      "totalUSD": 30011.02303,
+      "gainUSD": 6256.912350000006,
+      "totalUSD": 27583.856425,
       "byMkt": {
         "US": 13564.7,
-        "SG": 15677.23303,
+        "SG": 13250.066425,
         "UK": 769.09
       },
       "costByMkt": {
         "US": 8455.42,
-        "SG": 14438.59493,
+        "SG": 12106.084074999999,
         "UK": 765.44
       }
     }
@@ -478,5 +480,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T08:20:45.447Z"
+  "updatedAt": "2026-06-26T08:53:46.536Z"
 }
