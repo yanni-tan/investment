@@ -84,8 +84,13 @@
       "markets": [
         "US"
       ],
-      "sectors": [],
-      "sector": ""
+      "sectors": [
+        "AI Infrastructure"
+      ],
+      "sector": "AI Infrastructure",
+      "account": "Cash",
+      "domicile": "Netherlands",
+      "tracks": ""
     },
     {
       "id": "saqo5hfcdllmqovo48o",
@@ -578,5 +583,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T09:12:10.135Z"
+  "updatedAt": "2026-06-26T09:13:18.585Z"
 }
