@@ -2196,6 +2196,7 @@ function renderTable(rows, tot) {
     const sortedRows = sortCol ? [...rows].sort((a, b) => {
         const vals = {
             name:    r => r.name,
+            type:    r => r.type,
             market:  r => r.market,
             shares:  r => r.shares,
             avgCost: r => r.avgCost,
@@ -2224,6 +2225,7 @@ function renderTable(rows, tot) {
             <thead>
                 <tr>
                     <th class="sortable${sortCol==='name'?' sorted':''}" data-col="name">Holding <i class="sort-icon">${sortCol==='name'?(sortDir==='asc'?'↑':'↓'):'↕'}</i></th>
+                    <th class="sortable${sortCol==='type'?' sorted':''}" data-col="type">Type <i class="sort-icon">${sortCol==='type'?(sortDir==='asc'?'↑':'↓'):'↕'}</i></th>
                     <th class="sortable${sortCol==='market'?' sorted':''}" data-col="market">Market <i class="sort-icon">${sortCol==='market'?(sortDir==='asc'?'↑':'↓'):'↕'}</i></th>
                     ${thSort('shares','Shares')}
                     ${thSort('avgCost','Avg Cost')}
@@ -2281,10 +2283,11 @@ function tableRow(r, tot) {
                     <div class="ticker-avatar">${short.slice(0,4)}</div>
                     <div>
                         <div class="ticker-name">${r.name}</div>
-                        <div class="ticker-meta">${r.type}${r.notes ? ' · ' + r.notes : ''}</div>
+                        <div class="ticker-meta">${r.ticker}${r.notes ? ' · ' + r.notes : ''}</div>
                     </div>
                 </div>
             </td>
+            <td><span class="mkt-pill" style="background:var(--surface2,rgba(127,127,127,0.12));color:var(--label2)">${r.type}</span></td>
             <td><span style="display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center">${getMarkets(r).map(mktPill).join('')}${r.account === 'SRS' ? '<span class="mkt-pill" style="background:rgba(13,148,136,0.12);color:#0d9488">SRS</span>' : ''}</span></td>
             <td class="r">${Number(r.shares).toLocaleString('en-US', { maximumFractionDigits: 4 })}</td>
             <td class="r">${money(r.avgCost, r.currency)}</td>
