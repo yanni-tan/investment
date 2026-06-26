@@ -3447,11 +3447,15 @@ function renderDividends() {
         </tr></thead>
         <tbody>${sorted.map(d => {
             const h = holdings.find(x => x.id === d.holdingId);
-            const name = h?.name || d.name || '—';
+            const name = h?.name || d.name || '';
             const ticker = h?.ticker || d.ticker || '';
+            // Orphaned rows (holding sold/deleted) are editable so you can fill in what it was.
+            const nameCell = h
+                ? `<strong>${name}</strong><div style="font-size:11px;color:var(--label2)">${ticker}</div>`
+                : `<span onclick="editDivHolding('${d.id}')" style="cursor:pointer">${name ? `<strong>${name}</strong>` : '<span style="color:var(--label3)">+ Add holding name</span>'}<div style="font-size:11px;color:var(--label2)">${ticker}</div></span>`;
             return `<tr>
                 <td>${d.date}</td>
-                <td><strong>${name}</strong><div style="font-size:11px;color:var(--label2)">${ticker}</div></td>
+                <td>${nameCell}</td>
                 <td class="r" style="font-weight:600;color:var(--green)">${money(Number(d.amount)||0, divCurrency(d))}</td>
                 <td><button class="row-btn del" onclick="delDividend('${d.id}')">×</button></td>
             </tr>`;
@@ -3460,6 +3464,16 @@ function renderDividends() {
 }
 function delDividend(id) {
     dividends = dividends.filter(d => d.id !== id);
+    saveDividends(); renderDividends();
+}
+function editDivHolding(id) {
+    const d = dividends.find(x => x.id === id);
+    if (!d) return;
+    const name = prompt('Holding name (the stock/fund this dividend came from):', d.name || '');
+    if (name === null) return;
+    const ticker = prompt('Ticker symbol (optional):', d.ticker || '');
+    d.name = name.trim();
+    if (ticker !== null) d.ticker = ticker.trim();
     saveDividends(); renderDividends();
 }
 document.getElementById('div-form').addEventListener('submit', e => {
