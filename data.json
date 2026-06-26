@@ -209,7 +209,7 @@
       "shares": 4,
       "avgCost": 790.3051,
       "notes": "US growth engine / VOO",
-      "manualPrice": 787.6,
+      "manualPrice": 790.5,
       "markets": [
         "US"
       ],
@@ -632,5 +632,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T14:16:55.979Z"
+  "updatedAt": "2026-06-26T14:18:28.445Z"
 }
