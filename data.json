@@ -98,31 +98,6 @@
       "tracks": "Individual Stock"
     },
     {
-      "id": "saqo5hfcdllmqovo48o",
-      "ticker": "VOO",
-      "market": "US",
-      "name": "Vanguard S&P 500 ETF",
-      "type": "ETF",
-      "currency": "USD",
-      "shares": 2,
-      "avgCost": 628,
-      "notes": "",
-      "manualPrice": 688.4,
-      "markets": [
-        "US"
-      ],
-      "sectors": [
-        "Tech",
-        "Finance",
-        "Healthcare",
-        "Consumer"
-      ],
-      "sector": "Tech",
-      "account": "Cash",
-      "domicile": "USA",
-      "tracks": "S&P 500 (500 largest US companies)"
-    },
-    {
       "id": "ohv9vplhy6lmqovoz97",
       "ticker": "AMZN",
       "market": "US",
@@ -570,6 +545,19 @@
       "sellPrice": 5.275,
       "sellDate": "2026-06-26",
       "gainLoss": 76.50000000000001
+    },
+    {
+      "id": "r2dam53jsjemqv3eu9r",
+      "ticker": "VOO",
+      "name": "Vanguard S&P 500 ETF",
+      "market": "US",
+      "currency": "USD",
+      "shares": 2,
+      "buyAvg": 628,
+      "sellPrice": 675.5,
+      "sellDate": "2026-06-26",
+      "gainLoss": 95,
+      "disposition": "Reinvested in another stock"
     }
   ],
   "espp": {
@@ -663,5 +651,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T15:12:33.490Z"
+  "updatedAt": "2026-06-26T15:35:35.069Z"
 }
