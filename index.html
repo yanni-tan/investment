@@ -2143,7 +2143,10 @@ function renderKPI(rows) {
                 <div class="kpi-value">${dsigned(s.totalGain)}</div>
                 <div>
                     <span class="kpi-badge ${badgeClass(s.totalGainPct)}">${s.totalGain >= 0 ? '↑' : '↓'} ${pct(s.totalGainPct)}</span>
-                    <div class="kpi-sub">${displayCur === 'USD' ? signed(s.totalGain / fxSGDUSD, 'SGD') : signed(s.totalGain, 'USD')}</div>
+                    <div class="kpi-sub" style="margin-top:6px">
+                        🇺🇸 ${dsigned((s.byMkt.US || 0) - (s.costByMkt.US || 0))} &nbsp;+&nbsp; 🇸🇬 ${dsigned((s.byMkt.SG || 0) - (s.costByMkt.SG || 0))}${s.byMkt.UK ? ` &nbsp;+&nbsp; 🇬🇧 ${dsigned((s.byMkt.UK || 0) - (s.costByMkt.UK || 0))}` : ''}
+                    </div>
+                    <div class="kpi-sub">${displayCur === 'USD' ? signed(s.totalGain / fxSGDUSD, 'SGD') : signed(s.totalGain, 'USD')} total</div>
                 </div>
             </div>
         </div>`;
@@ -2496,8 +2499,11 @@ function esppTotalUSD() {
     const manualPrice = parseFloat(localStorage.getItem('espp_aapl_price')) || null;
     const lastLogged = esppData.updates?.length ? esppData.updates[esppData.updates.length - 1].aaplPrice : null;
     const aaplPrice = prices['AAPL']?.price || manualPrice || lastLogged || null;
-    const value = totalUnits * (aaplPrice || avgGrantPrice);
-    return { valueUSD: value, costUSD: totalGrantValue, units: totalUnits };
+    // Show the VESTED value (shares actually vested), not the full grant.
+    const vestedUnits = getAutoVestedUnits(esppData.grants);
+    const valueUSD = vestedUnits * (aaplPrice || avgGrantPrice);
+    const costUSD = vestedUnits * avgGrantPrice;
+    return { valueUSD, costUSD, units: vestedUnits };
 }
 
 // Total SRS value (holdings + cash) converted to USD. Returns null if no SRS activity.
@@ -2585,7 +2591,7 @@ function renderStatsRow(rows) {
                 <span class="kpi-badge ${badgeClass(gainUSD)}" style="font-size:10px;padding:3px 8px">${gainUSD >= 0 ? '↑' : '↓'} ${dsigned(gainUSD)}</span>
                 ${espp.costUSD > 0 ? `<span class="kpi-badge ${badgeClass(gPct)}" style="font-size:10px;padding:3px 8px">${gainUSD >= 0 ? '↑' : '↓'} ${pct(gPct)}</span>` : ''}
             </div>
-            <div class="stat-sub">${espp.units.toLocaleString('en-US', { maximumFractionDigits: 1 })} units</div>
+            <div class="stat-sub">${espp.units.toLocaleString('en-US', { maximumFractionDigits: 1 })} units vested</div>
         </div>`;
     }
 
