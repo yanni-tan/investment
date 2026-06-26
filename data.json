@@ -136,8 +136,15 @@
       "markets": [
         "US"
       ],
-      "sectors": [],
-      "sector": ""
+      "sectors": [
+        "Consumer",
+        "AI Infrastructure",
+        "Cloud Computing"
+      ],
+      "sector": "Consumer",
+      "account": "Cash",
+      "domicile": "",
+      "tracks": "Individual Stock"
     },
     {
       "id": "9h2pd5ui8lqmqovpxnd",
@@ -640,5 +647,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T14:51:34.005Z"
+  "updatedAt": "2026-06-26T14:52:27.095Z"
 }
