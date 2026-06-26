@@ -113,20 +113,6 @@
       "manualPrice": 25.88
     },
     {
-      "id": "my9v538pf78mqovuzr3",
-      "ticker": "ES3.SI",
-      "market": "SG",
-      "name": "SS SPDR STI ETF",
-      "type": "ETF",
-      "currency": "SGD",
-      "shares": 250,
-      "avgCost": 4.969,
-      "notes": "",
-      "manualPrice": 5.279,
-      "sector": "",
-      "account": "Cash"
-    },
-    {
       "id": "05sj4wbsax6rmqs6vjtb",
       "ticker": "CSPX.L",
       "market": "UK",
@@ -387,6 +373,18 @@
       "sellPrice": 39.7,
       "sellDate": "2026-06-26",
       "gainLoss": 206.00000000000023
+    },
+    {
+      "id": "k0jndkhej3bmqup2g1d",
+      "ticker": "ES3.SI",
+      "name": "SS SPDR STI ETF",
+      "market": "SG",
+      "currency": "SGD",
+      "shares": 250,
+      "buyAvg": 4.969,
+      "sellPrice": 5.275,
+      "sellDate": "2026-06-26",
+      "gainLoss": 76.50000000000001
     }
   ],
   "espp": {
@@ -480,5 +478,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T08:53:46.536Z"
+  "updatedAt": "2026-06-26T08:54:02.127Z"
 }
