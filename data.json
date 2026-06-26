@@ -222,7 +222,7 @@
       "id": "4fp0ikck9jomqs7vy5g",
       "ticker": "D05.SI",
       "market": "SG",
-      "name": "DBS",
+      "name": "DBS Group Holdings Ltd",
       "type": "Stock",
       "sector": "Finance",
       "currency": "SGD",
@@ -595,5 +595,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T09:15:11.563Z"
+  "updatedAt": "2026-06-26T09:15:20.395Z"
 }
