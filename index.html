@@ -1669,6 +1669,10 @@
                     <input class="finput" id="buy-price" type="number" step="any" min="0" placeholder="0.00" required>
                 </div>
             </div>
+            <div class="fg">
+                <label>Date</label>
+                <input class="finput" id="buy-date" type="date" required>
+            </div>
             <div id="buy-preview"></div>
             <div class="modal-foot">
                 <button type="button" class="btn btn-secondary" id="buy-cancel">Cancel</button>
@@ -2955,6 +2959,7 @@ function openBuyModal(id) {
         `<strong>${h.ticker}</strong> &nbsp;·&nbsp; ${Number(h.shares).toLocaleString()} shares &nbsp;·&nbsp; avg cost ${money(h.avgCost, h.currency)}`;
     document.getElementById('buy-shares').value = '';
     document.getElementById('buy-price').value = '';
+    document.getElementById('buy-date').value = new Date().toISOString().slice(0,10);
     document.getElementById('buy-preview').innerHTML = '';
     document.getElementById('buy-overlay').classList.add('open');
     setTimeout(() => document.getElementById('buy-shares').focus(), 50);
@@ -2974,7 +2979,7 @@ function updateBuyPreview() {
     document.getElementById('buy-preview').innerHTML = `
         <div class="buy-preview">
             New total: <strong style="color:var(--label)">${totalShares.toLocaleString('en-US', { maximumFractionDigits: 4 })} shares</strong>
-            &nbsp;·&nbsp; New avg cost: <strong style="color:var(--label)">${money(newAvgCost, h.currency)}</strong>
+            &nbsp;·&nbsp; Avg cost: <strong style="color:var(--label2)">${money(h.avgCost, h.currency)}</strong> → <strong style="color:var(--label)">${money(newAvgCost, h.currency)}</strong>
         </div>`;
 }
 
@@ -2990,9 +2995,11 @@ document.getElementById('buy-form').addEventListener('submit', e => {
     const newShares = parseFloat(document.getElementById('buy-shares').value);
     const newPrice  = parseFloat(document.getElementById('buy-price').value);
     if (isNaN(newShares) || isNaN(newPrice)) return;
+    const buyDate = document.getElementById('buy-date').value;
     const totalShares = h.shares + newShares;
     const newAvgCost  = (h.shares * h.avgCost + newShares * newPrice) / totalShares;
-    holdings[i] = { ...h, shares: totalShares, avgCost: newAvgCost };
+    const lot = { date: buyDate, shares: newShares, price: newPrice, prevShares: h.shares, prevAvg: h.avgCost, newAvg: newAvgCost };
+    holdings[i] = { ...h, shares: totalShares, avgCost: newAvgCost, buys: [...(h.buys || []), lot] };
     save();
     document.getElementById('buy-overlay').classList.remove('open');
     buyId = null;
@@ -4375,10 +4382,36 @@ function openDetail(id) {
         ${r.tracks ? `<div class="detail-section"><div class="detail-section-title">Tracks</div><p style="font-size:13px;color:var(--label2);line-height:1.5">${r.tracks}</p></div>` : ''}
         ${r.notes ? `<div class="detail-section"><div class="detail-section-title">Notes</div><p style="font-size:13px;color:var(--label2);line-height:1.5">${r.notes}</p></div>` : ''}`;
 
+    // Purchase history (cost-basis lots)
+    const lots = h.buys || [];
+    const initialShares = lots.length ? lots[0].prevShares : r.shares;
+    const initialAvg = lots.length ? lots[0].prevAvg : r.avgCost;
+    html += `<div class="detail-section">
+        <div class="detail-section-title">Purchase History (${lots.length + 1})</div>
+        <table class="detail-mini-table">
+            <thead><tr><th>Date</th><th class="r">Shares</th><th class="r">Price</th><th class="r">Avg Before</th><th class="r">Avg After</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td>Initial</td>
+                    <td class="r">${Number(initialShares).toLocaleString('en-US',{maximumFractionDigits:4})}</td>
+                    <td class="r">${money(initialAvg, r.currency)}</td>
+                    <td class="r" style="color:var(--label3)">—</td>
+                    <td class="r" style="font-weight:600">${money(initialAvg, r.currency)}</td>
+                </tr>
+                ${lots.map(l => `<tr>
+                    <td>${l.date || '—'}</td>
+                    <td class="r">+${Number(l.shares).toLocaleString('en-US',{maximumFractionDigits:4})}</td>
+                    <td class="r">${money(l.price, r.currency)}</td>
+                    <td class="r" style="color:var(--label2)">${money(l.prevAvg, r.currency)}</td>
+                    <td class="r" style="font-weight:600">${money(l.newAvg, r.currency)}</td>
+                </tr>`).join('')}
+            </tbody>
+        </table>
+    </div>`;
+
     // Dividend history
     html += `<div class="detail-section">
-        <div class="detail-section-title">Dividend History (${holdingDivs.length})</div>`;
-    if (holdingDivs.length) {
+        <div class="detail-section-title">Dividend History (${holdingDivs.length})</div>`;    if (holdingDivs.length) {
         html += `<table class="detail-mini-table">
             <thead><tr><th>Date</th><th class="r">Amount</th></tr></thead>
             <tbody>${holdingDivs.map(d => `<tr>
