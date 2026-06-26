@@ -111,8 +111,16 @@
       "markets": [
         "US"
       ],
-      "sectors": [],
-      "sector": ""
+      "sectors": [
+        "Tech",
+        "Finance",
+        "Healthcare",
+        "Consumer"
+      ],
+      "sector": "Tech",
+      "account": "Cash",
+      "domicile": "USA",
+      "tracks": "S&P 500 (500 largest US companies)"
     },
     {
       "id": "ohv9vplhy6lmqovoz97",
@@ -462,10 +470,10 @@
     },
     {
       "month": "2026-06-26",
-      "gainUSD": 6183.399499999996,
-      "totalUSD": 28954.8924,
+      "gainUSD": 6194.999499999998,
+      "totalUSD": 28966.492400000003,
       "byMkt": {
-        "US": 14182.38,
+        "US": 14193.98,
         "SG": 12239.7924,
         "UK": 0,
         "TW": 884.8266666666666,
@@ -632,5 +640,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T14:18:28.445Z"
+  "updatedAt": "2026-06-26T14:51:34.005Z"
 }
