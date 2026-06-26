@@ -272,7 +272,7 @@
       "shares": 10,
       "avgCost": 186.12,
       "notes": "Global core and diversification",
-      "manualPrice": 0.1,
+      "manualPrice": 186.26,
       "markets": [
         "US",
         "JP",
@@ -657,5 +657,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T14:57:55.089Z"
+  "updatedAt": "2026-06-26T14:58:03.359Z"
 }
