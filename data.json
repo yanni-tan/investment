@@ -84,7 +84,9 @@
       "notes": "Speculative AI infrastructure growth bet",
       "manualPrice": 286.15,
       "markets": [
-        "US"
+        "US",
+        "EU",
+        "Global"
       ],
       "sectors": [
         "AI Infrastructure",
@@ -606,5 +608,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T09:24:58.049Z"
+  "updatedAt": "2026-06-26T09:25:16.700Z"
 }
