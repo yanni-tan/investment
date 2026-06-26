@@ -1309,11 +1309,10 @@
                 <input class="finput" id="f-name" type="text" placeholder="Company or fund name" required>
             </div>
             <div class="fg">
-                <label>Markets / Countries <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--label3)">(select one or more)</span></label>
+                <label>Markets / Countries <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--label3)">(select or type a custom name)</span></label>
                 <div class="mchips" id="f-markets">
-                    <button type="button" class="mchip" data-val="US">🇺🇸 US (NYSE / NASDAQ)</button>
-                    <button type="button" class="mchip" data-val="SG">🇸🇬 SG (SGX)</button>
-                    <button type="button" class="mchip" data-val="UK">🇬🇧 UK (LSE)</button>
+                    <!-- chips injected at openModal -->
+                    <input type="text" class="mchip-input" id="f-market-custom" placeholder="Type custom market + Enter">
                 </div>
             </div>
             <div class="fg">
@@ -1705,7 +1704,43 @@
 
 // ── Constants ──
 const KEY = 'portfolio_v1';
-const MARKET_COLORS = { US: '#3b82f6', SG: '#ec4899', UK: '#d97706' };
+const MARKET_COLORS = {
+    US: '#3b82f6', SG: '#ec4899', UK: '#d97706',
+    HK: '#dc2626', JP: '#e11d48', AU: '#0ea5e9', CN: '#b91c1c',
+    IN: '#f97316', EU: '#6366f1', CA: '#ef4444', DE: '#8b5cf6',
+    KR: '#14b8a6', TW: '#a855f7', Global: '#64748b',
+};
+const MARKET_PRESETS = [
+    { code: 'US', label: '🇺🇸 US (NYSE / NASDAQ)' },
+    { code: 'SG', label: '🇸🇬 SG (SGX)' },
+    { code: 'UK', label: '🇬🇧 UK (LSE)' },
+    { code: 'HK', label: '🇭🇰 Hong Kong (HKEX)' },
+    { code: 'JP', label: '🇯🇵 Japan (TSE)' },
+    { code: 'AU', label: '🇦🇺 Australia (ASX)' },
+    { code: 'CN', label: '🇨🇳 China (SSE / SZSE)' },
+    { code: 'IN', label: '🇮🇳 India (NSE / BSE)' },
+    { code: 'EU', label: '🇪🇺 Europe' },
+    { code: 'CA', label: '🇨🇦 Canada (TSX)' },
+    { code: 'DE', label: '🇩🇪 Germany (XETRA)' },
+    { code: 'KR', label: '🇰🇷 Korea (KRX)' },
+    { code: 'TW', label: '🇹🇼 Taiwan (TWSE)' },
+    { code: 'Global', label: '🌏 Global' },
+];
+// Color for a market code — known palette first, then deterministic hue for custom codes.
+const MARKET_PALETTE = ['#0d9488','#d946ef','#f59e0b','#22c55e','#0284c7','#7c3aed','#dc2626','#65a30d'];
+function marketColor(code) {
+    if (MARKET_COLORS[code]) return MARKET_COLORS[code];
+    if (!code) return '#94a3b8';
+    let hash = 0;
+    for (let i = 0; i < code.length; i++) hash = (hash * 31 + code.charCodeAt(i)) >>> 0;
+    return MARKET_PALETTE[hash % MARKET_PALETTE.length];
+}
+// Single source of truth for market pill HTML. Inline styles let custom codes
+// render correctly without per-code CSS classes.
+function mktPill(m) {
+    const c = marketColor(m);
+    return `<span class="mkt-pill" style="background:${c}1f;color:${c}">${m}</span>`;
+}
 const DEFAULT_SECTORS = ['Tech','Finance','Healthcare','Consumer','Energy','Industrials','Real Estate','Utilities','Broad Market'];
 
 // Multi-value accessors: holdings store markets[]/sectors[] arrays, but legacy
@@ -2107,7 +2142,7 @@ function mobileCard(r, tot) {
             <div class="hc-info">
                 <div class="hc-name">${r.name}</div>
                 <div class="hc-meta">
-                    ${getMarkets(r).map(m => `<span class="mkt-pill mkt-${m.toLowerCase()}">${m}</span>`).join(' ')}
+                    ${getMarkets(r).map(mktPill).join(' ')}
                     ${r.account === 'SRS' ? '<span class="mkt-pill" style="background:rgba(13,148,136,0.12);color:#0d9488">SRS</span>' : ''}
                     <span>${r.type}</span>
                 </div>
@@ -2245,7 +2280,7 @@ function tableRow(r, tot) {
                     </div>
                 </div>
             </td>
-            <td><span style="display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center">${getMarkets(r).map(m => `<span class="mkt-pill mkt-${m.toLowerCase()}">${m}</span>`).join('')}${r.account === 'SRS' ? '<span class="mkt-pill" style="background:rgba(13,148,136,0.12);color:#0d9488">SRS</span>' : ''}</span></td>
+            <td><span style="display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center">${getMarkets(r).map(mktPill).join('')}${r.account === 'SRS' ? '<span class="mkt-pill" style="background:rgba(13,148,136,0.12);color:#0d9488">SRS</span>' : ''}</span></td>
             <td class="r">${Number(r.shares).toLocaleString('en-US', { maximumFractionDigits: 4 })}</td>
             <td class="r">${money(r.avgCost, r.currency)}</td>
             <td class="r">${priceCell}</td>
@@ -2313,7 +2348,7 @@ function renderMarketChart(rows) {
     let angle = 0;
     const stops = mkts.map(([mkt, v]) => {
         const deg = (v / total) * 360;
-        const color = MARKET_COLORS[mkt] || '#94a3b8';
+        const color = marketColor(mkt);
         const stop = `${color} ${angle.toFixed(1)}deg ${(angle + deg).toFixed(1)}deg`;
         angle += deg;
         return stop;
@@ -2322,7 +2357,7 @@ function renderMarketChart(rows) {
 
     const mktRows = mkts.map(([mkt, v]) => {
         const p = (v / total) * 100;
-        const color = MARKET_COLORS[mkt] || '#94a3b8';
+        const color = marketColor(mkt);
         const flag = MKT_FLAGS[mkt] || '';
         return `<div class="sector-row" onclick="setMarketTab('${mkt}')">
             <div class="sector-dot" style="background:${color}"></div>
@@ -2419,7 +2454,11 @@ function setMarketTab(mkt) {
 }
 
 // ── Market KPI breakdown ──
-const MKT_FLAGS = { US: '🇺🇸', SG: '🇸🇬', UK: '🇬🇧' };
+const MKT_FLAGS = {
+    US: '🇺🇸', SG: '🇸🇬', UK: '🇬🇧', HK: '🇭🇰', JP: '🇯🇵', AU: '🇦🇺',
+    CN: '🇨🇳', IN: '🇮🇳', EU: '🇪🇺', CA: '🇨🇦', DE: '🇩🇪', KR: '🇰🇷',
+    TW: '🇹🇼', Global: '🌏',
+};
 
 function renderStatsRow(rows) {
     const el = document.getElementById('stats-row');
@@ -2526,10 +2565,35 @@ function rebuildSectorChips(selected) {
     });
 }
 
-function setMarketChips(selected) {
-    document.querySelectorAll('#f-markets .mchip').forEach(c => {
-        c.classList.toggle('active', selected.includes(c.dataset.val));
+function rebuildMarketChips(selected) {
+    const wrap = document.getElementById('f-markets');
+    const inputEl = document.getElementById('f-market-custom');
+    [...wrap.querySelectorAll('.mchip')].forEach(c => c.remove());
+    const knownCodes = new Set(MARKET_PRESETS.map(p => p.code));
+    // Compose ordered list: presets first, then any custom codes the user has previously saved.
+    const all = MARKET_PRESETS.map(p => ({ ...p, isCustom: false }));
+    holdings.flatMap(getMarkets).forEach(c => {
+        if (!knownCodes.has(c) && !all.find(x => x.code === c)) {
+            all.push({ code: c, label: c, isCustom: true });
+        }
     });
+    selected.forEach(c => {
+        if (!knownCodes.has(c) && !all.find(x => x.code === c)) {
+            all.push({ code: c, label: c, isCustom: true });
+        }
+    });
+    all.forEach(({ code, label, isCustom }) => {
+        const isActive = selected.includes(code);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'mchip' + (isActive ? ' active' : '');
+        btn.dataset.val = code;
+        btn.innerHTML = label + (isCustom ? ' <span class="mchip-x" data-remove="1">×</span>' : '');
+        wrap.insertBefore(btn, inputEl);
+    });
+}
+function setMarketChips(selected) {
+    rebuildMarketChips(selected);
 }
 function getSelectedMarkets() {
     return [...document.querySelectorAll('#f-markets .mchip.active')].map(c => c.dataset.val);
@@ -2657,15 +2721,38 @@ document.querySelectorAll('.nav-item, .sidebar-add, .util-btn, #sync-setup-btn, 
 });
 
 document.getElementById('f-markets').addEventListener('click', e => {
+    // Remove a custom chip when its × is clicked.
+    if (e.target.dataset.remove) {
+        const chip = e.target.closest('.mchip');
+        chip?.remove();
+        return;
+    }
     const chip = e.target.closest('.mchip');
     if (!chip) return;
     chip.classList.toggle('active');
-    // Auto-set currency from the primary (first-selected) market when going 0→1.
+    // Auto-set currency from the primary (first-selected) market — only when we know the mapping.
     const sel = getSelectedMarkets();
     if (sel.length === 1) {
         const cur = { SG: 'SGD', UK: 'GBP', US: 'USD' };
-        document.getElementById('f-currency').value = cur[sel[0]] || 'USD';
+        if (cur[sel[0]]) document.getElementById('f-currency').value = cur[sel[0]];
     }
+});
+
+document.getElementById('f-market-custom').addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ',') return;
+    e.preventDefault();
+    const val = e.target.value.trim();
+    if (!val) return;
+    const existing = [...document.querySelectorAll('#f-markets .mchip')].find(c =>
+        c.dataset.val.toLowerCase() === val.toLowerCase());
+    if (existing) {
+        existing.classList.add('active');
+    } else {
+        const current = getSelectedMarkets();
+        current.push(val);
+        rebuildMarketChips(current);
+    }
+    e.target.value = '';
 });
 
 document.getElementById('f-sectors').addEventListener('click', e => {
@@ -4199,7 +4286,7 @@ function openDetail(id) {
         </div>
 
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px">
-            ${getMarkets(r).map(m => `<span class="mkt-pill mkt-${m.toLowerCase()}">${m}</span>`).join('')}
+            ${getMarkets(r).map(mktPill).join('')}
             <span class="chip" style="padding:3px 10px;font-size:11px">${r.type}</span>
             ${getSectors(r).map(s => `<span class="chip" style="padding:3px 10px;font-size:11px;background:${sectorColor(s)}22;color:${sectorColor(s)};border-color:${sectorColor(s)}44">${s}</span>`).join('')}
             ${r.account === 'SRS' ? '<span class="mkt-pill" style="background:rgba(13,148,136,0.12);color:#0d9488">SRS</span>' : '<span class="chip" style="padding:3px 10px;font-size:11px">Cash</span>'}
