@@ -510,7 +510,9 @@
       "id": "62pmcke0jh3mqqvgfgt",
       "holdingId": "my9v538pf78mqovuzr3",
       "date": "2026-06-23",
-      "amount": 8.5
+      "amount": 8.5,
+      "name": "UOB",
+      "ticker": ""
     }
   ],
   "realized": [
@@ -630,5 +632,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T14:16:49.970Z"
+  "updatedAt": "2026-06-26T14:16:55.979Z"
 }
