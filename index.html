@@ -412,6 +412,11 @@
             gap: 12px;
         }
 
+        /* Holdings table header: title+search on top, filter chips on their own row */
+        .table-header { flex-direction: column; align-items: stretch; gap: 14px; }
+        .th-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .th-top #search-input { width: 240px; max-width: 50%; padding: 8px 14px; font-size: 12px; border-radius: 20px; }
+
         .count-badge {
             font-size: 12px;
             color: var(--label2);
@@ -1107,9 +1112,6 @@
         <button class="nav-item" data-tab="SG">
             <span class="nav-dot sg"></span>SG Market
         </button>
-        <button class="nav-item" data-tab="UK">
-            <span class="nav-dot uk"></span>UK Market
-        </button>
         <div class="nav-section" style="margin-top:16px">Apple</div>
         <button class="nav-item" id="espp-nav-btn">
             <span class="nav-dot" style="background:#a855f7"></span>ESPP
@@ -1273,15 +1275,15 @@
 
     <!-- Full-width holdings table -->
     <div class="card">
-        <div class="card-header">
-            <div style="display:flex;align-items:center;gap:10px">
-                <h2 id="table-title">All Holdings</h2>
-                <span class="count-badge" id="count"></span>
+        <div class="card-header table-header">
+            <div class="th-top">
+                <div style="display:flex;align-items:center;gap:10px">
+                    <h2 id="table-title">All Holdings</h2>
+                    <span class="count-badge" id="count"></span>
+                </div>
+                <input type="text" id="search-input" class="finput" placeholder="Search holdings…">
             </div>
-            <div class="card-header-right">
-                <input type="text" id="search-input" class="finput" placeholder="Search holdings…" style="width:180px;padding:7px 12px;font-size:12px;border-radius:20px">
-                <div class="filter-chips" id="type-chips"></div>
-            </div>
+            <div class="filter-chips" id="type-chips"></div>
         </div>
         <div id="table-body"></div>
     </div>
@@ -2483,6 +2485,9 @@ const MKT_FLAGS = {
     US: '🇺🇸', SG: '🇸🇬', UK: '🇬🇧', HK: '🇭🇰', JP: '🇯🇵', AU: '🇦🇺',
     CN: '🇨🇳', IN: '🇮🇳', EU: '🇪🇺', CA: '🇨🇦', DE: '🇩🇪', KR: '🇰🇷',
     TW: '🇹🇼', Global: '🌏',
+    Netherlands: '🇳🇱', Ireland: '🇮🇪', Luxembourg: '🇱🇺', France: '🇫🇷',
+    Switzerland: '🇨🇭', 'Hong Kong': '🇭🇰', 'Cayman Islands': '🇰🇾', USA: '🇺🇸',
+    Singapore: '🇸🇬',
 };
 
 // Toggle the collapsed state of a collapsible card.
