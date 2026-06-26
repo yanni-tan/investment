@@ -269,8 +269,8 @@
       "sector": "All Sectors",
       "currency": "USD",
       "account": "Cash",
-      "shares": 0,
-      "avgCost": 0,
+      "shares": 10,
+      "avgCost": 186.12,
       "notes": "Global core and diversification",
       "manualPrice": 0.1,
       "markets": [
@@ -283,7 +283,17 @@
         "All Sectors"
       ],
       "domicile": "Ireland",
-      "tracks": "~4,000 stocks across developed and emerging markets"
+      "tracks": "~4,000 stocks across developed and emerging markets",
+      "buys": [
+        {
+          "date": "2026-06-26",
+          "shares": 10,
+          "price": 186.12,
+          "prevShares": 0,
+          "prevAvg": 0,
+          "newAvg": 186.12
+        }
+      ]
     },
     {
       "id": "10ojt3lst0whmqtox4v4",
@@ -647,5 +657,5 @@
       "notes": "Annual Top Up"
     }
   ],
-  "updatedAt": "2026-06-26T14:52:27.095Z"
+  "updatedAt": "2026-06-26T14:57:55.089Z"
 }
