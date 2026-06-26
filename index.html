@@ -1292,7 +1292,7 @@
         <form id="hform" autocomplete="off">
             <div class="frow">
                 <div class="fg">
-                    <label>Ticker Symbol</label>
+                    <label id="f-ticker-label">Ticker Symbol</label>
                     <input class="finput" id="f-ticker" type="text" placeholder="AAPL, D05, SHEL" required>
                 </div>
                 <div class="fg">
@@ -1301,6 +1301,7 @@
                         <option value="Stock">Stock</option>
                         <option value="ETF">ETF</option>
                         <option value="REIT">REIT</option>
+                        <option value="Index Fund">Index Fund</option>
                     </select>
                 </div>
             </div>
@@ -1360,13 +1361,17 @@
             </div>
             <div class="frow">
                 <div class="fg">
-                    <label>Shares</label>
+                    <label id="f-shares-label">Shares</label>
                     <input class="finput" id="f-shares" type="number" step="any" min="0" placeholder="0" required>
                 </div>
                 <div class="fg">
-                    <label>Avg Cost / Share</label>
+                    <label id="f-avgcost-label">Avg Cost / Share</label>
                     <input class="finput" id="f-avgcost" type="number" step="any" min="0" placeholder="0.00" required>
                 </div>
+            </div>
+            <div class="fg" id="f-nav-wrap" style="display:none">
+                <label>Current NAV <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--label3)">(optional — manual price for this fund)</span></label>
+                <input class="finput" id="f-nav" type="number" step="any" min="0" placeholder="0.00">
             </div>
             <div class="fg">
                 <label>Notes <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
@@ -1888,7 +1893,7 @@ async function fetchSymbol(symbol) {
 async function fetchPrices() {
     if (fetching) return;
 
-    const tickers    = [...new Set(holdings.map(h => h.ticker))];
+    const tickers    = [...new Set(holdings.filter(h => h.type !== 'Index Fund' && h.ticker).map(h => h.ticker))];
     const watchTickers = [...new Set(watchlist.map(w => w.ticker).filter(t => t && !tickers.includes(t)))];
     const esppTickers = esppData?.grants?.length && !tickers.includes('AAPL') && !watchTickers.includes('AAPL') ? ['AAPL'] : [];
     if (!tickers.length && !watchTickers.length && !esppTickers.length) return;
@@ -2602,6 +2607,17 @@ function getSelectedSectors() {
     return [...document.querySelectorAll('#f-sectors .mchip.active')].map(c => c.dataset.val);
 }
 
+// Index funds don't have a Yahoo ticker and price is entered manually. Adjust labels,
+// placeholder, and toggle the NAV field so the form makes sense for both modes.
+function syncTypeUI() {
+    const isIndex = document.getElementById('f-type').value === 'Index Fund';
+    document.getElementById('f-ticker-label').textContent = isIndex ? 'Fund Code / ISIN' : 'Ticker Symbol';
+    document.getElementById('f-ticker').placeholder = isIndex ? 'e.g. LU0996182563 or AMUNDIW' : 'AAPL, D05, SHEL';
+    document.getElementById('f-shares-label').textContent = isIndex ? 'Units' : 'Shares';
+    document.getElementById('f-avgcost-label').textContent = isIndex ? 'Avg Cost / Unit' : 'Avg Cost / Share';
+    document.getElementById('f-nav-wrap').style.display = isIndex ? '' : 'none';
+}
+
 function openModal(id = null) {
     editId = id;
     document.getElementById('modal-title').textContent = id ? 'Edit Holding' : 'Add Holding';
@@ -2621,6 +2637,7 @@ function openModal(id = null) {
         document.getElementById('f-tracks').value   = h.tracks || '';
         document.getElementById('f-shares').value   = h.shares;
         document.getElementById('f-avgcost').value  = h.avgCost;
+        document.getElementById('f-nav').value      = h.manualPrice ?? '';
         document.getElementById('f-notes').value    = h.notes || '';
     } else {
         document.getElementById('hform').reset();
@@ -2628,6 +2645,7 @@ function openModal(id = null) {
         rebuildSectorChips([]);
     }
     document.getElementById('f-sector-custom').value = '';
+    syncTypeUI();
 
     document.getElementById('overlay').classList.add('open');
     setTimeout(() => document.getElementById('f-ticker').focus(), 50);
@@ -2664,26 +2682,40 @@ document.getElementById('hform').addEventListener('submit', e => {
 
     // Primary listing drives the ticker suffix. If a user picked ['US','UK'] for a
     // cross-listed ETF, we treat the first chip as the listing they actually own.
+    // Index funds skip the suffix logic since their codes aren't Yahoo symbols.
     const primaryMarket = markets[0];
-    if (primaryMarket === 'SG' && !ticker.endsWith('.SI')) ticker += '.SI';
-    if (primaryMarket === 'UK' && !ticker.endsWith('.L'))  ticker += '.L';
+    if (type !== 'Index Fund') {
+        if (primaryMarket === 'SG' && !ticker.endsWith('.SI')) ticker += '.SI';
+        if (primaryMarket === 'UK' && !ticker.endsWith('.L'))  ticker += '.L';
+    }
 
     if (!ticker || !name || isNaN(shares) || isNaN(avgCost)) return;
 
     const market = primaryMarket;
     const sector = sectors[0] || '';
+    // For index funds the NAV input doubles as a manual price source.
+    const navInput = parseFloat(document.getElementById('f-nav').value);
+    const manualPriceUpdate = (type === 'Index Fund' && !isNaN(navInput) && navInput > 0) ? navInput : undefined;
 
     if (editId) {
         const i = holdings.findIndex(h => h.id === editId);
-        if (i !== -1) holdings[i] = { ...holdings[i], ticker, market, markets, name, type, sector, sectors, currency, account, domicile, tracks, shares, avgCost, notes };
+        if (i !== -1) {
+            holdings[i] = { ...holdings[i], ticker, market, markets, name, type, sector, sectors, currency, account, domicile, tracks, shares, avgCost, notes };
+            if (manualPriceUpdate !== undefined) holdings[i].manualPrice = manualPriceUpdate;
+            else if (type === 'Index Fund') holdings[i].manualPrice = holdings[i].manualPrice ?? null;
+        }
         toast('Holding updated');
     } else {
-        holdings.push({ id: uid(), ticker, market, markets, name, type, sector, sectors, currency, account, domicile, tracks, shares, avgCost, notes });
+        const h = { id: uid(), ticker, market, markets, name, type, sector, sectors, currency, account, domicile, tracks, shares, avgCost, notes };
+        if (manualPriceUpdate !== undefined) h.manualPrice = manualPriceUpdate;
+        holdings.push(h);
         toast('Holding added');
     }
 
     save(); closeModal(); fetchPrices();
 });
+
+document.getElementById('f-type').addEventListener('change', syncTypeUI);
 
 // ── Events ──
 document.getElementById('add-btn').addEventListener('click', () => openModal());
