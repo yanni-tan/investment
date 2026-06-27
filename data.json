@@ -344,7 +344,7 @@
       "ticker": "VWRA",
       "action": "Buy",
       "name": "VWRA",
-      "targetPrice": "189",
+      "targetPrice": "",
       "qty": "1",
       "notes": "use amazon gains to cover vwra",
       "account": "Cash"
@@ -753,5 +753,5 @@
       ]
     }
   },
-  "updatedAt": "2026-06-27T16:49:55.568Z"
+  "updatedAt": "2026-06-27T16:49:59.160Z"
 }
