@@ -513,7 +513,7 @@
     },
     {
       "month": "2026-06-27",
-      "gainUSD": 5116.204699999998,
+      "gainUSD": 5116.025099999995,
       "totalUSD": 28492.897599999997,
       "byMkt": {
         "US": 12789.590000000002,
@@ -526,7 +526,7 @@
         "JP": 466.59999999999997
       },
       "costByMkt": {
-        "US": 9361.673733333333,
+        "US": 9361.853333333333,
         "SG": 11154.852499999999,
         "UK": 0,
         "TW": 601.6266666666667,
@@ -703,7 +703,7 @@
         "05sj4wbsax6rmqs6vjtb": 30
       },
       "market": {
-        "US": 50,
+        "US": 40,
         "SG": 20,
         "Global": 30
       }
@@ -717,5 +717,41 @@
       "market": {}
     }
   },
-  "updatedAt": "2026-06-27T16:36:21.423Z"
+  "insightSettings": {
+    "conc": {
+      "holding": 25,
+      "sector": 40,
+      "market": 70
+    },
+    "band": 5,
+    "overlap": {
+      "US S&P 500": [
+        "VOO",
+        "CSPX",
+        "SPY",
+        "IVV",
+        "VUSD",
+        "VUAA",
+        "SPLG"
+      ],
+      "Nasdaq 100": [
+        "QQQM",
+        "QQQ",
+        "EQQQ"
+      ],
+      "Semiconductors": [
+        "SMH",
+        "SOXX",
+        "SOXQ"
+      ],
+      "World / Global": [
+        "VWRA",
+        "VWRD",
+        "VT",
+        "IWDA",
+        "SWRD"
+      ]
+    }
+  },
+  "updatedAt": "2026-06-27T16:38:46.742Z"
 }
