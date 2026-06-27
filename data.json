@@ -230,7 +230,7 @@
       "shares": 100,
       "avgCost": 66.1,
       "notes": "SGD dividends and local exposure",
-      "manualPrice": 66.2,
+      "manualPrice": 65.43,
       "markets": [
         "SG"
       ],
@@ -717,5 +717,5 @@
       "market": {}
     }
   },
-  "updatedAt": "2026-06-27T16:28:55.443Z"
+  "updatedAt": "2026-06-27T16:28:57.063Z"
 }
