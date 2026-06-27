@@ -418,6 +418,16 @@
       "qty": "",
       "account": "Cash",
       "notes": "top up to vwra"
+    },
+    {
+      "id": "xxko8kqg9almqvridb2",
+      "ticker": "BOND",
+      "action": "Buy",
+      "name": "SG Bond",
+      "targetPrice": "",
+      "qty": "",
+      "account": "SRS",
+      "notes": ""
     }
   ],
   "snapshots": [
@@ -684,5 +694,5 @@
       "Global": 30
     }
   },
-  "updatedAt": "2026-06-27T02:42:06.270Z"
+  "updatedAt": "2026-06-27T02:50:10.492Z"
 }
