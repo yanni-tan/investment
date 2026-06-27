@@ -2435,9 +2435,13 @@ function renderMarketChart(rows) {
     body.innerHTML = `<div class="alloc-list">${mktRows}</div>`;
 }
 
-// Core (US + SG) vs Diversification (everything else). Multi-market holdings split
-// proportionally, same as the other allocation charts.
-const CORE_MARKETS = new Set(['US', 'SG']);
+// Core = holdings that are PURELY USA (every market is US/USA). Any holding that
+// includes a non-USA country counts entirely as Diversification.
+function isCoreHolding(r) {
+    const mkts = getMarkets(r);
+    if (!mkts.length) return true; // default market is US
+    return mkts.every(m => m === 'US' || m === 'USA');
+}
 function renderCoreChart(rows) {
     const card = document.getElementById('core-chart-card');
     const body = document.getElementById('core-chart-body');
@@ -2447,13 +2451,9 @@ function renderCoreChart(rows) {
     const lists = { Core: [], Diversification: [] };
     rows.forEach(r => {
         const v = toUSD(r.value ?? r.costBasis, r.currency);
-        const mkts = getMarkets(r);
-        const share = mkts.length ? 1 / mkts.length : 1;
-        (mkts.length ? mkts : ['US']).forEach(m => {
-            const key = CORE_MARKETS.has(m) ? 'Core' : 'Diversification';
-            buckets[key] += v * share;
-            lists[key].push({ name: r.name, ticker: r.ticker, val: v * share });
-        });
+        const key = isCoreHolding(r) ? 'Core' : 'Diversification';
+        buckets[key] += v;
+        lists[key].push({ name: r.name, ticker: r.ticker, val: v });
     });
 
     const entries = Object.entries(buckets).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
@@ -3337,14 +3337,15 @@ function renderWatchlist() {
 
 // ── Insights: concentration risk + rebalancing ──
 const TARGETS_KEY = 'portfolio_targets';
-let allocTargets = { holding: {}, market: {} };
-let rebalMode = 'market';
+let allocTargets = { holding: {}, market: {}, core: {} };
+let rebalMode = 'core';
 const CONC_LIMITS = { holding: 25, sector: 40, market: 70 };
 
 function loadTargets() {
     try { allocTargets = JSON.parse(localStorage.getItem(TARGETS_KEY)) || {}; } catch { allocTargets = {}; }
     if (!allocTargets.holding) allocTargets.holding = {};
     if (!allocTargets.market) allocTargets.market = {};
+    if (!allocTargets.core) allocTargets.core = {};
 }
 function saveTargets() { localStorage.setItem(TARGETS_KEY, JSON.stringify(allocTargets)); syncSave(); }
 function setRebalMode(m) { rebalMode = m; renderInsights(); }
@@ -3449,10 +3450,20 @@ function renderInsights() {
         ? flags.map(f => `<div style="display:flex;gap:10px;align-items:flex-start;padding:11px 14px;background:rgba(245,158,11,0.10);border:1px solid rgba(245,158,11,0.25);border-radius:10px;font-size:13px;color:var(--label)"><span style="flex-shrink:0">⚠️</span><span>${f}</span></div>`).join('')
         : `<div style="display:flex;gap:10px;align-items:center;padding:11px 14px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.22);border-radius:10px;font-size:13px;color:var(--label)"><span>✅</span><span>Well diversified — no single holding over ${CONC_LIMITS.holding}%, sector over ${CONC_LIMITS.sector}%, or market over ${CONC_LIMITS.market}%.</span></div>`;
 
+    // Core (USA-only holdings) vs Diversification weights
+    const byCore = { Core: 0, Diversification: 0 };
+    rows.forEach(r => {
+        const v = toUSD(r.value ?? r.costBasis, r.currency);
+        byCore[isCoreHolding(r) ? 'Core' : 'Diversification'] += v;
+    });
+
     // ── Rebalancing ──
     const buckets = rebalMode === 'market'
         ? Object.entries(byMkt).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1])
             .map(([m, v]) => ({ key: m, label: `${MKT_FLAGS[m] || ''} ${MARKET_LABELS[m] || m}`, valUSD: v }))
+        : rebalMode === 'core'
+        ? Object.entries(byCore).sort((a, b) => b[1] - a[1])
+            .map(([k, v]) => ({ key: k, label: k, valUSD: v }))
         : holdingW.map(h => ({ key: h.id, label: `<b>${h.ticker}</b> · ${h.name}`, valUSD: h.valUSD }));
 
     const targets = allocTargets[rebalMode] || {};
@@ -3505,11 +3516,11 @@ function renderInsights() {
                 <h2>Rebalancing</h2>
                 <span class="count-badge">Targets total: ${sumWarn}</span>
             </div>
-            <div class="filter-chips">${modeBtn('market', 'By Market')}${modeBtn('holding', 'By Holding')}${bulkBtn}</div>
+            <div class="filter-chips">${modeBtn('core', 'Core / Diversification')}${modeBtn('market', 'By Market')}${modeBtn('holding', 'By Holding')}${bulkBtn}</div>
         </div>
         <table style="width:100%;border-collapse:collapse;font-size:13px">
             <thead><tr>
-                <th>${rebalMode === 'market' ? 'Market' : 'Holding'}</th>
+                <th>${rebalMode === 'market' ? 'Market' : rebalMode === 'core' ? 'Bucket' : 'Holding'}</th>
                 <th class="r">Current</th>
                 <th class="r">Target</th>
                 <th class="r">Action</th>
@@ -3676,7 +3687,7 @@ async function syncLoad() {
             localStorage.setItem(SRS_KEY, JSON.stringify(srsContributions));
         }
         if (payload.allocTargets && typeof payload.allocTargets === 'object') {
-            allocTargets = { holding: {}, market: {}, ...payload.allocTargets };
+            allocTargets = { holding: {}, market: {}, core: {}, ...payload.allocTargets };
             localStorage.setItem(TARGETS_KEY, JSON.stringify(allocTargets));
         }
         setSyncStatus('synced', 'Synced');
