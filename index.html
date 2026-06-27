@@ -3283,7 +3283,39 @@ const TARGETS_KEY = 'portfolio_targets';
 let allocTargets = {};
 let rebalMode = 'market';
 let acctScope = 'all';
-const CONC_LIMITS = { holding: 25, sector: 40, market: 70 };
+
+// Editable insight settings: concentration limits, rebalance band, fund-overlap groups.
+const SETTINGS_KEY = 'portfolio_insight_settings';
+const DEFAULT_OVERLAP = {
+    'US S&P 500': ['VOO', 'CSPX', 'SPY', 'IVV', 'VUSD', 'VUAA', 'SPLG'],
+    'Nasdaq 100': ['QQQM', 'QQQ', 'EQQQ'],
+    'Semiconductors': ['SMH', 'SOXX', 'SOXQ'],
+    'World / Global': ['VWRA', 'VWRD', 'VT', 'IWDA', 'SWRD'],
+};
+let insightSettings = {};
+function applyInsightDefaults() {
+    insightSettings = insightSettings || {};
+    insightSettings.conc = { holding: 25, sector: 40, market: 70, ...(insightSettings.conc || {}) };
+    if (insightSettings.band == null) insightSettings.band = 5;
+    if (!insightSettings.overlap || !Object.keys(insightSettings.overlap).length) insightSettings.overlap = { ...DEFAULT_OVERLAP };
+}
+function loadInsightSettings() {
+    try { insightSettings = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch { insightSettings = {}; }
+    applyInsightDefaults();
+}
+function saveInsightSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(insightSettings)); syncSave(); }
+function setConcLimit(key, val) { const p = parseFloat(val); if (!isNaN(p) && p > 0) insightSettings.conc[key] = p; saveInsightSettings(); renderInsights(); }
+function setRebalBand(val) { const p = parseFloat(val); insightSettings.band = isNaN(p) || p < 0 ? 0 : p; saveInsightSettings(); renderInsights(); }
+function editOverlapGroups() {
+    const input = prompt('Edit fund-overlap groups (JSON — { "Group name": ["TICKER", ...] }):', JSON.stringify(insightSettings.overlap, null, 2));
+    if (input === null) return;
+    try {
+        const parsed = JSON.parse(input);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            insightSettings.overlap = parsed; saveInsightSettings(); renderInsights(); toast('Overlap groups updated');
+        } else toast('Must be a JSON object');
+    } catch { toast('Invalid JSON'); }
+}
 
 function normalizeTargets() {
     // Migrate legacy flat {holding,market} → scoped under 'all'.
@@ -3369,6 +3401,41 @@ function planAllRebalance() {
     showPanel('watchlist');
 }
 
+// Uninvested SRS cash (USD) for the active scope. Normal account has no tracked cash.
+function scopeCashUSD() {
+    if (acctScope === 'normal') return 0;
+    const srs = srsTotalUSD();
+    if (!srs) return 0;
+    const srsHoldVal = holdings.map(enrich)
+        .filter(r => (r.account || 'Cash') === 'SRS')
+        .reduce((s, r) => s + toUSD(r.value ?? r.costBasis, r.currency), 0);
+    return Math.max(srs.valueUSD - srsHoldVal, 0);
+}
+
+// Seed targets from current weights (a starting point), rounded to whole %.
+function seedTargetsFromCurrent() {
+    const rows = scopeRows();
+    const total = rows.reduce((s, r) => s + toUSD(r.value ?? r.costBasis, r.currency), 0) || 1;
+    const map = allocTargets[acctScope][rebalMode];
+    if (rebalMode === 'market') {
+        const byMkt = calcSummary(rows).byMkt;
+        Object.entries(byMkt).filter(([, v]) => v > 0).forEach(([m, v]) => { map[m] = Math.round(v / total * 100); });
+    } else {
+        rows.forEach(r => { map[r.id] = Math.round(toUSD(r.value ?? r.costBasis, r.currency) / total * 100); });
+    }
+    saveTargets(); renderInsights(); toast('Targets seeded from current weights');
+}
+
+// Scale existing targets so they sum to 100%.
+function normalizeTargetsTo100() {
+    const map = allocTargets[acctScope][rebalMode];
+    const keys = Object.keys(map);
+    const sum = keys.reduce((s, k) => s + (Number(map[k]) || 0), 0);
+    if (sum <= 0) { toast('Set some targets first'); return; }
+    keys.forEach(k => { map[k] = Math.round(map[k] / sum * 1000) / 10; });
+    saveTargets(); renderInsights(); toast('Targets normalized to 100%');
+}
+
 function renderInsights() {
     const el = document.getElementById('insights-body');
     if (!holdings.length) {
@@ -3389,6 +3456,9 @@ function renderInsights() {
         return;
     }
     const total = rows.reduce((s, r) => s + toUSD(r.value ?? r.costBasis, r.currency), 0) || 1;
+    const cashUSD = scopeCashUSD();
+    const totalWithCash = total + cashUSD;
+    const C = insightSettings.conc, band = insightSettings.band;
 
     // Per-holding weights
     const holdingW = rows.map(r => ({
@@ -3406,21 +3476,66 @@ function renderInsights() {
         secs.forEach(s => { bySector[s] = (bySector[s] || 0) + v * share; });
     });
 
-    // Per-market weights
+    // Per-market & per-currency weights
     const byMkt = calcSummary(rows).byMkt;
+    const byCur = {};
+    rows.forEach(r => { byCur[r.currency] = (byCur[r.currency] || 0) + toUSD(r.value ?? r.costBasis, r.currency); });
 
-    // ── Concentration flags ──
+    // ── Summary metrics ──
+    const count = holdingW.length;
+    const top1 = holdingW[0] ? holdingW[0].pct : 0;
+    const top5 = holdingW.slice(0, 5).reduce((s, h) => s + h.pct, 0);
+    const hhi = holdingW.reduce((s, h) => s + Math.pow(h.pct / 100, 2), 0);
+    const effN = hhi > 0 ? 1 / hhi : 0;
+    const cLab = (top1 > 35 || effN < 4) ? ['High', 'var(--red)'] : (top1 > 22 || effN < 8) ? ['Moderate', '#f59e0b'] : ['Low', 'var(--green)'];
+    const metric = (label, val, sub) => `<div class="kpi-card"><div class="kpi-label">${label}</div><div class="kpi-value" style="font-size:22px">${val}</div><div class="kpi-sub">${sub}</div></div>`;
+    const summaryHtml = `<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:20px">
+        ${metric('Holdings', count, `top holding ${top1.toFixed(0)}%`)}
+        ${metric('Top 5 Weight', top5.toFixed(0) + '%', count <= 5 ? 'all holdings' : `of ${count} holdings`)}
+        ${metric('Effective Holdings', effN.toFixed(1), 'diversification (1/HHI)')}
+        ${metric('Concentration', `<span style="color:${cLab[1]}">${cLab[0]}</span>`, cashUSD > 0 ? `+ ${dmoney(cashUSD)} cash` : 'invested')}
+    </div>`;
+
+    // ── Currency exposure ──
+    const curEntries = Object.entries(byCur).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+    const curMax = curEntries[0] ? curEntries[0][1] : 1;
+    const CUR_COLORS = { USD: '#3b82f6', SGD: '#ec4899', GBP: '#f59e0b' };
+    const curHtml = curEntries.map(([cur, v]) => {
+        const p = v / total * 100, w = v / curMax * 100, color = CUR_COLORS[cur] || '#8b5cf6';
+        return `<div class="alloc-row" style="grid-template-columns:minmax(0,90px) minmax(40px,1fr) auto auto;cursor:default">
+            <span class="alloc-name"><span class="alloc-dot" style="background:${color}"></span>${cur}</span>
+            <div class="alloc-track"><div class="alloc-fill" style="width:${w.toFixed(1)}%;background:${color}"></div></div>
+            <span class="alloc-pct">${p.toFixed(1)}%</span>
+            <span class="alloc-val">${dmoney(v)}</span>
+        </div>`;
+    }).join('');
+
+    // ── Concentration + fund-overlap flags ──
     const flags = [];
-    holdingW.filter(h => h.pct > CONC_LIMITS.holding).forEach(h =>
-        flags.push(`<b>${h.ticker}</b> is ${h.pct.toFixed(1)}% of your portfolio (over ${CONC_LIMITS.holding}% single-holding limit)`));
-    Object.entries(bySector).map(([s, v]) => [s, v / total * 100]).filter(([, p]) => p > CONC_LIMITS.sector).sort((a, b) => b[1] - a[1]).forEach(([s, p]) =>
-        flags.push(`Sector <b>${s}</b> is ${p.toFixed(1)}% (over ${CONC_LIMITS.sector}% sector limit)`));
-    Object.entries(byMkt).map(([m, v]) => [m, v / total * 100]).filter(([, p]) => p > CONC_LIMITS.market).sort((a, b) => b[1] - a[1]).forEach(([m, p]) =>
-        flags.push(`Market <b>${MKT_FLAGS[m] || ''} ${m}</b> is ${p.toFixed(1)}% (over ${CONC_LIMITS.market}% market limit)`));
+    holdingW.filter(h => h.pct > C.holding).forEach(h => flags.push(['warn', `<b>${h.ticker}</b> is ${h.pct.toFixed(1)}% of this account (over ${C.holding}% single-holding limit)`]));
+    Object.entries(bySector).map(([s, v]) => [s, v / total * 100]).filter(([, p]) => p > C.sector).sort((a, b) => b[1] - a[1]).forEach(([s, p]) => flags.push(['warn', `Sector <b>${s}</b> is ${p.toFixed(1)}% (over ${C.sector}% sector limit)`]));
+    Object.entries(byMkt).map(([m, v]) => [m, v / total * 100]).filter(([, p]) => p > C.market).sort((a, b) => b[1] - a[1]).forEach(([m, p]) => flags.push(['warn', `Market <b>${MKT_FLAGS[m] || ''} ${m}</b> is ${p.toFixed(1)}% (over ${C.market}% market limit)`]));
+    const norm = t => (t || '').toUpperCase().split('.')[0];
+    Object.entries(insightSettings.overlap).forEach(([group, tickers]) => {
+        const set = new Set((tickers || []).map(norm));
+        const matches = holdingW.filter(h => set.has(norm(h.ticker)));
+        if (matches.length >= 2) {
+            const p = matches.reduce((s, h) => s + h.valUSD, 0) / total * 100;
+            flags.push(['overlap', `${matches.length} overlapping funds in <b>${group}</b> — combined ${p.toFixed(1)}% (${matches.map(m => m.ticker).join(', ')})`]);
+        }
+    });
+    const flagBox = (bg, bd, icon, text) => `<div style="display:flex;gap:10px;align-items:flex-start;padding:11px 14px;background:${bg};border:1px solid ${bd};border-radius:10px;font-size:13px;color:var(--label)"><span style="flex-shrink:0">${icon}</span><span>${text}</span></div>`;
+    let flagsHtml = flags.map(([type, f]) => type === 'overlap'
+        ? flagBox('rgba(99,102,241,0.10)', 'rgba(99,102,241,0.25)', '🔁', f)
+        : flagBox('rgba(245,158,11,0.10)', 'rgba(245,158,11,0.25)', '⚠️', f)).join('');
+    if (!flags.length) flagsHtml = flagBox('rgba(34,197,94,0.08)', 'rgba(34,197,94,0.22)', '✅', `Well diversified — no single holding over ${C.holding}%, sector over ${C.sector}%, or market over ${C.market}%, and no fund overlap.`);
+    if (cashUSD > 0) flagsHtml += flagBox('rgba(59,130,246,0.08)', 'rgba(59,130,246,0.22)', '💵', `Uninvested cash: <b>${dmoney(cashUSD)}</b> (${(cashUSD / totalWithCash * 100).toFixed(1)}% of account) — idle, not earning market returns.`);
 
-    const flagsHtml = flags.length
-        ? flags.map(f => `<div style="display:flex;gap:10px;align-items:flex-start;padding:11px 14px;background:rgba(245,158,11,0.10);border:1px solid rgba(245,158,11,0.25);border-radius:10px;font-size:13px;color:var(--label)"><span style="flex-shrink:0">⚠️</span><span>${f}</span></div>`).join('')
-        : `<div style="display:flex;gap:10px;align-items:center;padding:11px 14px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.22);border-radius:10px;font-size:13px;color:var(--label)"><span>✅</span><span>Well diversified — no single holding over ${CONC_LIMITS.holding}%, sector over ${CONC_LIMITS.sector}%, or market over ${CONC_LIMITS.market}%.</span></div>`;
+    const limInput = k => `<input type="number" min="1" max="100" value="${C[k]}" onchange="setConcLimit('${k}', this.value)" style="width:50px;text-align:right;padding:3px 6px;border-radius:6px;border:1.5px solid var(--sep);background:var(--surface2);color:var(--label);font-size:12px">`;
+    const settingsHtml = `<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--sep);font-size:12px;color:var(--label2)">
+        <span>Limits: Holding ${limInput('holding')}% · Sector ${limInput('sector')}% · Market ${limInput('market')}%</span>
+        <button class="row-btn" onclick="editOverlapGroups()">Edit overlap groups</button>
+    </div>`;
 
     // ── Rebalancing ──
     const buckets = rebalMode === 'market'
@@ -3435,18 +3550,23 @@ function renderInsights() {
         const curPct = (b.valUSD / total) * 100;
         const t = targets[b.key];
         const hasT = t != null && !isNaN(t);
-        const targetVal = hasT ? total * t / 100 : null;
-        const driftUSD = hasT ? targetVal - b.valUSD : null;
-        const offTarget = hasT && Math.abs(driftUSD) >= total * 0.001;
+        const driftPct = hasT ? t - curPct : null;
+        const driftUSD = hasT ? total * t / 100 - b.valUSD : null;
+        const offTarget = hasT && Math.abs(driftPct) >= band;
         const actionHtml = !hasT ? '<span style="color:var(--label3)">—</span>'
             : !offTarget ? '<span style="color:var(--label2)">On target</span>'
             : driftUSD > 0 ? `<span style="color:var(--green);font-weight:600">Buy ${dmoney(driftUSD)}</span>`
             : `<span style="color:var(--red);font-weight:600">Sell ${dmoney(-driftUSD)}</span>`;
         const planBtn = (rebalMode === 'holding' && offTarget)
             ? `<button class="row-btn" style="margin-left:8px" onclick="planFromRebalance('${b.key}')">→ Plan</button>` : '';
+        // current-vs-target mini bar (grey fill = current, accent marker = target)
+        const bar = `<div style="position:relative;height:6px;width:96px;margin:6px 0 0 auto;background:var(--surface2);border-radius:3px">
+            <div style="position:absolute;top:0;bottom:0;left:0;width:${Math.min(curPct, 100).toFixed(1)}%;background:var(--label2);border-radius:3px"></div>
+            ${hasT ? `<div style="position:absolute;top:-2px;bottom:-2px;left:${Math.min(t, 100).toFixed(1)}%;width:2px;background:var(--accent)" title="target ${t}%"></div>` : ''}
+        </div>`;
         return `<tr>
             <td style="padding:11px 14px">${b.label}</td>
-            <td class="r" style="padding:11px 14px">${dmoney(b.valUSD)}<div style="font-size:11px;color:var(--label2)">${curPct.toFixed(1)}%</div></td>
+            <td class="r" style="padding:11px 14px">${dmoney(b.valUSD)}<div style="font-size:11px;color:var(--label2)">${curPct.toFixed(1)}%</div>${bar}</td>
             <td class="r" style="padding:11px 14px">
                 <input type="number" min="0" max="100" step="1" value="${hasT ? t : ''}" placeholder="—"
                     onchange="setTarget('${b.key}', this.value)"
@@ -3465,20 +3585,31 @@ function renderInsights() {
     const modeBtn = (m, label) => `<button class="chip ${rebalMode === m ? 'active' : ''}" onclick="setRebalMode('${m}')">${label}</button>`;
     const bulkBtn = rebalMode === 'holding'
         ? `<button class="btn btn-secondary" style="padding:5px 12px;font-size:12px" onclick="planAllRebalance()">→ Send all to Planning</button>` : '';
+    const bandInput = `<span style="font-size:12px;color:var(--label2)">Drift band ±<input type="number" min="0" max="50" value="${band}" onchange="setRebalBand(this.value)" style="width:46px;text-align:right;padding:3px 6px;border-radius:6px;border:1.5px solid var(--sep);background:var(--surface2);color:var(--label);font-size:12px">%</span>`;
 
-    el.innerHTML = scopeBar + `
+    el.innerHTML = scopeBar + summaryHtml + `
     <div class="card" style="padding:18px 22px;margin-bottom:20px">
         <h2 style="font-size:15px;font-weight:600;margin-bottom:14px">Concentration Risk</h2>
         <div style="display:flex;flex-direction:column;gap:8px">${flagsHtml}</div>
+        ${settingsHtml}
+    </div>
+
+    <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><h2>Currency Exposure</h2><span class="count-badge">${curEntries.length} ${curEntries.length === 1 ? 'currency' : 'currencies'}</span></div>
+        <div class="alloc-list">${curHtml}</div>
     </div>
 
     <div class="card">
-        <div class="card-header">
-            <div style="display:flex;align-items:center;gap:10px">
+        <div class="card-header" style="flex-wrap:wrap;gap:10px">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
                 <h2>Rebalancing</h2>
                 <span class="count-badge">Targets total: ${sumWarn}</span>
+                ${bandInput}
             </div>
-            <div class="filter-chips">${modeBtn('market', 'By Market')}${modeBtn('holding', 'By Holding')}${bulkBtn}</div>
+            <div class="filter-chips">${modeBtn('market', 'By Market')}${modeBtn('holding', 'By Holding')}
+                <button class="row-btn" onclick="seedTargetsFromCurrent()">Set to current</button>
+                <button class="row-btn" onclick="normalizeTargetsTo100()">Normalize 100%</button>
+                ${bulkBtn}</div>
         </div>
         <table style="width:100%;border-collapse:collapse;font-size:13px">
             <thead><tr>
@@ -3653,6 +3784,11 @@ async function syncLoad() {
             normalizeTargets();
             localStorage.setItem(TARGETS_KEY, JSON.stringify(allocTargets));
         }
+        if (payload.insightSettings && typeof payload.insightSettings === 'object') {
+            insightSettings = payload.insightSettings;
+            applyInsightDefaults();
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(insightSettings));
+        }
         setSyncStatus('synced', 'Synced');
         return true;
     } catch (e) {
@@ -3684,6 +3820,7 @@ async function syncSaveNow() {
             espp: esppData,
             srsContributions,
             allocTargets,
+            insightSettings,
             updatedAt: new Date().toISOString(),
         };
         const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
@@ -4871,6 +5008,7 @@ function init() {
     loadEspp();
     loadSrs();
     loadTargets();
+    loadInsightSettings();
     setGreeting();
     render();
     fetchPrices();
