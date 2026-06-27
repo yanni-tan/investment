@@ -203,7 +203,7 @@
       "currency": "USD",
       "account": "Cash",
       "shares": 4,
-      "avgCost": 790.3051,
+      "avgCost": 790.265,
       "notes": "US growth engine / VOO",
       "manualPrice": 794.2,
       "markets": [
@@ -717,5 +717,5 @@
       "market": {}
     }
   },
-  "updatedAt": "2026-06-27T16:34:27.275Z"
+  "updatedAt": "2026-06-27T16:36:21.423Z"
 }
