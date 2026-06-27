@@ -1114,7 +1114,7 @@
         </button>
         <div class="nav-section" style="margin-top:16px">Accounts</div>
         <button class="nav-item" id="espp-nav-btn">
-            <span class="nav-dot" style="background:#a855f7"></span>ESPP
+            <span class="nav-dot" style="background:#a855f7"></span>Apple Stocks
         </button>
         <button class="nav-item" id="srs-nav-btn">
             <span class="nav-dot" style="background:#0d9488"></span>SRS
@@ -2572,10 +2572,13 @@ function renderStatsRow(rows) {
         </div>`;
     });
 
-    // SRS card (only if there's SRS activity)
+    // SRS card (only if there's SRS activity). SRS is a SGD account — show in S$
+    // so it matches the SRS panel regardless of the global display currency.
     const srs = srsTotalUSD();
     if (srs) {
         const gPct = srs.costUSD > 0 ? (srs.gainUSD / srs.costUSD) * 100 : 0;
+        const srsValSGD = srs.valueUSD / fxSGDUSD;
+        const srsGainSGD = srs.gainUSD / fxSGDUSD;
         html += `<div class="stat-mini" onclick="showPanel('srs')">
             <div class="stat-head">
                 <div class="stat-icon" style="background:rgba(13,148,136,0.12)">
@@ -2584,10 +2587,10 @@ function renderStatsRow(rows) {
                 <span class="stat-flag">🇸🇬</span>
             </div>
             <div class="stat-label">SRS Account</div>
-            <div class="stat-value">${dmoney(srs.valueUSD)}</div>
+            <div class="stat-value">${money(srsValSGD, 'SGD')}</div>
             <div class="stat-badges">
-                <span class="kpi-badge ${badgeClass(srs.gainUSD)}" style="font-size:10px;padding:3px 8px">${srs.gainUSD >= 0 ? '↑' : '↓'} ${dsigned(srs.gainUSD)}</span>
-                ${srs.costUSD > 0 ? `<span class="kpi-badge ${badgeClass(gPct)}" style="font-size:10px;padding:3px 8px">${srs.gainUSD >= 0 ? '↑' : '↓'} ${pct(gPct)}</span>` : ''}
+                <span class="kpi-badge ${badgeClass(srsGainSGD)}" style="font-size:10px;padding:3px 8px">${srsGainSGD >= 0 ? '↑' : '↓'} ${signed(srsGainSGD, 'SGD')}</span>
+                ${srs.costUSD > 0 ? `<span class="kpi-badge ${badgeClass(gPct)}" style="font-size:10px;padding:3px 8px">${srsGainSGD >= 0 ? '↑' : '↓'} ${pct(gPct)}</span>` : ''}
             </div>
             <div class="stat-sub">Holdings + cash</div>
         </div>`;
