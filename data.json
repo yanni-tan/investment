@@ -679,8 +679,9 @@
   "allocTargets": {
     "holding": {},
     "market": {
-      "US": 60
+      "US": 60,
+      "SG": 20
     }
   },
-  "updatedAt": "2026-06-27T02:41:08.809Z"
+  "updatedAt": "2026-06-27T02:41:11.924Z"
 }
