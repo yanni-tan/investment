@@ -3149,6 +3149,70 @@ function showPanel(which) {
 
 const ACTION_COLORS = { Buy: '#22c55e', Sell: '#ef4444', Watch: '#f59e0b' };
 
+// Native price currency inferred from ticker suffix (.SI=SGD, .L=GBP, else USD).
+const WCUR = t => /\.SI$/i.test(t) ? 'SGD' : /\.L$/i.test(t) ? 'GBP' : 'USD';
+
+function watchRowHtml(w) {
+    const lp = prices[w.ticker] || watchPrices[w.ticker];
+    const curPrice = lp?.price;
+    const target = Number(w.targetPrice);
+    const hit = curPrice && target && (
+        (w.action === 'Buy' && curPrice <= target) ||
+        (w.action === 'Sell' && curPrice >= target)
+    );
+    return `
+        <tr class="${hit ? 'watch-hit' : ''}">
+            <td>
+                <div style="font-weight:600">${w.ticker}</div>
+                <div style="font-size:11px;color:var(--label2)">${w.name}</div>
+            </td>
+            <td>
+                <span style="background:${ACTION_COLORS[w.action]}18;color:${ACTION_COLORS[w.action]};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">${w.action}</span>
+            </td>
+            <td class="r">${curPrice != null ? '$' + curPrice.toFixed(2) : '<span class="skel" style="width:48px;height:13px;display:inline-block"></span>'}${hit ? ' <span style="color:var(--green);font-weight:700;font-size:11px">TARGET HIT</span>' : ''}</td>
+            <td class="r">${w.targetPrice ? '$' + Number(w.targetPrice).toFixed(2) : '—'}</td>
+            <td class="r">${w.qty || '—'}</td>
+            <td><span class="mkt-pill" style="background:rgba(139,92,246,0.12);color:#7c3aed">${w.account || 'Cash'}</span></td>
+            <td style="padding:14px 16px;color:var(--label2);font-size:12px">${w.notes || '—'}</td>
+            <td>
+                <div style="display:flex;gap:4px">
+                    <button class="row-btn" onclick="openWatchModal('${w.id}')">Edit</button>
+                    <button class="row-btn del" onclick="delWatch('${w.id}')">Remove</button>
+                </div>
+            </td>
+        </tr>`;
+}
+
+// Build one Planning section (a titled card + table) for a subset of plans.
+function watchSection(title, items) {
+    if (!items.length) return '';
+    let buyUSD = 0, sellUSD = 0;
+    items.forEach(w => {
+        const lp = prices[w.ticker] || watchPrices[w.ticker];
+        const eff = (Number(w.targetPrice) || lp?.price) || null;
+        const qty = Number(w.qty) || null;
+        if (eff && qty) {
+            const amt = toUSD(eff * qty, WCUR(w.ticker));
+            if (w.action === 'Buy') buyUSD += amt; else if (w.action === 'Sell') sellUSD += amt;
+        }
+    });
+    return `<div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+            <div style="display:flex;align-items:center;gap:10px">
+                <h2>${title}</h2><span class="count-badge">${items.length}</span>
+            </div>
+            <span class="count-badge">Buy ${dmoney(buyUSD)} · Sell ${dmoney(sellUSD)}</span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead><tr>
+                <th>Item</th><th>Action</th><th class="r">Current</th><th class="r">Target</th>
+                <th class="r">Qty</th><th>Account</th><th>Notes</th><th></th>
+            </tr></thead>
+            <tbody>${items.map(watchRowHtml).join('')}</tbody>
+        </table>
+    </div>`;
+}
+
 function renderWatchlist() {
     const el = document.getElementById('watchlist-body');
     if (!watchlist.length) {
@@ -3162,8 +3226,6 @@ function renderWatchlist() {
     }
 
     // Planning summary: estimated capital for buys / proceeds from sells.
-    // Native price currency is inferred from the ticker suffix (.SI=SGD, .L=GBP, else USD).
-    const wcur = t => /\.SI$/i.test(t) ? 'SGD' : /\.L$/i.test(t) ? 'GBP' : 'USD';
     let totalBuyUSD = 0, totalSellUSD = 0, buys = 0, sells = 0, hits = 0, untotaled = 0;
     watchlist.forEach(w => {
         const lp = prices[w.ticker] || watchPrices[w.ticker];
@@ -3173,7 +3235,7 @@ function renderWatchlist() {
         const qty = Number(w.qty) || null;
         if (w.action === 'Buy') buys++; else if (w.action === 'Sell') sells++;
         if (eff && qty) {
-            const amt = toUSD(eff * qty, wcur(w.ticker));
+            const amt = toUSD(eff * qty, WCUR(w.ticker));
             if (w.action === 'Buy') totalBuyUSD += amt; else totalSellUSD += amt;
         } else if (w.action === 'Buy' || w.action === 'Sell') {
             untotaled++;
@@ -3207,48 +3269,11 @@ function renderWatchlist() {
         </div>
     </div>`;
 
-    el.innerHTML = kpiHtml + `<div class="card"><table style="width:100%;border-collapse:collapse;font-size:13px">
-        <thead><tr>
-            <th>Item</th>
-            <th>Action</th>
-            <th class="r">Current</th>
-            <th class="r">Target</th>
-            <th class="r">Qty</th>
-            <th>Account</th>
-            <th>Notes</th>
-            <th></th>
-        </tr></thead>
-        <tbody>${watchlist.map(w => {
-            const lp = prices[w.ticker] || watchPrices[w.ticker];
-            const curPrice = lp?.price;
-            const target = Number(w.targetPrice);
-            const hit = curPrice && target && (
-                (w.action === 'Buy' && curPrice <= target) ||
-                (w.action === 'Sell' && curPrice >= target)
-            );
-            return `
-        <tr class="${hit ? 'watch-hit' : ''}">
-            <td>
-                <div style="font-weight:600">${w.ticker}</div>
-                <div style="font-size:11px;color:var(--label2)">${w.name}</div>
-            </td>
-            <td>
-                <span style="background:${ACTION_COLORS[w.action]}18;color:${ACTION_COLORS[w.action]};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">${w.action}</span>
-            </td>
-            <td class="r">${curPrice != null ? '$' + curPrice.toFixed(2) : '<span class="skel" style="width:48px;height:13px;display:inline-block"></span>'}${hit ? ' <span style="color:var(--green);font-weight:700;font-size:11px">TARGET HIT</span>' : ''}</td>
-            <td class="r">${w.targetPrice ? '$' + Number(w.targetPrice).toFixed(2) : '—'}</td>
-            <td class="r">${w.qty || '—'}</td>
-            <td><span class="mkt-pill" style="background:rgba(139,92,246,0.12);color:#7c3aed">${w.account || 'Cash'}</span></td>
-            <td style="padding:14px 16px;color:var(--label2);font-size:12px">${w.notes || '—'}</td>
-            <td>
-                <div style="display:flex;gap:4px">
-                    <button class="row-btn" onclick="openWatchModal('${w.id}')">Edit</button>
-                    <button class="row-btn del" onclick="delWatch('${w.id}')">Remove</button>
-                </div>
-            </td>
-        </tr>`;
-        }).join('')}</tbody>
-    </table></div>`;
+    const normal = watchlist.filter(w => (w.account || 'Cash') !== 'SRS');
+    const srs    = watchlist.filter(w => (w.account || 'Cash') === 'SRS');
+    el.innerHTML = kpiHtml
+        + watchSection('Normal Investment', normal)
+        + watchSection('SRS Plan', srs);
 }
 
 // ── Insights: concentration risk + rebalancing ──
@@ -3269,6 +3294,57 @@ function setTarget(key, val) {
     if (isNaN(p) || p <= 0) delete allocTargets[rebalMode][key];
     else allocTargets[rebalMode][key] = p;
     saveTargets(); renderInsights();
+}
+
+// Compute the rebalancing drift for one holding (USD). Returns null if no target set.
+function rebalDrift(holdingId, rows, total) {
+    const t = allocTargets.holding[holdingId];
+    if (t == null || isNaN(t)) return null;
+    const r = rows.find(x => x.id === holdingId);
+    if (!r) return null;
+    const curVal = toUSD(r.value ?? r.costBasis, r.currency);
+    return { r, t, driftUSD: total * t / 100 - curVal };
+}
+
+// Turn a holding's rebalancing drift into a Buy/Sell plan on the Planning page.
+function planFromRebalance(holdingId) {
+    const rows = holdings.map(enrich);
+    const total = rows.reduce((s, r) => s + toUSD(r.value ?? r.costBasis, r.currency), 0) || 1;
+    const d = rebalDrift(holdingId, rows, total);
+    if (!d) return;
+    if (Math.abs(d.driftUSD) < total * 0.001) { toast('Already on target'); return; }
+    const action = d.driftUSD > 0 ? 'Buy' : 'Sell';
+    const priceUSD = d.r.price != null ? toUSD(d.r.price, d.r.currency) : null;
+    const qty = priceUSD ? Math.max(1, Math.round(Math.abs(d.driftUSD) / priceUSD)) : '';
+    const item = { ticker: d.r.ticker, action, name: d.r.name, targetPrice: '', qty, account: d.r.account || 'Cash', notes: `Rebalance to ${d.t}%` };
+    const existing = watchlist.find(w => w.ticker === d.r.ticker && w.action === action);
+    if (existing) Object.assign(existing, item);
+    else watchlist.push({ id: uid(), ...item });
+    saveWatchlist();
+    toast(`${action} ${d.r.ticker} → Planning`);
+}
+
+// Send every off-target holding to the Planning page at once.
+function planAllRebalance() {
+    const rows = holdings.map(enrich);
+    const total = rows.reduce((s, r) => s + toUSD(r.value ?? r.costBasis, r.currency), 0) || 1;
+    let n = 0;
+    Object.keys(allocTargets.holding).forEach(id => {
+        const d = rebalDrift(id, rows, total);
+        if (!d || Math.abs(d.driftUSD) < total * 0.001) return;
+        const action = d.driftUSD > 0 ? 'Buy' : 'Sell';
+        const priceUSD = d.r.price != null ? toUSD(d.r.price, d.r.currency) : null;
+        const qty = priceUSD ? Math.max(1, Math.round(Math.abs(d.driftUSD) / priceUSD)) : '';
+        const item = { ticker: d.r.ticker, action, name: d.r.name, targetPrice: '', qty, account: d.r.account || 'Cash', notes: `Rebalance to ${d.t}%` };
+        const existing = watchlist.find(w => w.ticker === d.r.ticker && w.action === action);
+        if (existing) Object.assign(existing, item);
+        else watchlist.push({ id: uid(), ...item });
+        n++;
+    });
+    if (!n) { toast('No off-target holdings to plan'); return; }
+    saveWatchlist();
+    toast(`Sent ${n} action${n !== 1 ? 's' : ''} to Planning`);
+    showPanel('watchlist');
 }
 
 function renderInsights() {
@@ -3329,10 +3405,13 @@ function renderInsights() {
         const hasT = t != null && !isNaN(t);
         const targetVal = hasT ? total * t / 100 : null;
         const driftUSD = hasT ? targetVal - b.valUSD : null;
+        const offTarget = hasT && Math.abs(driftUSD) >= total * 0.001;
         const actionHtml = !hasT ? '<span style="color:var(--label3)">—</span>'
-            : Math.abs(driftUSD) < total * 0.001 ? '<span style="color:var(--label2)">On target</span>'
+            : !offTarget ? '<span style="color:var(--label2)">On target</span>'
             : driftUSD > 0 ? `<span style="color:var(--green);font-weight:600">Buy ${dmoney(driftUSD)}</span>`
             : `<span style="color:var(--red);font-weight:600">Sell ${dmoney(-driftUSD)}</span>`;
+        const planBtn = (rebalMode === 'holding' && offTarget)
+            ? `<button class="row-btn" style="margin-left:8px" onclick="planFromRebalance('${b.key}')">→ Plan</button>` : '';
         return `<tr>
             <td style="padding:11px 14px">${b.label}</td>
             <td class="r" style="padding:11px 14px">${dmoney(b.valUSD)}<div style="font-size:11px;color:var(--label2)">${curPct.toFixed(1)}%</div></td>
@@ -3342,7 +3421,7 @@ function renderInsights() {
                     style="width:64px;text-align:right;padding:5px 8px;border-radius:8px;border:1.5px solid var(--sep);background:var(--surface2);color:var(--label);font-size:13px">
                 <span style="color:var(--label3)">%</span>
             </td>
-            <td class="r" style="padding:11px 14px">${actionHtml}</td>
+            <td class="r" style="padding:11px 14px;white-space:nowrap">${actionHtml}${planBtn}</td>
         </tr>`;
     }).join('');
 
@@ -3352,6 +3431,8 @@ function renderInsights() {
         : '<span style="color:var(--label3)">no targets set</span>';
 
     const modeBtn = (m, label) => `<button class="chip ${rebalMode === m ? 'active' : ''}" onclick="setRebalMode('${m}')">${label}</button>`;
+    const bulkBtn = rebalMode === 'holding'
+        ? `<button class="btn btn-secondary" style="padding:5px 12px;font-size:12px" onclick="planAllRebalance()">→ Send all to Planning</button>` : '';
 
     el.innerHTML = `
     <div class="card" style="padding:18px 22px;margin-bottom:20px">
@@ -3365,7 +3446,7 @@ function renderInsights() {
                 <h2>Rebalancing</h2>
                 <span class="count-badge">Targets total: ${sumWarn}</span>
             </div>
-            <div class="filter-chips">${modeBtn('market', 'By Market')}${modeBtn('holding', 'By Holding')}</div>
+            <div class="filter-chips">${modeBtn('market', 'By Market')}${modeBtn('holding', 'By Holding')}${bulkBtn}</div>
         </div>
         <table style="width:100%;border-collapse:collapse;font-size:13px">
             <thead><tr>
