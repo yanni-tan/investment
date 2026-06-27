@@ -3980,6 +3980,7 @@ function renderRealizedPanel() {
             <th>Holding</th>
             <th class="r">Shares</th>
             <th class="r">Buy Avg</th>
+            <th class="r">Total Cost</th>
             <th class="r">Sell Price</th>
             <th class="r">P&L</th>
             <th>Use of Proceeds</th>
@@ -3992,6 +3993,7 @@ function renderRealizedPanel() {
                 <td><strong>${r.name}</strong><div style="font-size:11px;color:var(--label2)">${r.ticker}</div></td>
                 <td class="r">${r.shares}</td>
                 <td class="r">${money(r.buyAvg, r.currency)}</td>
+                <td class="r">${money((Number(r.buyAvg)||0) * (Number(r.shares)||0), r.currency)}</td>
                 <td class="r">${money(r.sellPrice, r.currency)}</td>
                 <td class="r"><span class="${cc(r.gainLoss)}" style="font-weight:600">${signed(r.gainLoss, r.currency)}</span><div style="font-size:11px;color:var(--label2)">${pct(gPct)}</div></td>
                 <td><span onclick="editDisposition('${r.id}')" style="cursor:pointer;${r.disposition ? 'color:var(--label)' : 'color:var(--label3)'}">${r.disposition ? r.disposition.replace(/</g,'&lt;') : '+ Add note'}</span></td>
