@@ -1903,9 +1903,7 @@ function setGreeting() {
     const h   = now.getHours();
     const g   = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
     const emoji = h < 6 ? '🌙' : h < 12 ? '🌅' : h < 17 ? '☀️' : h < 20 ? '🌆' : '🌙';
-    const fmt = (d) => `Last updated on ${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}, ${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
-    document.getElementById('greeting').innerHTML =
-        `<span id="greeting-time" style="display:block;font-size:13px;font-weight:400;color:var(--label3);letter-spacing:0;margin-bottom:12px">${fmt(now)}</span>${emoji} ${g}, Yanni Tan`;
+    document.getElementById('greeting').innerHTML = `${emoji} ${g}, Yanni Tan`;
     document.getElementById('greeting-sub').textContent =
         now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 }
@@ -1973,10 +1971,8 @@ async function fetchPrices() {
         if (!results.some(Boolean)) throw new Error('no prices');
 
         const t = new Date();
-        const fmtTime = `Last updated on ${t.toLocaleDateString('en-US',{month:'short',day:'numeric'})}, ${t.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
+        const fmtTime = `Last updated ${t.toLocaleDateString('en-US',{month:'short',day:'numeric'})}, ${t.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
         document.getElementById('last-updated').textContent = fmtTime;
-        const gt = document.getElementById('greeting-time');
-        if (gt) gt.textContent = fmtTime;
 
     } catch {
         document.getElementById('last-updated').textContent = 'Price update failed';
