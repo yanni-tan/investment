@@ -3281,7 +3281,7 @@ function renderWatchlist() {
 // scope ∈ 'all' | 'normal' | 'srs' — so SRS and Normal can be planned independently.
 const TARGETS_KEY = 'portfolio_targets';
 let allocTargets = {};
-let rebalMode = 'market';
+let rebalMode = 'holding';
 let acctScope = 'all';
 
 // Editable insight settings: concentration limits, rebalance band, fund-overlap groups.
@@ -3606,10 +3606,10 @@ function renderInsights() {
                 <span class="count-badge">Targets total: ${sumWarn}</span>
                 ${bandInput}
             </div>
-            <div class="filter-chips">${modeBtn('market', 'By Market')}${modeBtn('holding', 'By Holding')}
+            <div class="filter-chips">
                 <button class="row-btn" onclick="seedTargetsFromCurrent()">Set to current</button>
                 <button class="row-btn" onclick="normalizeTargetsTo100()">Normalize 100%</button>
-                ${bulkBtn}</div>
+            </div>
         </div>
         <table style="width:100%;border-collapse:collapse;font-size:13px">
             <thead><tr>
