@@ -3277,28 +3277,50 @@ function renderWatchlist() {
 }
 
 // ── Insights: concentration risk + rebalancing ──
+// Targets are scoped per account: allocTargets[scope] = { holding:{}, market:{} },
+// scope ∈ 'all' | 'normal' | 'srs' — so SRS and Normal can be planned independently.
 const TARGETS_KEY = 'portfolio_targets';
-let allocTargets = { holding: {}, market: {} };
+let allocTargets = {};
 let rebalMode = 'market';
+let acctScope = 'all';
 const CONC_LIMITS = { holding: 25, sector: 40, market: 70 };
 
+function normalizeTargets() {
+    // Migrate legacy flat {holding,market} → scoped under 'all'.
+    if (allocTargets.holding || allocTargets.market) {
+        allocTargets = { all: { holding: allocTargets.holding || {}, market: allocTargets.market || {} } };
+    }
+    ['all', 'normal', 'srs'].forEach(sc => {
+        allocTargets[sc] = allocTargets[sc] || {};
+        allocTargets[sc].holding = allocTargets[sc].holding || {};
+        allocTargets[sc].market = allocTargets[sc].market || {};
+    });
+}
 function loadTargets() {
     try { allocTargets = JSON.parse(localStorage.getItem(TARGETS_KEY)) || {}; } catch { allocTargets = {}; }
-    if (!allocTargets.holding) allocTargets.holding = {};
-    if (!allocTargets.market) allocTargets.market = {};
+    normalizeTargets();
 }
 function saveTargets() { localStorage.setItem(TARGETS_KEY, JSON.stringify(allocTargets)); syncSave(); }
 function setRebalMode(m) { rebalMode = m; renderInsights(); }
+function setAcctScope(s) { acctScope = s; renderInsights(); }
+// Holdings filtered to the active account scope.
+function scopeRows() {
+    const rows = holdings.map(enrich);
+    if (acctScope === 'srs') return rows.filter(r => (r.account || 'Cash') === 'SRS');
+    if (acctScope === 'normal') return rows.filter(r => (r.account || 'Cash') !== 'SRS');
+    return rows;
+}
 function setTarget(key, val) {
     const p = parseFloat(val);
-    if (isNaN(p) || p <= 0) delete allocTargets[rebalMode][key];
-    else allocTargets[rebalMode][key] = p;
+    const map = allocTargets[acctScope][rebalMode];
+    if (isNaN(p) || p <= 0) delete map[key];
+    else map[key] = p;
     saveTargets(); renderInsights();
 }
 
 // Compute the rebalancing drift for one holding (USD). Returns null if no target set.
 function rebalDrift(holdingId, rows, total) {
-    const t = allocTargets.holding[holdingId];
+    const t = allocTargets[acctScope].holding[holdingId];
     if (t == null || isNaN(t)) return null;
     const r = rows.find(x => x.id === holdingId);
     if (!r) return null;
@@ -3308,7 +3330,7 @@ function rebalDrift(holdingId, rows, total) {
 
 // Turn a holding's rebalancing drift into a Buy/Sell plan on the Planning page.
 function planFromRebalance(holdingId) {
-    const rows = holdings.map(enrich);
+    const rows = scopeRows();
     const total = rows.reduce((s, r) => s + toUSD(r.value ?? r.costBasis, r.currency), 0) || 1;
     const d = rebalDrift(holdingId, rows, total);
     if (!d) return;
@@ -3324,12 +3346,12 @@ function planFromRebalance(holdingId) {
     toast(`${action} ${d.r.ticker} → Planning`);
 }
 
-// Send every off-target holding to the Planning page at once.
+// Send every off-target holding (in the active account scope) to Planning at once.
 function planAllRebalance() {
-    const rows = holdings.map(enrich);
+    const rows = scopeRows();
     const total = rows.reduce((s, r) => s + toUSD(r.value ?? r.costBasis, r.currency), 0) || 1;
     let n = 0;
-    Object.keys(allocTargets.holding).forEach(id => {
+    Object.keys(allocTargets[acctScope].holding).forEach(id => {
         const d = rebalDrift(id, rows, total);
         if (!d || Math.abs(d.driftUSD) < total * 0.001) return;
         const action = d.driftUSD > 0 ? 'Buy' : 'Sell';
@@ -3355,7 +3377,17 @@ function renderInsights() {
             <p>Add holdings to see concentration risk and rebalancing.</p></div></div>`;
         return;
     }
-    const rows = holdings.map(enrich);
+
+    const scopeBtn = (s, label) => `<button class="chip ${acctScope === s ? 'active' : ''}" onclick="setAcctScope('${s}')">${label}</button>`;
+    const scopeBar = `<div class="filter-chips" style="margin-bottom:20px">${scopeBtn('all', 'All Accounts')}${scopeBtn('normal', 'Normal Investment')}${scopeBtn('srs', 'SRS Investment')}</div>`;
+
+    const rows = scopeRows();
+    if (!rows.length) {
+        el.innerHTML = scopeBar + `<div class="card"><div class="empty" style="padding:50px 20px">
+            <div class="empty-icon">📭</div><h3>No holdings in this account</h3>
+            <p>Switch account or add holdings under it.</p></div></div>`;
+        return;
+    }
     const total = rows.reduce((s, r) => s + toUSD(r.value ?? r.costBasis, r.currency), 0) || 1;
 
     // Per-holding weights
@@ -3396,7 +3428,7 @@ function renderInsights() {
             .map(([m, v]) => ({ key: m, label: `${MKT_FLAGS[m] || ''} ${MARKET_LABELS[m] || m}`, valUSD: v }))
         : holdingW.map(h => ({ key: h.id, label: `<b>${h.ticker}</b> · ${h.name}`, valUSD: h.valUSD }));
 
-    const targets = allocTargets[rebalMode] || {};
+    const targets = allocTargets[acctScope][rebalMode] || {};
     const targetSum = buckets.reduce((s, b) => s + (Number(targets[b.key]) || 0), 0);
 
     const rebalRows = buckets.map(b => {
@@ -3434,7 +3466,7 @@ function renderInsights() {
     const bulkBtn = rebalMode === 'holding'
         ? `<button class="btn btn-secondary" style="padding:5px 12px;font-size:12px" onclick="planAllRebalance()">→ Send all to Planning</button>` : '';
 
-    el.innerHTML = `
+    el.innerHTML = scopeBar + `
     <div class="card" style="padding:18px 22px;margin-bottom:20px">
         <h2 style="font-size:15px;font-weight:600;margin-bottom:14px">Concentration Risk</h2>
         <div style="display:flex;flex-direction:column;gap:8px">${flagsHtml}</div>
@@ -3617,7 +3649,8 @@ async function syncLoad() {
             localStorage.setItem(SRS_KEY, JSON.stringify(srsContributions));
         }
         if (payload.allocTargets && typeof payload.allocTargets === 'object') {
-            allocTargets = { holding: {}, market: {}, ...payload.allocTargets };
+            allocTargets = payload.allocTargets;
+            normalizeTargets();
             localStorage.setItem(TARGETS_KEY, JSON.stringify(allocTargets));
         }
         setSyncStatus('synced', 'Synced');
