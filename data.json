@@ -718,7 +718,11 @@
       "market": {}
     },
     "srs": {
-      "holding": {},
+      "holding": {
+        "4fp0ikck9jomqs7vy5g": 100,
+        "10ojt3lst0whmqtox4v4": 0,
+        "mbjf9qaas7amqtoy4mo": 0
+      },
       "market": {}
     }
   },
@@ -758,5 +762,5 @@
       ]
     }
   },
-  "updatedAt": "2026-06-27T17:10:36.730Z"
+  "updatedAt": "2026-06-27T17:10:47.008Z"
 }
