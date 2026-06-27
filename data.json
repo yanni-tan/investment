@@ -700,7 +700,7 @@
     "all": {
       "holding": {
         "a5ai6mouvtemqtorv8l": 35,
-        "05sj4wbsax6rmqs6vjtb": 30
+        "05sj4wbsax6rmqs6vjtb": 25
       },
       "market": {
         "US": 40,
@@ -753,5 +753,5 @@
       ]
     }
   },
-  "updatedAt": "2026-06-27T16:40:04.236Z"
+  "updatedAt": "2026-06-27T16:40:06.372Z"
 }
