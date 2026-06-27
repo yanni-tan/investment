@@ -1142,7 +1142,7 @@
         </button>
         <div class="nav-section" style="margin-top:16px">Plan</div>
         <button class="nav-item" id="watchlist-nav-btn">
-            <span class="nav-dot" style="background:#c8ff00"></span>Planning
+            <span class="nav-dot" style="background:#c8ff00"></span>SRS Plan
         </button>
         <button class="nav-item" id="dca-nav-btn">
             <span class="nav-dot" style="background:#14b8a6"></span>Monthly Plan
@@ -1176,8 +1176,8 @@
     <div id="watchlist-panel" style="display:none">
         <div class="page-header">
             <div>
-                <div class="greeting">Planning</div>
-                <div class="greeting-sub">Plan your future buys and sells</div>
+                <div class="greeting">SRS Planning</div>
+                <div class="greeting-sub">Plan your SRS buys and sells</div>
             </div>
             <button class="btn btn-primary" id="add-watch-btn">+ Add Plan</button>
         </div>
@@ -2149,9 +2149,9 @@ function renderDcaReminder() {
     if (!el) return;
     if (!dcaSettings || !dcaSettings.amount) { el.innerHTML = ''; return; }
     const logged = contribLog.some(c => c.month === new Date().toISOString().slice(0, 7));
-    el.innerHTML = `<div onclick="showPanel('dca')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 18px;margin-bottom:20px;border-radius:var(--radius);background:linear-gradient(135deg,rgba(236,72,153,0.14),rgba(236,72,153,0.04));border:1px solid rgba(236,72,153,0.30)">
+    el.innerHTML = `<div onclick="showPanel('dca')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 18px;margin-bottom:20px;border-radius:var(--radius);background:linear-gradient(135deg,rgba(249,168,212,0.12),rgba(249,168,212,0.03));border:1px solid rgba(249,168,212,0.28)">
         <div style="font-size:14px;color:var(--label)">💸 Monthly plan: invest <b>${money(dcaSettings.amount, dcaSettings.currency)}</b> ${logged ? '· <span style="color:var(--green)">logged this month ✓</span>' : '<span style="color:var(--label2)">this month</span>'}</div>
-        <span style="font-size:13px;font-weight:600;color:#ec4899">${logged ? 'View plan →' : 'Plan & log →'}</span>
+        <span style="font-size:13px;font-weight:600;color:#f9a8d4">${logged ? 'View plan →' : 'Plan & log →'}</span>
     </div>`;
 }
 
@@ -3263,19 +3263,20 @@ function watchSection(title, items) {
 
 function renderWatchlist() {
     const el = document.getElementById('watchlist-body');
-    if (!watchlist.length) {
+    const srs = watchlist.filter(w => (w.account || 'Cash') === 'SRS');
+    if (!srs.length) {
         el.innerHTML = `<div class="card"><div class="empty" style="padding:60px 20px">
             <div class="empty-icon">📋</div>
-            <h3>Nothing planned yet</h3>
-            <p>Add stocks or ETFs you're planning to buy or sell.</p>
+            <h3>No SRS plans yet</h3>
+            <p>Plan your SRS buys and sells here. Your regular monthly investing lives in Monthly Plan.</p>
             <button class="btn btn-primary" onclick="openWatchModal()">+ Add Plan</button>
         </div></div>`;
         return;
     }
 
-    // Planning summary: estimated capital for buys / proceeds from sells.
+    // Planning summary: estimated capital for buys / proceeds from sells (SRS only).
     let totalBuyUSD = 0, totalSellUSD = 0, buys = 0, sells = 0, hits = 0, untotaled = 0;
-    watchlist.forEach(w => {
+    srs.forEach(w => {
         const lp = prices[w.ticker] || watchPrices[w.ticker];
         const curPrice = lp?.price;
         const target = Number(w.targetPrice) || null;
@@ -3313,15 +3314,11 @@ function renderWatchlist() {
         <div class="kpi-card">
             <div class="kpi-label">Targets Hit</div>
             <div class="kpi-value" style="font-size:24px${hits ? ';color:var(--green)' : ''}">${hits}</div>
-            <div class="kpi-sub">of ${watchlist.length} item${watchlist.length !== 1 ? 's' : ''}</div>
+            <div class="kpi-sub">of ${srs.length} item${srs.length !== 1 ? 's' : ''}</div>
         </div>
     </div>`;
 
-    const normal = watchlist.filter(w => (w.account || 'Cash') !== 'SRS');
-    const srs    = watchlist.filter(w => (w.account || 'Cash') === 'SRS');
-    el.innerHTML = kpiHtml
-        + watchSection('Normal Investment', normal)
-        + watchSection('SRS Plan', srs);
+    el.innerHTML = kpiHtml + watchSection('SRS Plan', srs);
 }
 
 // ── Insights: concentration risk + rebalancing ──
@@ -3819,6 +3816,7 @@ function openWatchModal(id = null) {
         document.getElementById('w-notes').value  = w.notes || '';
     } else {
         document.getElementById('watch-form').reset();
+        document.getElementById('w-account').value = 'SRS';
     }
     document.getElementById('watch-overlay').classList.add('open');
     setTimeout(() => document.getElementById('w-ticker').focus(), 50);
@@ -5090,8 +5088,8 @@ function openDetail(id) {
                 <div class="detail-stat-value ${gainCls}">${r.gainLoss != null ? (r.gainLoss >= 0 ? '+' : '') + money(Math.abs(r.gainLoss), r.currency) : '—'}</div>
             </div>
             <div class="detail-stat">
-                <div class="detail-stat-label">Return</div>
-                <div class="detail-stat-value ${gainCls}">${r.gainPct != null ? (r.gainPct >= 0 ? '+' : '') + r.gainPct.toFixed(2) + '%' : '—'}</div>
+                <div class="detail-stat-label">Today</div>
+                <div class="detail-stat-value ${dayCls}">${r.changePct != null ? (r.changePct >= 0 ? '+' : '') + r.changePct.toFixed(2) + '%' : '—'}</div>
             </div>
             <div class="detail-stat">
                 <div class="detail-stat-label">Total Dividends</div>
