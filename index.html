@@ -3965,9 +3965,11 @@ function renderRealizedPanel() {
     }
     const sorted = [...realized].sort((a,b) => (b.sellDate||'').localeCompare(a.sellDate||''));
     const totalGain = realized.reduce((s,r) => s + (r.gainLoss||0), 0);
+    const totalProceeds = realized.reduce((s,r) => s + (Number(r.sellPrice)||0) * (Number(r.shares)||0), 0);
     const wins = realized.filter(r => r.gainLoss >= 0).length;
     el.innerHTML = `
-    <div class="kpi-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:20px">
+    <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:20px">
+        <div class="kpi-card"><div class="kpi-label">Total Returned</div><div class="kpi-value" style="font-size:24px">${money(totalProceeds,'USD')}</div><div class="kpi-sub">Proceeds (cost + profit)</div></div>
         <div class="kpi-card"><div class="kpi-label">Total Realized P&L</div><div class="kpi-value ${cc(totalGain)}" style="font-size:24px">${money(totalGain,'USD')}</div></div>
         <div class="kpi-card"><div class="kpi-label">Trades</div><div class="kpi-value" style="font-size:24px">${realized.length}</div></div>
         <div class="kpi-card"><div class="kpi-label">Win Rate</div><div class="kpi-value" style="font-size:24px">${realized.length > 0 ? (wins/realized.length*100).toFixed(0) : 0}%</div></div>
