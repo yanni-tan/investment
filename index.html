@@ -1913,13 +1913,16 @@ function saveSrs() { localStorage.setItem(SRS_KEY, JSON.stringify(srsContributio
 function setGreeting() {
     const now = new Date();
     const h   = now.getHours();
-    const [g, emoji] =
-        h < 5  ? ['Burning the midnight oil', '🌙'] :
-        h < 12 ? ['Good morning', '🌅'] :
-        h < 17 ? ['Good afternoon', '☀️'] :
-        h < 21 ? ['Good evening', '🌆'] :
-                 ['Winding down', '🌙'];
-    document.getElementById('greeting').innerHTML = `${emoji} ${g}, Yanni Tan`;
+    const GREETINGS = {
+        wee:       ['🦉 Can\'t sleep, Yanni?', '🌙 Burning the midnight oil', '😴 Markets are closed — go to bed!', '🌜 Late-night portfolio peek?', '👀 The charts can wait, Yanni'],
+        morning:   ['🌅 Good morning, Yanni', '☕ Rise and grind, Yanni', '🌞 Top of the morning, Yanni', '🐦 Early bird gets the gains'],
+        afternoon: ['☀️ Good afternoon, Yanni', '🌤️ Afternoon, Yanni', '📈 How\'s it looking, Yanni?', '🥪 Lunchtime check-in?'],
+        evening:   ['🌆 Good evening, Yanni', '🌇 Evening, Yanni', '🍷 Markets are winding down', '📊 End-of-day review?'],
+        night:     ['🌙 Winding down, Yanni?', '🌃 Still up, Yanni?', '✨ Late one tonight', '🛋️ Time to relax, Yanni'],
+    };
+    const bucket = h < 5 ? 'wee' : h < 12 ? 'morning' : h < 17 ? 'afternoon' : h < 21 ? 'evening' : 'night';
+    const pool = GREETINGS[bucket];
+    document.getElementById('greeting').textContent = pool[Math.floor(Math.random() * pool.length)];
     document.getElementById('greeting-sub').textContent =
         now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 }
