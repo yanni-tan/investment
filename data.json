@@ -418,6 +418,16 @@
       "qty": "",
       "account": "SRS",
       "notes": "Corporate Bonds"
+    },
+    {
+      "id": "wjlnqyejwfkmqwkhf4g",
+      "ticker": "G3B",
+      "action": "Buy",
+      "name": "Amova Singapre STI ETF",
+      "targetPrice": "",
+      "qty": "",
+      "account": "SRS",
+      "notes": "Top 30 SGX"
     }
   ],
   "snapshots": [
@@ -687,5 +697,5 @@
       "Global": 30
     }
   },
-  "updatedAt": "2026-06-27T16:19:01.817Z"
+  "updatedAt": "2026-06-27T16:21:15.053Z"
 }
