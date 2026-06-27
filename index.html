@@ -2435,12 +2435,13 @@ function renderMarketChart(rows) {
     body.innerHTML = `<div class="alloc-list">${mktRows}</div>`;
 }
 
-// Core = holdings that are PURELY USA (every market is US/USA). Any holding that
-// includes a non-USA country counts entirely as Diversification.
+// Core = holdings that ONLY track SG and/or US markets. Any holding that includes
+// another country/region (Global, EU, JP, world funds, etc.) is Diversification.
+const CORE_SET = new Set(['US', 'USA', 'SG', 'Singapore']);
 function isCoreHolding(r) {
     const mkts = getMarkets(r);
     if (!mkts.length) return true; // default market is US
-    return mkts.every(m => m === 'US' || m === 'USA');
+    return mkts.every(m => CORE_SET.has(m));
 }
 function renderCoreChart(rows) {
     const card = document.getElementById('core-chart-card');
