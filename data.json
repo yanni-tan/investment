@@ -157,7 +157,7 @@
       "shares": 100,
       "avgCost": 57.53,
       "notes": "",
-      "manualPrice": 66.2,
+      "manualPrice": 65.43,
       "markets": [
         "SG"
       ],
@@ -697,15 +697,25 @@
     }
   ],
   "allocTargets": {
-    "holding": {
-      "a5ai6mouvtemqtorv8l": 30,
-      "05sj4wbsax6rmqs6vjtb": 30
+    "all": {
+      "holding": {
+        "a5ai6mouvtemqtorv8l": 30,
+        "05sj4wbsax6rmqs6vjtb": 30
+      },
+      "market": {
+        "US": 50,
+        "SG": 20,
+        "Global": 30
+      }
     },
-    "market": {
-      "US": 50,
-      "SG": 20,
-      "Global": 30
+    "normal": {
+      "holding": {},
+      "market": {}
+    },
+    "srs": {
+      "holding": {},
+      "market": {}
     }
   },
-  "updatedAt": "2026-06-27T16:22:58.402Z"
+  "updatedAt": "2026-06-27T16:28:53.004Z"
 }
