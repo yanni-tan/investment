@@ -1128,9 +1128,9 @@
         <button class="nav-item" id="realized-nav-btn">
             <span class="nav-dot" style="background:#ef4444"></span>Realized Gains
         </button>
-        <div class="nav-section" style="margin-top:16px">Watchlist</div>
+        <div class="nav-section" style="margin-top:16px">Planning</div>
         <button class="nav-item" id="watchlist-nav-btn">
-            <span class="nav-dot" style="background:#c8ff00"></span>Watchlist
+            <span class="nav-dot" style="background:#c8ff00"></span>Planning
         </button>
     </nav>
     <div class="sidebar-footer">
@@ -1158,10 +1158,10 @@
     <div id="watchlist-panel" style="display:none">
         <div class="page-header">
             <div>
-                <div class="greeting">Watchlist</div>
+                <div class="greeting">Planning</div>
                 <div class="greeting-sub">Plan your future buys and sells</div>
             </div>
-            <button class="btn btn-primary" id="add-watch-btn">+ Add Item</button>
+            <button class="btn btn-primary" id="add-watch-btn">+ Add Plan</button>
         </div>
         <div id="watchlist-body"></div>
     </div>
@@ -1608,7 +1608,7 @@
 <div class="overlay" id="watch-overlay">
     <div class="modal">
         <div class="modal-hdr">
-            <h2 id="watch-modal-title">Add to Watchlist</h2>
+            <h2 id="watch-modal-title">Add Plan</h2>
             <button class="modal-x" id="watch-modal-close">×</button>
         </div>
         <form id="watch-form" autocomplete="off">
@@ -3136,13 +3136,60 @@ function renderWatchlist() {
     if (!watchlist.length) {
         el.innerHTML = `<div class="card"><div class="empty" style="padding:60px 20px">
             <div class="empty-icon">📋</div>
-            <h3>No items yet</h3>
-            <p>Add stocks or ETFs you're planning to buy, sell, or monitor.</p>
-            <button class="btn btn-primary" onclick="openWatchModal()">+ Add Item</button>
+            <h3>Nothing planned yet</h3>
+            <p>Add stocks or ETFs you're planning to buy or sell.</p>
+            <button class="btn btn-primary" onclick="openWatchModal()">+ Add Plan</button>
         </div></div>`;
         return;
     }
-    el.innerHTML = `<div class="card"><table style="width:100%;border-collapse:collapse;font-size:13px">
+
+    // Planning summary: estimated capital for buys / proceeds from sells.
+    // Native price currency is inferred from the ticker suffix (.SI=SGD, .L=GBP, else USD).
+    const wcur = t => /\.SI$/i.test(t) ? 'SGD' : /\.L$/i.test(t) ? 'GBP' : 'USD';
+    let totalBuyUSD = 0, totalSellUSD = 0, buys = 0, sells = 0, hits = 0, untotaled = 0;
+    watchlist.forEach(w => {
+        const lp = prices[w.ticker] || watchPrices[w.ticker];
+        const curPrice = lp?.price;
+        const target = Number(w.targetPrice) || null;
+        const eff = target || curPrice || null;
+        const qty = Number(w.qty) || null;
+        if (w.action === 'Buy') buys++; else if (w.action === 'Sell') sells++;
+        if (eff && qty) {
+            const amt = toUSD(eff * qty, wcur(w.ticker));
+            if (w.action === 'Buy') totalBuyUSD += amt; else totalSellUSD += amt;
+        } else if (w.action === 'Buy' || w.action === 'Sell') {
+            untotaled++;
+        }
+        const hit = curPrice && target && ((w.action === 'Buy' && curPrice <= target) || (w.action === 'Sell' && curPrice >= target));
+        if (hit) hits++;
+    });
+    const net = totalSellUSD - totalBuyUSD;
+
+    const kpiHtml = `
+    <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:20px">
+        <div class="kpi-card">
+            <div class="kpi-label">Total Buy</div>
+            <div class="kpi-value" style="font-size:24px;color:var(--green)">${dmoney(totalBuyUSD)}</div>
+            <div class="kpi-sub">${buys} planned buy${buys !== 1 ? 's' : ''}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Total Sell</div>
+            <div class="kpi-value" style="font-size:24px;color:var(--red)">${dmoney(totalSellUSD)}</div>
+            <div class="kpi-sub">${sells} planned sell${sells !== 1 ? 's' : ''}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Net Cash Flow</div>
+            <div class="kpi-value ${cc(net)}" style="font-size:24px">${dsigned(net)}</div>
+            <div class="kpi-sub">Sell − Buy${untotaled ? ` · ${untotaled} item${untotaled !== 1 ? 's' : ''} need qty/price` : ''}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Targets Hit</div>
+            <div class="kpi-value" style="font-size:24px${hits ? ';color:var(--green)' : ''}">${hits}</div>
+            <div class="kpi-sub">of ${watchlist.length} item${watchlist.length !== 1 ? 's' : ''}</div>
+        </div>
+    </div>`;
+
+    el.innerHTML = kpiHtml + `<div class="card"><table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead><tr>
             <th>Item</th>
             <th>Action</th>
@@ -3188,7 +3235,7 @@ function renderWatchlist() {
 
 function openWatchModal(id = null) {
     watchEditId = id;
-    document.getElementById('watch-modal-title').textContent = id ? 'Edit Item' : 'Add to Watchlist';
+    document.getElementById('watch-modal-title').textContent = id ? 'Edit Plan' : 'Add Plan';
     if (id) {
         const w = watchlist.find(x => x.id === id);
         if (!w) return;
