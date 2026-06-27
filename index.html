@@ -289,6 +289,20 @@
         .icon-btn:active { opacity: .7; }
         .icon-btn svg { width: 15px; height: 15px; fill: none; stroke: var(--label2); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
+        /* Segmented control cluster (theme · currency · refresh) */
+        .control-group {
+            display: flex; align-items: center; overflow: hidden;
+            background: var(--surface); border: 1px solid var(--sep);
+            border-radius: 20px; box-shadow: var(--shadow-sm);
+        }
+        .control-group .icon-btn {
+            width: 40px; height: 34px; border: none; border-radius: 0;
+            box-shadow: none; background: transparent;
+            border-left: 1px solid var(--sep);
+        }
+        .control-group .icon-btn:first-child { border-left: none; }
+        .control-group .icon-btn:hover { background: var(--surface2); }
+
         .spinning { animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -1239,18 +1253,16 @@
         </div>
         <div class="header-right">
             <div class="last-updated-text" id="last-updated">Fetching live prices…</div>
-            <button class="icon-btn" id="theme-toggle-btn" title="Toggle dark/light mode" style="font-size:16px;padding:0">
-                🌙
-            </button>
-            <button class="icon-btn" id="currency-toggle-btn" title="Toggle display currency" style="font-size:13px;font-weight:700;color:var(--label2)">
-                USD
-            </button>
-            <button class="icon-btn" id="refresh-btn" title="Refresh prices">
-                <svg viewBox="0 0 24 24" id="refresh-icon">
-                    <polyline points="23 4 23 10 17 10"/>
-                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-                </svg>
-            </button>
+            <div class="control-group">
+                <button class="icon-btn" id="theme-toggle-btn" title="Toggle dark/light mode" style="font-size:15px;padding:0">🌙</button>
+                <button class="icon-btn" id="currency-toggle-btn" title="Toggle display currency" style="font-size:13px;font-weight:700;color:var(--label2)">USD</button>
+                <button class="icon-btn" id="refresh-btn" title="Refresh prices">
+                    <svg viewBox="0 0 24 24" id="refresh-icon">
+                        <polyline points="23 4 23 10 17 10"/>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -1901,8 +1913,12 @@ function saveSrs() { localStorage.setItem(SRS_KEY, JSON.stringify(srsContributio
 function setGreeting() {
     const now = new Date();
     const h   = now.getHours();
-    const g   = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-    const emoji = h < 6 ? '🌙' : h < 12 ? '🌅' : h < 17 ? '☀️' : h < 20 ? '🌆' : '🌙';
+    const [g, emoji] =
+        h < 5  ? ['Burning the midnight oil', '🌙'] :
+        h < 12 ? ['Good morning', '🌅'] :
+        h < 17 ? ['Good afternoon', '☀️'] :
+        h < 21 ? ['Good evening', '🌆'] :
+                 ['Winding down', '🌙'];
     document.getElementById('greeting').innerHTML = `${emoji} ${g}, Yanni Tan`;
     document.getElementById('greeting-sub').textContent =
         now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
