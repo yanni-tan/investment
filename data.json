@@ -33,7 +33,7 @@
       "shares": 4,
       "avgCost": 451.22,
       "notes": "High-conviction AI and semiconductor exposure",
-      "manualPrice": 663.62,
+      "manualPrice": 609,
       "sector": "Semiconductor",
       "account": "Cash",
       "markets": [
@@ -717,5 +717,5 @@
       "market": {}
     }
   },
-  "updatedAt": "2026-06-27T16:31:38.002Z"
+  "updatedAt": "2026-06-27T16:31:47.059Z"
 }
