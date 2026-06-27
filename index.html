@@ -2149,9 +2149,9 @@ function renderDcaReminder() {
     if (!el) return;
     if (!dcaSettings || !dcaSettings.amount) { el.innerHTML = ''; return; }
     const logged = contribLog.some(c => c.month === new Date().toISOString().slice(0, 7));
-    el.innerHTML = `<div onclick="showPanel('dca')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 18px;margin-bottom:20px;border-radius:var(--radius);background:linear-gradient(135deg,rgba(20,184,166,0.12),rgba(20,184,166,0.04));border:1px solid rgba(20,184,166,0.25)">
+    el.innerHTML = `<div onclick="showPanel('dca')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 18px;margin-bottom:20px;border-radius:var(--radius);background:linear-gradient(135deg,rgba(236,72,153,0.14),rgba(236,72,153,0.04));border:1px solid rgba(236,72,153,0.30)">
         <div style="font-size:14px;color:var(--label)">💸 Monthly plan: invest <b>${money(dcaSettings.amount, dcaSettings.currency)}</b> ${logged ? '· <span style="color:var(--green)">logged this month ✓</span>' : '<span style="color:var(--label2)">this month</span>'}</div>
-        <span style="font-size:13px;font-weight:600;color:#14b8a6">${logged ? 'View plan →' : 'Plan & log →'}</span>
+        <span style="font-size:13px;font-weight:600;color:#ec4899">${logged ? 'View plan →' : 'Plan & log →'}</span>
     </div>`;
 }
 
