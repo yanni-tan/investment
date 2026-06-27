@@ -428,6 +428,16 @@
       "qty": "",
       "account": "SRS",
       "notes": "Top 30 SGX"
+    },
+    {
+      "id": "n03tru5b0imqwkjmv9",
+      "ticker": "ACWD",
+      "action": "Buy",
+      "name": "ACWD",
+      "targetPrice": "",
+      "qty": "",
+      "account": "SRS",
+      "notes": ""
     }
   ],
   "snapshots": [
@@ -697,5 +707,5 @@
       "Global": 30
     }
   },
-  "updatedAt": "2026-06-27T16:21:15.053Z"
+  "updatedAt": "2026-06-27T16:22:58.402Z"
 }
