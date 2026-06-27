@@ -1144,6 +1144,9 @@
         <button class="nav-item" id="watchlist-nav-btn">
             <span class="nav-dot" style="background:#c8ff00"></span>Planning
         </button>
+        <button class="nav-item" id="dca-nav-btn">
+            <span class="nav-dot" style="background:#14b8a6"></span>Monthly Plan
+        </button>
         <button class="nav-item" id="insights-nav-btn">
             <span class="nav-dot" style="background:#8b5cf6"></span>Insights
         </button>
@@ -1190,6 +1193,17 @@
             </div>
         </div>
         <div id="insights-body"></div>
+    </div>
+
+    <!-- ── Monthly Plan (DCA) Panel ── -->
+    <div id="dca-panel" style="display:none">
+        <div class="page-header">
+            <div>
+                <div class="greeting">Monthly Plan</div>
+                <div class="greeting-sub">Your recurring investing plan</div>
+            </div>
+        </div>
+        <div id="dca-body"></div>
     </div>
 
     <!-- ── Dividends Panel ── -->
@@ -1266,6 +1280,8 @@
             </div>
         </div>
     </div>
+
+    <div id="dca-reminder"></div>
 
     <!-- Top section: KPI cards + stats row -->
     <div class="top-section">
@@ -2124,6 +2140,19 @@ function render() {
     renderTable(searched, tot);
     renderSectorChart(all);
     renderMarketChart(all);
+    renderDcaReminder();
+}
+
+// Slim dashboard banner reminding of the monthly plan + this month's status.
+function renderDcaReminder() {
+    const el = document.getElementById('dca-reminder');
+    if (!el) return;
+    if (!dcaSettings || !dcaSettings.amount) { el.innerHTML = ''; return; }
+    const logged = contribLog.some(c => c.month === new Date().toISOString().slice(0, 7));
+    el.innerHTML = `<div onclick="showPanel('dca')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 18px;margin-bottom:20px;border-radius:var(--radius);background:linear-gradient(135deg,rgba(20,184,166,0.12),rgba(20,184,166,0.04));border:1px solid rgba(20,184,166,0.25)">
+        <div style="font-size:14px;color:var(--label)">💸 Monthly plan: invest <b>${money(dcaSettings.amount, dcaSettings.currency)}</b> ${logged ? '· <span style="color:var(--green)">logged this month ✓</span>' : '<span style="color:var(--label2)">this month</span>'}</div>
+        <span style="font-size:13px;font-weight:600;color:#14b8a6">${logged ? 'View plan →' : 'Plan & log →'}</span>
+    </div>`;
 }
 
 // ── Daily snapshots ──
@@ -3148,12 +3177,14 @@ function showPanel(which) {
     document.getElementById('espp-panel').style.display = which === 'espp' ? '' : 'none';
     document.getElementById('srs-panel').style.display = which === 'srs' ? '' : 'none';
     document.getElementById('insights-panel').style.display = which === 'insights' ? '' : 'none';
+    document.getElementById('dca-panel').style.display = which === 'dca' ? '' : 'none';
     document.getElementById('watchlist-nav-btn').classList.toggle('active', which === 'watchlist');
     document.getElementById('dividends-nav-btn').classList.toggle('active', which === 'dividends');
     document.getElementById('realized-nav-btn').classList.toggle('active', which === 'realized');
     document.getElementById('espp-nav-btn').classList.toggle('active', which === 'espp');
     document.getElementById('srs-nav-btn').classList.toggle('active', which === 'srs');
     document.getElementById('insights-nav-btn').classList.toggle('active', which === 'insights');
+    document.getElementById('dca-nav-btn').classList.toggle('active', which === 'dca');
     document.querySelectorAll('.nav-item[data-tab]').forEach(n => n.classList.toggle('active', which === 'dashboard' && n.dataset.tab === tab));
     if (which === 'watchlist') renderWatchlist();
     if (which === 'dividends') renderDividends();
@@ -3161,6 +3192,7 @@ function showPanel(which) {
     if (which === 'espp') { renderEspp(); if (!prices['AAPL']) fetchPrices(); }
     if (which === 'srs') renderSrs();
     if (which === 'insights') renderInsights();
+    if (which === 'dca') renderDca();
 }
 
 const ACTION_COLORS = { Buy: '#22c55e', Sell: '#ef4444', Watch: '#f59e0b' };
@@ -3604,6 +3636,174 @@ function renderInsights() {
     el.innerHTML = scopeBar + healthHtml + lookHtml + goalsHtml + customizeHtml;
 }
 
+// ── Monthly Plan (DCA): contribution amount, allocation, projection, tracker ──
+const DCA_KEY = 'portfolio_dca';
+const CONTRIB_KEY = 'portfolio_contributions';
+let dcaSettings = { amount: 1000, currency: 'SGD', rate: 7 };
+let contribLog = [];
+function loadDca() {
+    try { const d = JSON.parse(localStorage.getItem(DCA_KEY)); if (d) dcaSettings = { amount: 1000, currency: 'SGD', rate: 7, ...d }; } catch {}
+    try { contribLog = JSON.parse(localStorage.getItem(CONTRIB_KEY)) || []; } catch { contribLog = []; }
+}
+function saveDca() { localStorage.setItem(DCA_KEY, JSON.stringify(dcaSettings)); syncSave(); }
+function saveContribs() { localStorage.setItem(CONTRIB_KEY, JSON.stringify(contribLog)); syncSave(); }
+function setDca(field, val) {
+    if (field === 'currency') dcaSettings.currency = val;
+    else { const p = parseFloat(val); if (!isNaN(p) && p >= 0) dcaSettings[field] = p; }
+    saveDca(); renderDca(); render();
+}
+// USD → a given currency (for displaying contribution amounts in their native currency)
+function toCur(usd, cur) { return cur === 'SGD' ? usd / fxSGDUSD : cur === 'GBP' ? usd / fxGBPUSD : usd; }
+const cmoney = (usd) => money(toCur(usd, dcaSettings.currency), dcaSettings.currency);
+
+// Split this month's contribution across holdings to move toward Allocation Goals
+// (falls back to current weights if no goals set). Returns [{r, amtUSD}] sorted desc.
+function monthlyAllocation() {
+    const amountUSD = toUSD(dcaSettings.amount, dcaSettings.currency);
+    const rows = holdings.map(enrich);
+    const total = rows.reduce((s, r) => s + toUSD(r.value ?? r.costBasis, r.currency), 0);
+    if (!rows.length || amountUSD <= 0) return { list: [], hasGoals: false };
+    const targets = (allocTargets.all && allocTargets.all.holding) || {};
+    const tSum = rows.reduce((s, r) => s + (Number(targets[r.id]) || 0), 0);
+    const hasGoals = tSum > 0;
+    const weights = {};
+    rows.forEach(r => {
+        weights[r.id] = hasGoals ? (Number(targets[r.id]) || 0) / tSum
+            : (total > 0 ? toUSD(r.value ?? r.costBasis, r.currency) / total : 1 / rows.length);
+    });
+    const futureTotal = total + amountUSD;
+    const gaps = rows.map(r => {
+        const cur = toUSD(r.value ?? r.costBasis, r.currency);
+        return { r, gap: Math.max(weights[r.id] * futureTotal - cur, 0), w: weights[r.id] };
+    });
+    const gapSum = gaps.reduce((s, g) => s + g.gap, 0);
+    const list = gaps.map(g => ({ r: g.r, amtUSD: gapSum > 0 ? amountUSD * g.gap / gapSum : amountUSD * g.w }))
+        .filter(x => x.amtUSD > 0.5).sort((a, b) => b.amtUSD - a.amtUSD);
+    return { list, hasGoals };
+}
+
+// Future value: current portfolio compounded + monthly contributions (annuity).
+function projectFV(years) {
+    const r = (dcaSettings.rate || 0) / 100, i = r / 12, n = years * 12;
+    const monthlyUSD = toUSD(dcaSettings.amount, dcaSettings.currency);
+    const pv = holdings.map(enrich).reduce((s, h) => s + toUSD(h.value ?? h.costBasis, h.currency), 0);
+    const fvPv = pv * Math.pow(1 + i, n);
+    const fvCon = i > 0 ? monthlyUSD * ((Math.pow(1 + i, n) - 1) / i) : monthlyUSD * n;
+    const contributed = pv + monthlyUSD * n;
+    return { value: fvPv + fvCon, contributed };
+}
+
+function logThisMonth() {
+    const month = new Date().toISOString().slice(0, 7); // YYYY-MM
+    if (contribLog.some(c => c.month === month)) { toast('This month is already logged'); return; }
+    contribLog.push({ id: uid(), month, amount: dcaSettings.amount, currency: dcaSettings.currency });
+    saveContribs(); renderDca(); toast('Contribution logged');
+}
+function delContrib(id) { contribLog = contribLog.filter(c => c.id !== id); saveContribs(); renderDca(); }
+
+// Count consecutive months with a logged contribution, ending at the current month.
+function contribStreak() {
+    const months = new Set(contribLog.map(c => c.month));
+    let streak = 0;
+    const d = new Date();
+    for (;;) {
+        const key = d.toISOString().slice(0, 7);
+        if (months.has(key)) { streak++; d.setMonth(d.getMonth() - 1); } else break;
+    }
+    return streak;
+}
+
+function renderDca() {
+    const el = document.getElementById('dca-body');
+    if (!el) return;
+    const { list, hasGoals } = monthlyAllocation();
+
+    const year = new Date().getFullYear().toString();
+    const investedThisYearUSD = contribLog.filter(c => c.month.startsWith(year))
+        .reduce((s, c) => s + toUSD(c.amount, c.currency), 0);
+    const streak = contribStreak();
+
+    // Settings + KPI row
+    const kpis = `<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:20px">
+        <div class="kpi-card">
+            <div class="kpi-label">Monthly Amount</div>
+            <div class="kpi-value" style="font-size:22px">${money(dcaSettings.amount, dcaSettings.currency)}</div>
+            <div class="kpi-sub">
+                <input type="number" min="0" step="50" value="${dcaSettings.amount}" onchange="setDca('amount', this.value)" style="width:80px;padding:3px 6px;border-radius:6px;border:1.5px solid var(--sep);background:var(--surface2);color:var(--label);font-size:12px">
+                <select onchange="setDca('currency', this.value)" style="padding:3px 4px;border-radius:6px;border:1.5px solid var(--sep);background:var(--surface2);color:var(--label);font-size:12px">
+                    <option ${dcaSettings.currency === 'SGD' ? 'selected' : ''}>SGD</option>
+                    <option ${dcaSettings.currency === 'USD' ? 'selected' : ''}>USD</option>
+                    <option ${dcaSettings.currency === 'GBP' ? 'selected' : ''}>GBP</option>
+                </select> / mo
+            </div>
+        </div>
+        <div class="kpi-card"><div class="kpi-label">Invested This Year</div><div class="kpi-value" style="font-size:22px">${dmoney(investedThisYearUSD)}</div><div class="kpi-sub">${contribLog.filter(c => c.month.startsWith(year)).length} month${contribLog.filter(c => c.month.startsWith(year)).length !== 1 ? 's' : ''} logged</div></div>
+        <div class="kpi-card"><div class="kpi-label">Streak</div><div class="kpi-value" style="font-size:22px">${streak} mo${streak !== 1 ? 's' : ''}</div><div class="kpi-sub">consecutive contributions</div></div>
+        <div class="kpi-card"><div class="kpi-label">Assumed Return</div><div class="kpi-value" style="font-size:22px">${dcaSettings.rate}%</div><div class="kpi-sub"><input type="number" min="0" max="30" step="0.5" value="${dcaSettings.rate}" onchange="setDca('rate', this.value)" style="width:60px;padding:3px 6px;border-radius:6px;border:1.5px solid var(--sep);background:var(--surface2);color:var(--label);font-size:12px"> % / yr</div></div>
+    </div>`;
+
+    // Allocator
+    const allocRows = list.map(x => `<tr>
+        <td style="padding:11px 14px"><b>${x.r.ticker}</b><div style="font-size:11px;color:var(--label2)">${x.r.name}</div></td>
+        <td class="r" style="padding:11px 14px;font-weight:600">${cmoney(x.amtUSD)}</td>
+        <td class="r" style="padding:11px 14px">${(x.amtUSD / toUSD(dcaSettings.amount, dcaSettings.currency) * 100).toFixed(0)}%</td>
+        <td class="r" style="padding:11px 14px"><button class="row-btn" onclick="planContribution('${x.r.id}', ${x.amtUSD})">→ Plan</button></td>
+    </tr>`).join('');
+    const allocHtml = `<div class="card" style="margin-bottom:20px">
+        <div class="card-header"><h2>This Month's ${money(dcaSettings.amount, dcaSettings.currency)}</h2>
+            <span class="count-badge">${hasGoals ? 'toward your goals' : 'by current weights'}</span></div>
+        <div style="padding:0 22px 6px;font-size:12px;color:var(--label2)">${hasGoals ? 'Split to move you toward your Allocation Goals (set in Insights).' : 'No goals set — splitting by current weights. Set Allocation Goals in Insights for smarter splits.'}</div>
+        ${list.length ? `<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th>Holding</th><th class="r">Add</th><th class="r">Share</th><th class="r">Plan</th></tr></thead><tbody>${allocRows}</tbody></table>`
+            : `<div class="empty" style="padding:30px 20px"><p>Add holdings to see a suggested split.</p></div>`}
+    </div>`;
+
+    // Projection
+    const projRow = y => { const p = projectFV(y); return `<tr>
+        <td style="padding:11px 14px">${y} years</td>
+        <td class="r" style="padding:11px 14px;color:var(--label2)">${dmoney(p.contributed)}</td>
+        <td class="r" style="padding:11px 14px;font-weight:600;color:var(--green)">${dmoney(p.value)}</td>
+    </tr>`; };
+    const projHtml = `<div class="card" style="margin-bottom:20px">
+        <div class="card-header"><h2>Growth Projection</h2><span class="count-badge">at ${dcaSettings.rate}% / yr</span></div>
+        <div style="padding:0 22px 6px;font-size:12px;color:var(--label2)">Estimate only — assumes ${money(dcaSettings.amount, dcaSettings.currency)}/mo and a constant ${dcaSettings.rate}% annual return on your current portfolio.</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th>Horizon</th><th class="r">Total Put In</th><th class="r">Projected Value</th></tr></thead>
+        <tbody>${[5, 10, 20, 30].map(projRow).join('')}</tbody></table>
+    </div>`;
+
+    // Tracker
+    const logged = [...contribLog].sort((a, b) => b.month.localeCompare(a.month));
+    const fmtMonth = m => { const [y, mo] = m.split('-'); return new Date(y, mo - 1, 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }); };
+    const logRows = logged.map(c => `<tr>
+        <td style="padding:11px 14px">${fmtMonth(c.month)}</td>
+        <td class="r" style="padding:11px 14px;font-weight:600">${money(c.amount, c.currency)}</td>
+        <td class="r" style="padding:11px 14px"><button class="row-btn del" onclick="delContrib('${c.id}')">×</button></td>
+    </tr>`).join('');
+    const thisMonthKey = new Date().toISOString().slice(0, 7);
+    const loggedThisMonth = contribLog.some(c => c.month === thisMonthKey);
+    const trackHtml = `<div class="card">
+        <div class="card-header"><h2>Contribution Log</h2>
+            <button class="btn btn-primary" style="padding:6px 14px;font-size:13px" onclick="logThisMonth()" ${loggedThisMonth ? 'disabled style="padding:6px 14px;font-size:13px;opacity:0.5"' : ''}>${loggedThisMonth ? '✓ Logged this month' : '+ Log this month'}</button></div>
+        ${logged.length ? `<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th>Month</th><th class="r">Amount</th><th class="r"></th></tr></thead><tbody>${logRows}</tbody></table>`
+            : `<div class="empty" style="padding:30px 20px"><p>No contributions logged yet. Tap "Log this month" after you invest.</p></div>`}
+    </div>`;
+
+    el.innerHTML = kpis + allocHtml + projHtml + trackHtml;
+}
+
+// Send a monthly-contribution slice to the Planning page as a Buy.
+function planContribution(holdingId, amtUSD) {
+    const r = holdings.map(enrich).find(x => x.id === holdingId);
+    if (!r) return;
+    const priceUSD = r.price != null ? toUSD(r.price, r.currency) : null;
+    const qty = priceUSD ? Math.max(1, Math.round(amtUSD / priceUSD)) : '';
+    const item = { ticker: r.ticker, action: 'Buy', name: r.name, targetPrice: '', qty, account: r.account || 'Cash', notes: `Monthly DCA ~${cmoney(amtUSD)}` };
+    const existing = watchlist.find(w => w.ticker === r.ticker && w.action === 'Buy');
+    if (existing) Object.assign(existing, item);
+    else watchlist.push({ id: uid(), ...item });
+    saveWatchlist();
+    toast(`Buy ${r.ticker} → Planning`);
+}
+
 function openWatchModal(id = null) {
     watchEditId = id;
     document.getElementById('watch-modal-title').textContent = id ? 'Edit Plan' : 'Add Plan';
@@ -3660,6 +3860,7 @@ document.getElementById('watch-overlay').addEventListener('click', e => { if (e.
 document.getElementById('add-watch-btn').addEventListener('click', () => openWatchModal());
 document.getElementById('watchlist-nav-btn').addEventListener('click', () => showPanel('watchlist'));
 document.getElementById('insights-nav-btn').addEventListener('click', () => showPanel('insights'));
+document.getElementById('dca-nav-btn').addEventListener('click', () => showPanel('dca'));
 
 // ── GitHub Sync ──
 const SYNC_REPO  = 'yanni-tan/investment';
@@ -3770,6 +3971,14 @@ async function syncLoad() {
             applyInsightDefaults();
             localStorage.setItem(SETTINGS_KEY, JSON.stringify(insightSettings));
         }
+        if (payload.dcaSettings && typeof payload.dcaSettings === 'object') {
+            dcaSettings = { amount: 1000, currency: 'SGD', rate: 7, ...payload.dcaSettings };
+            localStorage.setItem(DCA_KEY, JSON.stringify(dcaSettings));
+        }
+        if (Array.isArray(payload.contribLog)) {
+            contribLog = payload.contribLog;
+            localStorage.setItem(CONTRIB_KEY, JSON.stringify(contribLog));
+        }
         setSyncStatus('synced', 'Synced');
         return true;
     } catch (e) {
@@ -3802,6 +4011,8 @@ async function syncSaveNow() {
             srsContributions,
             allocTargets,
             insightSettings,
+            dcaSettings,
+            contribLog,
             updatedAt: new Date().toISOString(),
         };
         const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
@@ -4990,6 +5201,7 @@ function init() {
     loadSrs();
     loadTargets();
     loadInsightSettings();
+    loadDca();
     setGreeting();
     render();
     fetchPrices();
