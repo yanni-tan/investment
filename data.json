@@ -334,7 +334,7 @@
       "ticker": "CSPX",
       "action": "Buy",
       "name": "CSPX",
-      "targetPrice": "802.85",
+      "targetPrice": "",
       "qty": "1",
       "notes": "",
       "account": "Cash"
@@ -753,5 +753,5 @@
       ]
     }
   },
-  "updatedAt": "2026-06-27T16:40:06.372Z"
+  "updatedAt": "2026-06-27T16:49:55.568Z"
 }
