@@ -390,16 +390,6 @@
       "notes": "Sell and close FSMONE account"
     },
     {
-      "id": "dzx8yj67y6hmqtmwbkz",
-      "ticker": "VOO",
-      "action": "Sell",
-      "name": "VOO",
-      "targetPrice": "",
-      "qty": "",
-      "account": "Cash",
-      "notes": "CSPX"
-    },
-    {
       "id": "8ngroomdm8hmqtnrww7",
       "ticker": "GOOG",
       "action": "Sell",
@@ -684,5 +674,5 @@
       "Global": 30
     }
   },
-  "updatedAt": "2026-06-27T16:15:35.215Z"
+  "updatedAt": "2026-06-27T16:15:42.697Z"
 }
