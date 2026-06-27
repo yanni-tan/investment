@@ -689,18 +689,19 @@
   "allocTargets": {
     "all": {
       "holding": {
-        "a5ai6mouvtemqtorv8l": 6.9,
-        "05sj4wbsax6rmqs6vjtb": 10.9,
-        "rhinml0lo3fmqovitd2": 15.8,
-        "m331x1l1l8mqovkw3s": 8.9,
+        "a5ai6mouvtemqtorv8l": 7,
+        "05sj4wbsax6rmqs6vjtb": 11,
+        "rhinml0lo3fmqovitd2": 16,
+        "m331x1l1l8mqovkw3s": 9,
         "rfwf8osbny9mqovmc03": 3,
         "jvr6bn5csgcmqovmw7m": 3,
         "ohv9vplhy6lmqovoz97": 3,
-        "9h2pd5ui8lqmqovpxnd": 5.9,
-        "npcpo1kt4ikmqovskq8": 6.9,
-        "4fp0ikck9jomqs7vy5g": 17.8,
+        "9h2pd5ui8lqmqovpxnd": 6,
+        "npcpo1kt4ikmqovskq8": 7,
+        "4fp0ikck9jomqs7vy5g": 17,
         "10ojt3lst0whmqtox4v4": 0,
-        "mbjf9qaas7amqtoy4mo": 0
+        "mbjf9qaas7amqtoy4mo": 0,
+        "wkk7vtoidbmqovrsxc": 17
       },
       "market": {
         "US": 45,
@@ -757,5 +758,5 @@
       ]
     }
   },
-  "updatedAt": "2026-06-27T17:01:29.436Z"
+  "updatedAt": "2026-06-27T17:10:28.386Z"
 }
