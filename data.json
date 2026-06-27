@@ -401,13 +401,13 @@
     },
     {
       "id": "xxko8kqg9almqvridb2",
-      "ticker": "BOND",
+      "ticker": "A35",
       "action": "Buy",
-      "name": "SG Bond",
+      "name": "ABF Singapore Bond Index Fund",
       "targetPrice": "",
       "qty": "",
       "account": "SRS",
-      "notes": ""
+      "notes": "Govt, HDB & LTA"
     }
   ],
   "snapshots": [
@@ -677,5 +677,5 @@
       "Global": 30
     }
   },
-  "updatedAt": "2026-06-27T16:16:15.235Z"
+  "updatedAt": "2026-06-27T16:18:15.362Z"
 }
