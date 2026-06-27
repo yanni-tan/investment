@@ -1286,6 +1286,17 @@
             </div>
             <div class="collapse-body" id="sector-chart-body"></div>
         </div>
+
+        <div class="card collapsible collapsed" id="core-chart-card">
+            <div class="card-header" onclick="toggleCollapse('core-chart-card')">
+                <h2>Core vs Diversification</h2>
+                <div style="display:flex;align-items:center;gap:10px">
+                    <span class="count-badge" id="core-count"></span>
+                    <span class="collapse-chevron">⌄</span>
+                </div>
+            </div>
+            <div class="collapse-body" id="core-chart-body"></div>
+        </div>
     </div>
 
     <!-- Full-width holdings table -->
@@ -2111,6 +2122,7 @@ function render() {
     renderTable(searched, tot);
     renderSectorChart(all);
     renderMarketChart(all);
+    renderCoreChart(all);
 }
 
 // ── Daily snapshots ──
@@ -2423,6 +2435,53 @@ function renderMarketChart(rows) {
     body.innerHTML = `<div class="alloc-list">${mktRows}</div>`;
 }
 
+// Core (US + SG) vs Diversification (everything else). Multi-market holdings split
+// proportionally, same as the other allocation charts.
+const CORE_MARKETS = new Set(['US', 'SG']);
+function renderCoreChart(rows) {
+    const card = document.getElementById('core-chart-card');
+    const body = document.getElementById('core-chart-body');
+    if (!rows.length) { card.style.display = 'none'; return; }
+
+    const buckets = { Core: 0, Diversification: 0 };
+    const lists = { Core: [], Diversification: [] };
+    rows.forEach(r => {
+        const v = toUSD(r.value ?? r.costBasis, r.currency);
+        const mkts = getMarkets(r);
+        const share = mkts.length ? 1 / mkts.length : 1;
+        (mkts.length ? mkts : ['US']).forEach(m => {
+            const key = CORE_MARKETS.has(m) ? 'Core' : 'Diversification';
+            buckets[key] += v * share;
+            lists[key].push({ name: r.name, ticker: r.ticker, val: v * share });
+        });
+    });
+
+    const entries = Object.entries(buckets).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+    if (!entries.length) { card.style.display = 'none'; return; }
+    card.style.display = '';
+    const total = entries.reduce((s, [, v]) => s + v, 0);
+    const maxV = entries[0][1] || 1;
+    document.getElementById('core-count').textContent = `${(buckets.Core / total * 100).toFixed(0)}% core`;
+
+    const colors = { Core: '#22c55e', Diversification: '#8b5cf6' };
+    const coreRows = entries.map(([k, v]) => {
+        const p = (v / total) * 100;
+        const w = (v / maxV) * 100;
+        const color = colors[k];
+        return `<div class="alloc-item">
+            <div class="alloc-row" onclick="this.parentElement.classList.toggle('open')">
+                <span class="alloc-caret">▶</span>
+                <span class="alloc-name"><span class="alloc-dot" style="background:${color}"></span>${k}</span>
+                <div class="alloc-track"><div class="alloc-fill" style="width:${w.toFixed(1)}%;background:${color}"></div></div>
+                <span class="alloc-pct">${p.toFixed(1)}%</span>
+                <span class="alloc-val">${dmoney(v)}</span>
+            </div>
+            <div class="alloc-detail">${allocDetailRows(lists[k], v)}</div>
+        </div>`;
+    }).join('');
+
+    body.innerHTML = `<div class="alloc-list">${coreRows}</div>`;
+}
 function renderSectorChart(rows) {
     const card = document.getElementById('sector-chart-card');
     const body = document.getElementById('sector-chart-body');
