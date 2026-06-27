@@ -408,16 +408,6 @@
       "qty": "",
       "account": "SRS",
       "notes": "Govt, HDB & LTA"
-    },
-    {
-      "id": "bg3rllll7gfmqwkekbh",
-      "ticker": "MBH",
-      "action": "Buy",
-      "name": "Amova SGD Investment Grade Corporate Bond Index ETF",
-      "targetPrice": "",
-      "qty": "",
-      "account": "SRS",
-      "notes": "Corporate Bonds"
     }
   ],
   "snapshots": [
@@ -752,5 +742,5 @@
       ]
     }
   },
-  "updatedAt": "2026-06-27T18:04:20.119Z"
+  "updatedAt": "2026-06-27T18:04:28.075Z"
 }
