@@ -699,7 +699,7 @@
   "allocTargets": {
     "all": {
       "holding": {
-        "a5ai6mouvtemqtorv8l": 30,
+        "a5ai6mouvtemqtorv8l": 35,
         "05sj4wbsax6rmqs6vjtb": 30
       },
       "market": {
@@ -753,5 +753,5 @@
       ]
     }
   },
-  "updatedAt": "2026-06-27T16:38:48.711Z"
+  "updatedAt": "2026-06-27T16:40:04.236Z"
 }
