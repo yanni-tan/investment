@@ -1483,6 +1483,12 @@
                     <input class="finput" id="f-avgcost" type="number" step="any" min="0" placeholder="0.00" required>
                 </div>
             </div>
+            <div class="frow" id="f-date-wrap">
+                <div class="fg">
+                    <label>Purchase Date</label>
+                    <input class="finput" id="f-date" type="date">
+                </div>
+            </div>
             <div class="fg" id="f-nav-wrap" style="display:none">
                 <label>Current NAV <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--label3)">(optional — manual price for this fund)</span></label>
                 <input class="finput" id="f-nav" type="number" step="any" min="0" placeholder="0.00">
@@ -2868,10 +2874,13 @@ function openModal(id = null) {
         document.getElementById('f-avgcost').value  = h.avgCost;
         document.getElementById('f-nav').value      = h.manualPrice ?? '';
         document.getElementById('f-notes').value    = h.notes || '';
+        document.getElementById('f-date-wrap').style.display = 'none';
     } else {
         document.getElementById('hform').reset();
         setMarketChips(['US']);
         rebuildSectorChips([]);
+        document.getElementById('f-date-wrap').style.display = '';
+        document.getElementById('f-date').value = new Date().toISOString().slice(0, 10);
     }
     document.getElementById('f-sector-custom').value = '';
     syncTypeUI();
@@ -2929,13 +2938,24 @@ document.getElementById('hform').addEventListener('submit', e => {
     if (editId) {
         const i = holdings.findIndex(h => h.id === editId);
         if (i !== -1) {
-            holdings[i] = { ...holdings[i], ticker, market, markets, name, type, sector, sectors, currency, account, domicile, tracks, shares, avgCost, notes };
+            const prev = holdings[i];
+            const today = new Date().toISOString().slice(0, 10);
+            let updatedBuys = prev.buys || [];
+            if (shares > prev.shares) {
+                const delta = shares - prev.shares;
+                const impliedPrice = prev.shares > 0
+                    ? (shares * avgCost - prev.shares * prev.avgCost) / delta
+                    : avgCost;
+                updatedBuys = [...updatedBuys, { date: today, shares: delta, price: +impliedPrice.toFixed(6) }];
+            }
+            holdings[i] = { ...prev, ticker, market, markets, name, type, sector, sectors, currency, account, domicile, tracks, shares, avgCost, notes, buys: updatedBuys };
             if (manualPriceUpdate !== undefined) holdings[i].manualPrice = manualPriceUpdate;
             else if (type === 'Index Fund') holdings[i].manualPrice = holdings[i].manualPrice ?? null;
         }
         toast('Holding updated');
     } else {
-        const h = { id: uid(), ticker, market, markets, name, type, sector, sectors, currency, account, domicile, tracks, shares, avgCost, notes };
+        const purchaseDate = document.getElementById('f-date').value || new Date().toISOString().slice(0, 10);
+        const h = { id: uid(), ticker, market, markets, name, type, sector, sectors, currency, account, domicile, tracks, shares, avgCost, notes, buys: [{ date: purchaseDate, shares, price: avgCost }] };
         if (manualPriceUpdate !== undefined) h.manualPrice = manualPriceUpdate;
         holdings.push(h);
         toast('Holding added');
