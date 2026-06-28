@@ -3681,7 +3681,7 @@ function monthlyAllocationAuto() {
 // Split this month's contribution — uses manual overrides if set, else auto.
 function monthlyAllocation() {
     const amountUSD = toUSD(dcaSettings.amount, dcaSettings.currency);
-    if (dcaSettings.manualAlloc !== null) {
+    if (dcaSettings.manualAlloc != null) {
         const rows = holdings.map(enrich);
         const list = rows.map(r => ({
             r, amtUSD: amountUSD * (dcaSettings.manualAlloc[r.id] ?? 0)
@@ -3752,7 +3752,7 @@ function renderDca() {
     </div>`;
 
     // Allocator
-    const isManual = dcaSettings.manualAlloc !== null;
+    const isManual = dcaSettings.manualAlloc != null; // null or undefined → auto
     const displayList = isManual
         ? holdings.map(enrich).map(r => ({ r, amtUSD: amountUSD * (dcaSettings.manualAlloc[r.id] ?? 0) }))
             .sort((a, b) => b.amtUSD - a.amtUSD)
@@ -3856,7 +3856,7 @@ function setManualAlloc(id, field, rawVal) {
     if (!amountUSD) return;
     const val = parseFloat(rawVal);
     if (isNaN(val) || val < 0) return;
-    if (dcaSettings.manualAlloc === null) {
+    if (dcaSettings.manualAlloc == null) {
         const { list: autoList } = monthlyAllocationAuto();
         dcaSettings.manualAlloc = {};
         autoList.forEach(x => { dcaSettings.manualAlloc[x.r.id] = x.amtUSD / amountUSD; });
@@ -4037,7 +4037,7 @@ async function syncLoad() {
             localStorage.setItem(SETTINGS_KEY, JSON.stringify(insightSettings));
         }
         if (payload.dcaSettings && typeof payload.dcaSettings === 'object') {
-            dcaSettings = { amount: 1000, currency: 'SGD', rate: 7, ...payload.dcaSettings };
+            dcaSettings = { amount: 1000, currency: 'SGD', rate: 7, manualAlloc: null, ...payload.dcaSettings };
             localStorage.setItem(DCA_KEY, JSON.stringify(dcaSettings));
         }
         if (Array.isArray(payload.contribLog)) {
