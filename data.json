@@ -807,10 +807,10 @@
   },
   "contribLog": [],
   "srsAllocSettings": {
-    "amount": 900,
+    "amount": 10000,
     "currency": "SGD",
     "manualAlloc": null
   },
   "srsAllocLog": [],
-  "updatedAt": "2026-06-28T18:30:56.285Z"
+  "updatedAt": "2026-06-28T18:30:58.997Z"
 }
