@@ -3787,11 +3787,13 @@ function renderDca() {
         return `<tr>
         <td style="padding:11px 14px">
             <b>${x.r.ticker}</b>
-            <div style="font-size:11px;color:var(--label2);margin-bottom:4px">${x.r.name}</div>
-            <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">
-                <span class="mkt-pill" style="background:var(--surface2,rgba(127,127,127,0.12));color:var(--label2)">${x.r.type}</span>
-                ${getMarkets(x.r).map(mktPill).join('')}
-            </div>
+            <div style="font-size:11px;color:var(--label2)">${x.r.name}</div>
+        </td>
+        <td style="padding:11px 14px">
+            <span class="mkt-pill" style="background:var(--surface2,rgba(127,127,127,0.12));color:var(--label2)">${x.r.type}</span>
+        </td>
+        <td style="padding:11px 14px">
+            <div style="display:flex;flex-wrap:wrap;gap:3px">${getMarkets(x.r).map(mktPill).join('')}</div>
         </td>
         <td class="r" style="padding:8px 14px">
             <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px">
@@ -3809,7 +3811,7 @@ function renderDca() {
     }).join('');
 
     const footerRow = `<tr style="border-top:2px solid var(--sep)">
-        <td style="padding:10px 14px"><button class="row-btn" onclick="resetManualAlloc()">↺ Clear all</button></td>
+        <td colspan="3" style="padding:10px 14px"><button class="row-btn" onclick="resetManualAlloc()">↺ Clear all</button></td>
         <td class="r" colspan="2" style="padding:10px 14px;font-size:12px;color:${remainingColor};font-weight:600">${remainingLabel}</td>
     </tr>`;
 
@@ -3819,7 +3821,7 @@ function renderDca() {
             <button class="btn btn-primary" style="padding:6px 14px;font-size:13px" onclick="commitPlan()" ${loggedThisMonth ? 'disabled style="padding:6px 14px;font-size:13px;opacity:0.5"' : ''}>${loggedThisMonth ? '✓ Committed' : 'Commit this month'}</button>
         </div>
         <div style="padding:0 22px 6px;font-size:12px;color:var(--label2)">Enter the amount or % you want to invest in each holding this month.</div>
-        ${displayList.length ? `<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th>Holding</th><th class="r">Amount</th><th class="r">Share</th></tr></thead><tbody>${allocRows}${footerRow}</tbody></table>`
+        ${displayList.length ? `<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th>Holding</th><th>Type</th><th>Market</th><th class="r">Amount</th><th class="r">Share</th></tr></thead><tbody>${allocRows}${footerRow}</tbody></table>`
             : `<div class="empty" style="padding:30px 20px"><p>Add holdings to see a suggested split.</p></div>`}
     </div>`;
 
