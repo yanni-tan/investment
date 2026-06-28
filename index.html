@@ -75,6 +75,35 @@
         .watch-hit { background: rgba(34,197,94,0.06); }
         .watch-hit td:first-child::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--green); margin-right:6px; }
 
+        /* ── Performance chart ── */
+        .perf-chart-wrap { position:relative; background:var(--surface); border-radius:var(--radius); padding:24px; margin-bottom:20px; overflow:hidden; }
+        .perf-chart-wrap svg { width:100%; height:auto; display:block; }
+        .perf-tooltip {
+            position:absolute; pointer-events:none; display:none;
+            background:var(--surface2); border:1px solid var(--sep);
+            border-radius:10px; padding:10px 14px; font-size:13px; line-height:1.5;
+            box-shadow:var(--shadow); white-space:nowrap; z-index:10;
+        }
+        .perf-tooltip .tt-date { color:var(--label2); font-size:11px; margin-bottom:4px; }
+        .perf-tooltip .tt-val { font-size:15px; font-weight:600; }
+        .perf-tooltip .tt-gain { font-size:12px; margin-top:2px; }
+        .perf-meta { display:flex; gap:24px; margin-bottom:20px; flex-wrap:wrap; }
+        .perf-meta-item { display:flex; flex-direction:column; gap:2px; }
+        .perf-meta-label { font-size:11px; color:var(--label3); text-transform:uppercase; letter-spacing:.5px; }
+        .perf-meta-value { font-size:18px; font-weight:600; }
+        .perf-meta-sub { font-size:12px; color:var(--label2); }
+        .perf-empty { padding:60px 20px; text-align:center; color:var(--label2); }
+        .perf-empty .empty-icon { font-size:40px; margin-bottom:12px; }
+        .perf-empty h3 { font-size:16px; font-weight:500; margin-bottom:6px; color:var(--label); }
+        .chart-range-chips { display:flex; gap:8px; margin-bottom:20px; }
+        .chart-range-chip {
+            padding:5px 14px; border-radius:20px; border:1px solid var(--sep);
+            font-size:12px; font-weight:500; cursor:pointer; background:transparent; color:var(--label2);
+            transition:all .15s;
+        }
+        .chart-range-chip.active { background:var(--accent); color:#111; border-color:var(--accent); }
+        .chart-range-chip:hover:not(.active) { background:var(--surface2); color:var(--label); }
+
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
@@ -1140,6 +1169,9 @@
         <button class="nav-item" id="realized-nav-btn">
             <span class="nav-dot" style="background:#ef4444"></span>Realized Gains
         </button>
+        <button class="nav-item" id="chart-nav-btn">
+            <span class="nav-dot" style="background:#3b82f6"></span>Performance
+        </button>
         <div class="nav-section" style="margin-top:16px">Plan</div>
         <button class="nav-item" id="dca-nav-btn">
             <span class="nav-dot" style="background:#14b8a6"></span>Monthly Plan
@@ -1227,6 +1259,17 @@
             </div>
         </div>
         <div id="realized-body"></div>
+    </div>
+
+    <!-- ── Performance Chart Panel ── -->
+    <div id="chart-panel" style="display:none">
+        <div class="page-header">
+            <div>
+                <div class="greeting">Performance</div>
+                <div class="greeting-sub">Portfolio value over time</div>
+            </div>
+        </div>
+        <div id="chart-body"></div>
     </div>
 
     <!-- ── ESPP Panel ── -->
@@ -3178,6 +3221,7 @@ function showPanel(which) {
     document.getElementById('srs-panel').style.display = which === 'srs' ? '' : 'none';
     document.getElementById('insights-panel').style.display = which === 'insights' ? '' : 'none';
     document.getElementById('dca-panel').style.display = which === 'dca' ? '' : 'none';
+    document.getElementById('chart-panel').style.display = which === 'chart' ? '' : 'none';
     document.getElementById('watchlist-nav-btn').classList.toggle('active', which === 'watchlist');
     document.getElementById('dividends-nav-btn').classList.toggle('active', which === 'dividends');
     document.getElementById('realized-nav-btn').classList.toggle('active', which === 'realized');
@@ -3185,6 +3229,7 @@ function showPanel(which) {
     document.getElementById('srs-nav-btn').classList.toggle('active', which === 'srs');
     document.getElementById('insights-nav-btn').classList.toggle('active', which === 'insights');
     document.getElementById('dca-nav-btn').classList.toggle('active', which === 'dca');
+    document.getElementById('chart-nav-btn').classList.toggle('active', which === 'chart');
     document.querySelectorAll('.nav-item[data-tab]').forEach(n => n.classList.toggle('active', which === 'dashboard' && n.dataset.tab === tab));
     if (which === 'watchlist') renderWatchlist();
     if (which === 'dividends') renderDividends();
@@ -3193,6 +3238,7 @@ function showPanel(which) {
     if (which === 'srs') renderSrs();
     if (which === 'insights') renderInsights();
     if (which === 'dca') renderDca();
+    if (which === 'chart') renderPerfChart();
 }
 
 const ACTION_COLORS = { Buy: '#22c55e', Sell: '#ef4444', Watch: '#f59e0b' };
@@ -4066,6 +4112,7 @@ document.getElementById('add-watch-btn').addEventListener('click', () => openWat
 document.getElementById('watchlist-nav-btn').addEventListener('click', () => showPanel('watchlist'));
 document.getElementById('insights-nav-btn').addEventListener('click', () => showPanel('insights'));
 document.getElementById('dca-nav-btn').addEventListener('click', () => showPanel('dca'));
+document.getElementById('chart-nav-btn').addEventListener('click', () => showPanel('chart'));
 
 // ── GitHub Sync ──
 const SYNC_REPO  = 'yanni-tan/investment';
@@ -5465,6 +5512,209 @@ document.getElementById('sync-pull-btn').addEventListener('click', async () => {
     if (updated) { render(); if (showingWatchlist) renderWatchlist(); toast('Pulled latest data ✓'); }
     else toast('Already up to date');
 });
+
+// ── Performance Chart ──
+let perfChartRange = 30; // days
+
+function renderPerfChart() {
+    const el = document.getElementById('chart-body');
+    const snaps = loadSnapshots();
+    if (!snaps.length) {
+        el.innerHTML = `<div class="card"><div class="perf-empty">
+            <div class="empty-icon">📈</div>
+            <h3>No history yet</h3>
+            <p>Snapshots are saved automatically each time prices load. Check back tomorrow.</p>
+        </div></div>`;
+        return;
+    }
+
+    const rangeChips = [7, 30, 90].map(d =>
+        `<button class="chart-range-chip ${perfChartRange === d ? 'active' : ''}" onclick="setPerfRange(${d})">${d === 7 ? '1W' : d === 30 ? '1M' : '3M'}</button>`
+    ).join('');
+
+    // Filter to range
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - perfChartRange);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    const pts = snaps.filter(s => s.month >= cutoffStr).sort((a, b) => a.month.localeCompare(b.month));
+
+    if (pts.length < 2) {
+        el.innerHTML = `<div class="chart-range-chips">${rangeChips}</div>
+        <div class="card"><div class="perf-empty">
+            <div class="empty-icon">📉</div>
+            <h3>Not enough data for this range</h3>
+            <p>Only ${pts.length} snapshot${pts.length !== 1 ? 's' : ''} in the last ${perfChartRange} days. Try a shorter range or wait for more data.</p>
+        </div></div>`;
+        return;
+    }
+
+    const fx = fxSGDUSD;
+    const toDisp = usd => displayCur === 'SGD' ? usd / fx : usd;
+    const cur = displayCur;
+
+    const first = pts[0];
+    const last = pts[pts.length - 1];
+    const startVal = toDisp(first.totalUSD);
+    const endVal = toDisp(last.totalUSD);
+    const absChange = endVal - startVal;
+    const pctChange = startVal ? (absChange / startVal) * 100 : 0;
+    const isUp = absChange >= 0;
+
+    // High/low
+    const allVals = pts.map(p => toDisp(p.totalUSD));
+    const minVal = Math.min(...allVals);
+    const maxVal = Math.max(...allVals);
+
+    // SVG dimensions
+    const W = 800, H = 280;
+    const pad = { top: 20, right: 24, bottom: 44, left: 72 };
+    const cw = W - pad.left - pad.right;
+    const ch = H - pad.top - pad.bottom;
+    const n = pts.length;
+
+    const xScale = i => pad.left + (i / (n - 1)) * cw;
+    const valRange = maxVal - minVal || 1;
+    const yPad = valRange * 0.08;
+    const yMin = minVal - yPad, yMax = maxVal + yPad;
+    const yScale = v => pad.top + ch - ((v - yMin) / (yMax - yMin)) * ch;
+
+    // Path
+    const linePts = pts.map((p, i) => `${xScale(i).toFixed(1)},${yScale(toDisp(p.totalUSD)).toFixed(1)}`);
+    const linePath = 'M' + linePts.join('L');
+    const areaPath = linePath + `L${xScale(n - 1).toFixed(1)},${(pad.top + ch).toFixed(1)}L${pad.left.toFixed(1)},${(pad.top + ch).toFixed(1)}Z`;
+
+    // Y-axis labels (4 grid lines)
+    const yTicks = 4;
+    let yLabels = '', yGridLines = '';
+    for (let i = 0; i <= yTicks; i++) {
+        const v = yMin + (yMax - yMin) * (i / yTicks);
+        const y = yScale(v);
+        const label = cur === 'SGD'
+            ? (v >= 1000 ? `S$${(v / 1000).toFixed(1)}k` : `S$${v.toFixed(0)}`)
+            : (v >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$${v.toFixed(0)}`);
+        yGridLines += `<line x1="${pad.left}" y1="${y.toFixed(1)}" x2="${pad.left + cw}" y2="${y.toFixed(1)}" stroke="var(--sep)" stroke-width="1"/>`;
+        yLabels += `<text x="${(pad.left - 8).toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="end" fill="var(--label3)" font-size="11">${label}</text>`;
+    }
+
+    // X-axis date labels (up to 5)
+    let xLabels = '';
+    const xTickCount = Math.min(5, n);
+    const xIndices = Array.from({ length: xTickCount }, (_, i) => Math.round((i / (xTickCount - 1)) * (n - 1)));
+    xIndices.forEach(idx => {
+        const d = new Date(pts[idx].month + 'T00:00:00');
+        const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        xLabels += `<text x="${xScale(idx).toFixed(1)}" y="${(pad.top + ch + 18).toFixed(1)}" text-anchor="middle" fill="var(--label3)" font-size="11">${label}</text>`;
+    });
+
+    const lineColor = isUp ? 'var(--green)' : 'var(--red)';
+    const gradId = 'perfGrad' + (isUp ? 'G' : 'R');
+    const gradColor = isUp ? '#22c55e' : '#ef4444';
+
+    // Dot data for hover (serialised as JSON in data attr)
+    const dotData = pts.map((p, i) => ({
+        x: +xScale(i).toFixed(1),
+        y: +yScale(toDisp(p.totalUSD)).toFixed(1),
+        month: p.month,
+        totalUSD: p.totalUSD,
+        gainUSD: p.gainUSD
+    }));
+
+    const metaHtml = `<div class="perf-meta">
+        <div class="perf-meta-item">
+            <div class="perf-meta-label">Current Value</div>
+            <div class="perf-meta-value">${dmoney(last.totalUSD)}</div>
+        </div>
+        <div class="perf-meta-item">
+            <div class="perf-meta-label">Period Change</div>
+            <div class="perf-meta-value" style="color:${isUp ? 'var(--green)' : 'var(--red)'}">${isUp ? '+' : ''}${dmoney(absChange)}</div>
+            <div class="perf-meta-sub" style="color:${isUp ? 'var(--green)' : 'var(--red)'}">${isUp ? '+' : ''}${pctChange.toFixed(2)}%</div>
+        </div>
+        <div class="perf-meta-item">
+            <div class="perf-meta-label">All-Time Gain</div>
+            <div class="perf-meta-value" style="color:${last.gainUSD >= 0 ? 'var(--green)' : 'var(--red)'}">${last.gainUSD >= 0 ? '+' : ''}${dmoney(last.gainUSD)}</div>
+        </div>
+    </div>`;
+
+    const svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" id="perf-svg"
+        style="cursor:crosshair" data-pts='${JSON.stringify(dotData)}'>
+        <defs>
+            <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="${gradColor}" stop-opacity="0.18"/>
+                <stop offset="100%" stop-color="${gradColor}" stop-opacity="0"/>
+            </linearGradient>
+            <clipPath id="chartClip"><rect x="${pad.left}" y="${pad.top}" width="${cw}" height="${ch}"/></clipPath>
+        </defs>
+        ${yGridLines}
+        <g clip-path="url(#chartClip)">
+            <path d="${areaPath}" fill="url(#${gradId})"/>
+            <path d="${linePath}" fill="none" stroke="${lineColor}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        </g>
+        <line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${pad.top + ch}" stroke="var(--sep)" stroke-width="1"/>
+        <line x1="${pad.left}" y1="${pad.top + ch}" x2="${pad.left + cw}" y2="${pad.top + ch}" stroke="var(--sep)" stroke-width="1"/>
+        ${yLabels}${xLabels}
+        <circle id="perf-dot" cx="-999" cy="-999" r="4" fill="${lineColor}" stroke="var(--surface)" stroke-width="2" style="pointer-events:none"/>
+    </svg>`;
+
+    el.innerHTML = `<div class="chart-range-chips">${rangeChips}</div>
+    ${metaHtml}
+    <div class="perf-chart-wrap">
+        ${svg}
+        <div class="perf-tooltip" id="perf-tooltip"></div>
+    </div>`;
+
+    // Hover interaction
+    const svgEl = document.getElementById('perf-svg');
+    const tip = document.getElementById('perf-tooltip');
+    const dot = document.getElementById('perf-dot');
+    const dpts = JSON.parse(svgEl.dataset.pts);
+
+    svgEl.addEventListener('mousemove', e => {
+        const rect = svgEl.getBoundingClientRect();
+        const svgW = svgEl.viewBox.baseVal.width;
+        const scaleX = svgW / rect.width;
+        const mx = (e.clientX - rect.left) * scaleX;
+
+        // Find closest point
+        let best = 0, bestDist = Infinity;
+        dpts.forEach((p, i) => {
+            const d = Math.abs(p.x - mx);
+            if (d < bestDist) { bestDist = d; best = i; }
+        });
+        const p = dpts[best];
+        dot.setAttribute('cx', p.x);
+        dot.setAttribute('cy', p.y);
+
+        const val = displayCur === 'SGD' ? p.totalUSD / fxSGDUSD : p.totalUSD;
+        const gain = displayCur === 'SGD' ? p.gainUSD / fxSGDUSD : p.gainUSD;
+        const gainSign = gain >= 0 ? '+' : '';
+        const gainColor = gain >= 0 ? 'var(--green)' : 'var(--red)';
+        const d = new Date(p.month + 'T00:00:00');
+        const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+
+        tip.style.display = 'block';
+        tip.innerHTML = `<div class="tt-date">${dateStr}</div>
+            <div class="tt-val">${dmoney(p.totalUSD)}</div>
+            <div class="tt-gain" style="color:${gainColor}">${gainSign}${dmoney(p.gainUSD)} total gain</div>`;
+
+        // Position tooltip: prefer left of cursor, flip right if near edge
+        const tipW = 200;
+        const relX = e.clientX - rect.left;
+        const left = relX + tipW + 16 > rect.width ? relX - tipW - 8 : relX + 16;
+        const relY = e.clientY - rect.top;
+        tip.style.left = left + 'px';
+        tip.style.top = Math.max(0, relY - 20) + 'px';
+    });
+
+    svgEl.addEventListener('mouseleave', () => {
+        tip.style.display = 'none';
+        dot.setAttribute('cx', -999);
+    });
+}
+
+function setPerfRange(days) {
+    perfChartRange = days;
+    renderPerfChart();
+}
 
 init();
 </script>
