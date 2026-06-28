@@ -3638,8 +3638,6 @@ const DCA_KEY = 'portfolio_dca';
 const CONTRIB_KEY = 'portfolio_contributions';
 let dcaSettings = { amount: 1000, currency: 'SGD', rate: 7, manualAlloc: null };
 let contribLog = [];
-function loadDca() {
-
 // ── SRS Planner state ──
 const SRS_ALLOC_KEY = 'srs_alloc';
 const SRS_ALLOC_LOG_KEY = 'srs_alloc_log';
@@ -3769,6 +3767,8 @@ function renderSrsPlanner() {
     </div>`;
     return planCard + logCard;
 }
+
+function loadDca() {
     try { const d = JSON.parse(localStorage.getItem(DCA_KEY)); if (d) dcaSettings = { amount: 1000, currency: 'SGD', rate: 7, manualAlloc: null, ...d }; } catch {}
     try { contribLog = JSON.parse(localStorage.getItem(CONTRIB_KEY)) || []; } catch { contribLog = []; }
 }
