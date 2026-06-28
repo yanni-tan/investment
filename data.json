@@ -781,8 +781,10 @@
     "amount": 1000,
     "currency": "SGD",
     "rate": 7,
-    "manualAlloc": null
+    "manualAlloc": {
+      "a5ai6mouvtemqtorv8l": 1
+    }
   },
   "contribLog": [],
-  "updatedAt": "2026-06-28T17:50:52.915Z"
+  "updatedAt": "2026-06-28T17:50:58.241Z"
 }
