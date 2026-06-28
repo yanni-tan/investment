@@ -408,6 +408,16 @@
       "qty": "",
       "account": "SRS",
       "notes": "Govt, HDB & LTA"
+    },
+    {
+      "id": "y1bzfmrvvumqy20dxw",
+      "ticker": "SMH",
+      "action": "Buy",
+      "name": "VanEck Semiconductor ETF",
+      "targetPrice": "",
+      "qty": 1,
+      "account": "Cash",
+      "notes": "Monthly DCA ~S$190.40"
     }
   ],
   "snapshots": [
@@ -770,8 +780,9 @@
   "dcaSettings": {
     "amount": 1000,
     "currency": "SGD",
-    "rate": 7
+    "rate": 7,
+    "manualAlloc": null
   },
   "contribLog": [],
-  "updatedAt": "2026-06-28T17:02:08.130Z"
+  "updatedAt": "2026-06-28T17:19:39.633Z"
 }
