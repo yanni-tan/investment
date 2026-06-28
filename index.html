@@ -102,9 +102,13 @@
             transition:all .15s;
         }
         .chart-range-chip.active { background:var(--accent); color:#111; border-color:var(--accent); }
-        .chart-range-chip:hover:not(.active) { background:var(--surface2); color:var(--label); }
-
-        /* ── Activity section ── */
+        .perf-legend { display:flex; gap:16px; flex-wrap:wrap; margin-top:14px; margin-bottom:4px; }
+        .perf-legend-item { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--label2); }
+        .perf-legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+        .tt-row { display:flex; align-items:center; gap:6px; font-size:12px; padding:2px 0; }
+        .tt-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+        .tt-rowval { margin-left:auto; font-weight:500; padding-left:12px; }
+        .tt-total { font-size:12px; color:var(--label2); margin-top:6px; padding-top:6px; border-top:1px solid var(--sep); }
         .act-section-title { font-size:13px; font-weight:600; color:var(--label2); text-transform:uppercase; letter-spacing:.5px; margin:28px 0 12px; }
         .act-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-bottom:24px; }
         .act-card { padding:20px 20px 16px; }
@@ -2245,7 +2249,18 @@ function saveSnapshot() {
     const snaps = loadSnapshots();
     const all = holdings.map(enrich);
     const s = calcSummary(all);
-    const entry = { month: day, gainUSD: s.totalGain, totalUSD: s.totalUSD, byMkt: { ...s.byMkt }, costByMkt: { ...s.costByMkt } };
+    const cashHoldings = all.filter(h => (h.account || 'Cash') === 'Cash');
+    const cs = calcSummary(cashHoldings);
+    const srs = srsTotalUSD();
+    const espp = esppTotalUSD();
+    const entry = {
+        month: day,
+        gainUSD: s.totalGain, totalUSD: s.totalUSD,
+        byMkt: { ...s.byMkt }, costByMkt: { ...s.costByMkt },
+        byMktCash: { ...cs.byMkt },
+        srsUSD: srs ? srs.valueUSD : null,
+        esppUSD: espp ? espp.valueUSD : null,
+    };
     const idx = snaps.findIndex(snap => snap.month === day);
     if (idx >= 0) { snaps[idx] = entry; }
     else { snaps.push(entry); if (snaps.length > 90) snaps.shift(); }
@@ -5574,8 +5589,7 @@ function renderPerfChart() {
     const snaps = loadSnapshots();
     if (!snaps.length) {
         el.innerHTML = `<div class="card"><div class="perf-empty">
-            <div class="empty-icon">📈</div>
-            <h3>No history yet</h3>
+            <div class="empty-icon">📈</div><h3>No history yet</h3>
             <p>Snapshots are saved automatically each time prices load. Check back tomorrow.</p>
         </div></div>`;
         return;
@@ -5585,7 +5599,6 @@ function renderPerfChart() {
         `<button class="chart-range-chip ${perfChartRange === d ? 'active' : ''}" onclick="setPerfRange(${d})">${d === 7 ? '1W' : d === 30 ? '1M' : '3M'}</button>`
     ).join('');
 
-    // Filter to range
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - perfChartRange);
     const cutoffStr = cutoff.toISOString().slice(0, 10);
@@ -5594,49 +5607,52 @@ function renderPerfChart() {
     if (pts.length < 2) {
         el.innerHTML = `<div class="chart-range-chips">${rangeChips}</div>
         <div class="card"><div class="perf-empty">
-            <div class="empty-icon">📉</div>
-            <h3>Not enough data for this range</h3>
-            <p>Only ${pts.length} snapshot${pts.length !== 1 ? 's' : ''} in the last ${perfChartRange} days. Try a shorter range or wait for more data.</p>
+            <div class="empty-icon">📉</div><h3>Not enough data for this range</h3>
+            <p>Only ${pts.length} snapshot${pts.length !== 1 ? 's' : ''} in the last ${perfChartRange} days.</p>
         </div></div>`;
         return;
     }
 
     const fx = fxSGDUSD;
-    const toDisp = usd => displayCur === 'SGD' ? usd / fx : usd;
+    const toDisp = usd => (usd == null ? null : displayCur === 'SGD' ? usd / fx : usd);
     const cur = displayCur;
 
-    const first = pts[0];
-    const last = pts[pts.length - 1];
-    const startVal = toDisp(first.totalUSD);
-    const endVal = toDisp(last.totalUSD);
+    const first = pts[0], last = pts[pts.length - 1];
+    const startVal = toDisp(first.totalUSD), endVal = toDisp(last.totalUSD);
     const absChange = endVal - startVal;
     const pctChange = startVal ? (absChange / startVal) * 100 : 0;
     const isUp = absChange >= 0;
+    const n = pts.length;
 
-    // High/low
-    const allVals = pts.map(p => toDisp(p.totalUSD));
-    const minVal = Math.min(...allVals);
-    const maxVal = Math.max(...allVals);
+    // ── Series definition ──
+    const SERIES = [
+        { key: 'us',   label: '🇺🇸 US',       color: '#3b82f6', getVal: p => toDisp(p.byMktCash?.US ?? p.byMkt?.US ?? null) },
+        { key: 'sg',   label: '🇸🇬 SG',       color: '#8b5cf6', getVal: p => toDisp(p.byMktCash?.SG ?? p.byMkt?.SG ?? null) },
+        { key: 'espp', label: '🍎 ESPP',      color: '#f59e0b', getVal: p => toDisp(p.esppUSD ?? null) },
+        { key: 'srs',  label: 'SRS',          color: '#14b8a6', getVal: p => toDisp(p.srsUSD ?? null) },
+    ].filter(s => pts.some(p => s.getVal(p) !== null));
+
+    // Compute values per series per point
+    const seriesVals = SERIES.map(s => pts.map(p => s.getVal(p)));
+
+    // Y range across all series
+    const allSeriesVals = seriesVals.flat().filter(v => v !== null);
+    const minVal = Math.min(...allSeriesVals);
+    const maxVal = Math.max(...allSeriesVals);
 
     // SVG dimensions
     const W = 800, H = 280;
     const pad = { top: 20, right: 24, bottom: 44, left: 72 };
     const cw = W - pad.left - pad.right;
     const ch = H - pad.top - pad.bottom;
-    const n = pts.length;
 
     const xScale = i => pad.left + (i / (n - 1)) * cw;
     const valRange = maxVal - minVal || 1;
-    const yPad = valRange * 0.08;
+    const yPad = valRange * 0.1;
     const yMin = minVal - yPad, yMax = maxVal + yPad;
     const yScale = v => pad.top + ch - ((v - yMin) / (yMax - yMin)) * ch;
 
-    // Path
-    const linePts = pts.map((p, i) => `${xScale(i).toFixed(1)},${yScale(toDisp(p.totalUSD)).toFixed(1)}`);
-    const linePath = 'M' + linePts.join('L');
-    const areaPath = linePath + `L${xScale(n - 1).toFixed(1)},${(pad.top + ch).toFixed(1)}L${pad.left.toFixed(1)},${(pad.top + ch).toFixed(1)}Z`;
-
-    // Y-axis labels (4 grid lines)
+    // Grid lines + y labels
     const yTicks = 4;
     let yLabels = '', yGridLines = '';
     for (let i = 0; i <= yTicks; i++) {
@@ -5649,28 +5665,43 @@ function renderPerfChart() {
         yLabels += `<text x="${(pad.left - 8).toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="end" fill="var(--label3)" font-size="11">${label}</text>`;
     }
 
-    // X-axis date labels (up to 5)
+    // X labels
     let xLabels = '';
     const xTickCount = Math.min(5, n);
-    const xIndices = Array.from({ length: xTickCount }, (_, i) => Math.round((i / (xTickCount - 1)) * (n - 1)));
-    xIndices.forEach(idx => {
+    Array.from({ length: xTickCount }, (_, i) => Math.round((i / (xTickCount - 1)) * (n - 1))).forEach(idx => {
         const d = new Date(pts[idx].month + 'T00:00:00');
-        const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        xLabels += `<text x="${xScale(idx).toFixed(1)}" y="${(pad.top + ch + 18).toFixed(1)}" text-anchor="middle" fill="var(--label3)" font-size="11">${label}</text>`;
+        xLabels += `<text x="${xScale(idx).toFixed(1)}" y="${(pad.top + ch + 18).toFixed(1)}" text-anchor="middle" fill="var(--label3)" font-size="11">${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</text>`;
     });
 
-    const lineColor = isUp ? 'var(--green)' : 'var(--red)';
-    const gradId = 'perfGrad' + (isUp ? 'G' : 'R');
-    const gradColor = isUp ? '#22c55e' : '#ef4444';
+    // Draw lines per series (skip null gaps)
+    let linePaths = '';
+    seriesVals.forEach((vals, si) => {
+        let d = '';
+        vals.forEach((v, i) => {
+            if (v === null) return;
+            const x = xScale(i).toFixed(1), y = yScale(v).toFixed(1);
+            d += (d === '' || vals[i - 1] === null) ? `M${x},${y}` : `L${x},${y}`;
+        });
+        if (d) linePaths += `<path d="${d}" fill="none" stroke="${SERIES[si].color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>`;
+    });
 
-    // Dot data for hover (serialised as JSON in data attr)
-    const dotData = pts.map((p, i) => ({
-        x: +xScale(i).toFixed(1),
-        y: +yScale(toDisp(p.totalUSD)).toFixed(1),
-        month: p.month,
-        totalUSD: p.totalUSD,
-        gainUSD: p.gainUSD
-    }));
+    // Hover dots (one per series)
+    const hoverDots = SERIES.map((s, si) =>
+        `<circle id="pdot-${si}" cx="-999" cy="-999" r="4" fill="${s.color}" stroke="var(--surface)" stroke-width="2" style="pointer-events:none"/>`
+    ).join('');
+
+    // Hairline
+    const hairline = `<line id="perf-hair" x1="-999" y1="${pad.top}" x2="-999" y2="${pad.top + ch}" stroke="var(--sep)" stroke-width="1" style="pointer-events:none"/>`;
+
+    // Hover data JSON
+    const dotData = pts.map((p, i) => {
+        const obj = { x: +xScale(i).toFixed(1), month: p.month, totalUSD: p.totalUSD, gainUSD: p.gainUSD };
+        SERIES.forEach((s, si) => { obj[s.key] = seriesVals[si][i]; });
+        return obj;
+    });
+
+    // Legend
+    const legend = `<div class="perf-legend">${SERIES.map(s => `<span class="perf-legend-item"><span class="perf-legend-dot" style="background:${s.color}"></span>${s.label}</span>`).join('')}</div>`;
 
     const metaHtml = `<div class="perf-meta">
         <div class="perf-meta-item">
@@ -5690,103 +5721,14 @@ function renderPerfChart() {
 
     const svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" id="perf-svg"
         style="cursor:crosshair" data-pts='${JSON.stringify(dotData)}'>
-        <defs>
-            <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="${gradColor}" stop-opacity="0.18"/>
-                <stop offset="100%" stop-color="${gradColor}" stop-opacity="0"/>
-            </linearGradient>
-            <clipPath id="chartClip"><rect x="${pad.left}" y="${pad.top}" width="${cw}" height="${ch}"/></clipPath>
-        </defs>
+        <defs><clipPath id="chartClip"><rect x="${pad.left}" y="${pad.top}" width="${cw}" height="${ch}"/></clipPath></defs>
         ${yGridLines}
-        <g clip-path="url(#chartClip)">
-            <path d="${areaPath}" fill="url(#${gradId})"/>
-            <path d="${linePath}" fill="none" stroke="${lineColor}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-        </g>
+        <g clip-path="url(#chartClip)">${linePaths}</g>
         <line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${pad.top + ch}" stroke="var(--sep)" stroke-width="1"/>
         <line x1="${pad.left}" y1="${pad.top + ch}" x2="${pad.left + cw}" y2="${pad.top + ch}" stroke="var(--sep)" stroke-width="1"/>
         ${yLabels}${xLabels}
-        <circle id="perf-dot" cx="-999" cy="-999" r="4" fill="${lineColor}" stroke="var(--surface)" stroke-width="2" style="pointer-events:none"/>
+        ${hairline}${hoverDots}
     </svg>`;
-
-    // ── Activity data from log ──
-    const logInRange = activityLog
-        .filter(e => e.date && e.date >= cutoffStr)
-        .sort((a, b) => b.date.localeCompare(a.date));
-
-    const markets = ['US', 'SG', 'UK'];
-    const mktLabel = { US: '🇺🇸 US Stocks', SG: '🇸🇬 SG Stocks', UK: '🇬🇧 UK Stocks' };
-    const mktCur = { US: 'USD', SG: 'SGD', UK: 'GBP' };
-    const mktSym = { USD: '$', SGD: 'S$', GBP: '£' };
-
-    const fmtNative = (val, nc) => {
-        const sym = mktSym[nc] || '$';
-        return `${sym}${Math.abs(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    };
-    const fmtShares = n => Math.abs(n) % 1 === 0 ? Math.abs(n).toString() : Math.abs(n).toFixed(4).replace(/\.?0+$/, '');
-    const fmtDate = s => { const d = new Date(s + 'T00:00:00'); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
-
-    const activityCards = markets.map(mkt => {
-        const entries = logInRange.filter(e => (e.market || 'US') === mkt);
-        if (!entries.length) return '';
-        const nc = mktCur[mkt];
-
-        const rows = entries.map(e => {
-            const delta = e.sharesAfter - e.sharesBefore;
-            const isBuy = delta > 0;
-            const isSell = delta < 0;
-            const isAdjust = delta === 0;
-            const color = isBuy ? 'var(--green)' : isSell ? 'var(--red)' : 'var(--label3)';
-            const sign = isBuy ? '+' : isSell ? '−' : '±';
-            const label = isBuy ? 'Bought' : isSell ? 'Sold' : 'Adjusted';
-            const priceStr = e.pricePerShare != null ? ` @ ${fmtNative(e.pricePerShare, nc)}` : '';
-            const totalCost = e.pricePerShare != null ? Math.abs(delta) * e.pricePerShare : null;
-            const sharesChange = isAdjust
-                ? `${fmtShares(e.sharesBefore)} → ${fmtShares(e.sharesAfter)} shares`
-                : `${sign}${fmtShares(delta)} shares`;
-            const costChange = e.avgCostBefore !== e.avgCostAfter
-                ? `avg cost ${fmtNative(e.avgCostBefore, nc)} → ${fmtNative(e.avgCostAfter, nc)}`
-                : '';
-
-            return `<div class="act-row2">
-                <div class="act-row2-left">
-                    <span class="act-date">${fmtDate(e.date)}</span>
-                    <span class="act-badge" style="background:${isBuy ? 'rgba(34,197,94,0.12)' : isSell ? 'rgba(239,68,68,0.12)' : 'var(--surface2)'}; color:${color}">${label}</span>
-                    <span class="act-ticker">${e.ticker}</span>
-                </div>
-                <div class="act-row2-right">
-                    <span style="color:${color};font-weight:500">${sharesChange}${priceStr}</span>
-                    ${totalCost != null ? `<span class="act-total-inline">${fmtNative(totalCost, nc)}</span>` : ''}
-                    ${costChange ? `<span class="act-cost-change">${costChange}</span>` : ''}
-                </div>
-            </div>`;
-        }).join('');
-
-        const buyEntries = entries.filter(e => e.sharesAfter > e.sharesBefore);
-        const sellEntries = entries.filter(e => e.sharesAfter < e.sharesBefore);
-        const buyShares = buyEntries.reduce((s, e) => s + (e.sharesAfter - e.sharesBefore), 0);
-        const sellShares = sellEntries.reduce((s, e) => s + (e.sharesBefore - e.sharesAfter), 0);
-        const buyCost = buyEntries.reduce((s, e) => s + (e.pricePerShare != null ? (e.sharesAfter - e.sharesBefore) * e.pricePerShare : 0), 0);
-        const sellProceeds = sellEntries.reduce((s, e) => s + (e.pricePerShare != null ? (e.sharesBefore - e.sharesAfter) * e.pricePerShare : 0), 0);
-
-        const summary = `<div class="act-summary2">
-            ${buyEntries.length ? `<span class="act-sum-chip green">▲ ${fmtShares(buyShares)} bought · ${fmtNative(buyCost, nc)}</span>` : ''}
-            ${sellEntries.length ? `<span class="act-sum-chip red">▼ ${fmtShares(sellShares)} sold · ${fmtNative(sellProceeds, nc)}</span>` : ''}
-        </div>`;
-
-        return `<div class="card act-card">
-            <div class="act-market-header">${mktLabel[mkt]}</div>
-            ${rows}
-            ${summary}
-        </div>`;
-    }).filter(Boolean).join('');
-
-    const activityHtml = activityCards
-        ? `<div class="act-section-title">Activity in this period</div>
-           <div class="act-grid">${activityCards}</div>`
-        : `<div class="act-section-title">Activity in this period</div>
-           <div class="card"><div class="perf-empty" style="padding:32px 20px">
-               <p style="color:var(--label3);font-size:14px">No changes recorded in this period.</p>
-           </div></div>`;
 
     el.innerHTML = `<div class="chart-range-chips">${rangeChips}</div>
     ${metaHtml}
@@ -5794,50 +5736,60 @@ function renderPerfChart() {
         ${svg}
         <div class="perf-tooltip" id="perf-tooltip"></div>
     </div>
-    ${activityHtml}`;
+    ${legend}`;
 
     // Hover interaction
     const svgEl = document.getElementById('perf-svg');
     const tip = document.getElementById('perf-tooltip');
-    const dot = document.getElementById('perf-dot');
+    const hair = document.getElementById('perf-hair');
+    const dots = SERIES.map((_, si) => document.getElementById(`pdot-${si}`));
     const dpts = JSON.parse(svgEl.dataset.pts);
 
     svgEl.addEventListener('mousemove', e => {
         const rect = svgEl.getBoundingClientRect();
-        const svgW = svgEl.viewBox.baseVal.width;
-        const scaleX = svgW / rect.width;
+        const scaleX = svgEl.viewBox.baseVal.width / rect.width;
         const mx = (e.clientX - rect.left) * scaleX;
 
         let best = 0, bestDist = Infinity;
-        dpts.forEach((p, i) => {
-            const d = Math.abs(p.x - mx);
-            if (d < bestDist) { bestDist = d; best = i; }
-        });
+        dpts.forEach((p, i) => { const d = Math.abs(p.x - mx); if (d < bestDist) { bestDist = d; best = i; } });
         const p = dpts[best];
-        dot.setAttribute('cx', p.x);
-        dot.setAttribute('cy', p.y);
+
+        hair.setAttribute('x1', p.x); hair.setAttribute('x2', p.x);
+        dots.forEach((dot, si) => {
+            const v = p[SERIES[si].key];
+            if (v !== null && v !== undefined) {
+                dot.setAttribute('cx', p.x);
+                dot.setAttribute('cy', yScale(v).toFixed(1));
+            } else {
+                dot.setAttribute('cx', -999);
+            }
+        });
+
+        const dateStr = new Date(p.month + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        const rows = SERIES.map(s => {
+            const v = p[s.key];
+            if (v == null) return '';
+            return `<div class="tt-row"><span class="tt-dot" style="background:${s.color}"></span><span>${s.label}</span><span class="tt-rowval">${dmoney(v / (displayCur === 'SGD' ? 1 : fx) * (displayCur === 'SGD' ? 1 / fx * fx : 1))}</span></div>`;
+        }).join('');
 
         const gainSign = p.gainUSD >= 0 ? '+' : '';
         const gainColor = p.gainUSD >= 0 ? 'var(--green)' : 'var(--red)';
-        const d = new Date(p.month + 'T00:00:00');
-        const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 
         tip.style.display = 'block';
         tip.innerHTML = `<div class="tt-date">${dateStr}</div>
-            <div class="tt-val">${dmoney(p.totalUSD)}</div>
-            <div class="tt-gain" style="color:${gainColor}">${gainSign}${dmoney(p.gainUSD)} total gain</div>`;
+            ${rows}
+            <div class="tt-total">${dmoney(p.totalUSD)} total &nbsp;<span style="color:${gainColor}">${gainSign}${dmoney(p.gainUSD)}</span></div>`;
 
-        const tipW = 200;
+        const tipW = 220;
         const relX = e.clientX - rect.left;
-        const left = relX + tipW + 16 > rect.width ? relX - tipW - 8 : relX + 16;
-        const relY = e.clientY - rect.top;
-        tip.style.left = left + 'px';
-        tip.style.top = Math.max(0, relY - 20) + 'px';
+        tip.style.left = (relX + tipW + 16 > rect.width ? relX - tipW - 8 : relX + 16) + 'px';
+        tip.style.top = Math.max(0, e.clientY - rect.top - 20) + 'px';
     });
 
     svgEl.addEventListener('mouseleave', () => {
         tip.style.display = 'none';
-        dot.setAttribute('cx', -999);
+        hair.setAttribute('x1', -999); hair.setAttribute('x2', -999);
+        dots.forEach(d => d.setAttribute('cx', -999));
     });
 }
 
