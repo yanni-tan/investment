@@ -781,18 +781,8 @@
     "amount": 1000,
     "currency": "SGD",
     "rate": 7,
-    "manualAlloc": {
-      "m331x1l1l8mqovkw3s": 0,
-      "a5ai6mouvtemqtorv8l": 0.5,
-      "wkk7vtoidbmqovrsxc": 0,
-      "4fp0ikck9jomqs7vy5g": 0,
-      "npcpo1kt4ikmqovskq8": 0,
-      "rhinml0lo3fmqovitd2": 0.10524499004509145,
-      "9h2pd5ui8lqmqovpxnd": 0.05300055633417962,
-      "05sj4wbsax6rmqs6vjtb": 0.5,
-      "rfwf8osbny9mqovmc03": 0.00651867875752559
-    }
+    "manualAlloc": null
   },
   "contribLog": [],
-  "updatedAt": "2026-06-28T17:25:31.687Z"
+  "updatedAt": "2026-06-28T17:50:52.915Z"
 }
