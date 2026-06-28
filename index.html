@@ -3656,7 +3656,7 @@ const cmoney = (usd) => money(toCur(usd, dcaSettings.currency), dcaSettings.curr
 // Auto-allocation: split monthly contribution toward goals / current weights. Returns [{r, amtUSD}].
 function monthlyAllocationAuto() {
     const amountUSD = toUSD(dcaSettings.amount, dcaSettings.currency);
-    const rows = holdings.map(enrich);
+    const rows = holdings.map(enrich).filter(r => (r.account || 'Cash') !== 'SRS');
     const total = rows.reduce((s, r) => s + toUSD(r.value ?? r.costBasis, r.currency), 0);
     if (!rows.length || amountUSD <= 0) return { list: [], hasGoals: false };
     const targets = (allocTargets.all && allocTargets.all.holding) || {};
@@ -3682,7 +3682,7 @@ function monthlyAllocationAuto() {
 function monthlyAllocation() {
     const amountUSD = toUSD(dcaSettings.amount, dcaSettings.currency);
     if (dcaSettings.manualAlloc != null) {
-        const rows = holdings.map(enrich);
+        const rows = holdings.map(enrich).filter(r => (r.account || 'Cash') !== 'SRS');
         const list = rows.map(r => ({
             r, amtUSD: amountUSD * (dcaSettings.manualAlloc[r.id] ?? 0)
         })).sort((a, b) => b.amtUSD - a.amtUSD);
@@ -3754,7 +3754,7 @@ function renderDca() {
     // Allocator
     const isManual = dcaSettings.manualAlloc != null; // null or undefined → auto
     const displayList = isManual
-        ? holdings.map(enrich).map(r => ({ r, amtUSD: amountUSD * (dcaSettings.manualAlloc[r.id] ?? 0) }))
+        ? holdings.map(enrich).filter(r => (r.account || 'Cash') !== 'SRS').map(r => ({ r, amtUSD: amountUSD * (dcaSettings.manualAlloc[r.id] ?? 0) }))
             .sort((a, b) => b.amtUSD - a.amtUSD)
         : list;
     const totalAllocUSD = displayList.reduce((s, x) => s + x.amtUSD, 0);
