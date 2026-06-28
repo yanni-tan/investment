@@ -104,6 +104,27 @@
         .chart-range-chip.active { background:var(--accent); color:#111; border-color:var(--accent); }
         .chart-range-chip:hover:not(.active) { background:var(--surface2); color:var(--label); }
 
+        /* ── Activity section ── */
+        .act-section-title { font-size:13px; font-weight:600; color:var(--label2); text-transform:uppercase; letter-spacing:.5px; margin:28px 0 12px; }
+        .act-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-bottom:24px; }
+        .act-card { padding:20px 20px 16px; }
+        .act-market-header { font-size:14px; font-weight:600; margin-bottom:14px; }
+        .act-section-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.6px; padding:4px 0 8px; border-bottom:1px solid var(--sep); margin-bottom:8px; }
+        .act-buy-label { color:var(--green); }
+        .act-sell-label { color:var(--red); }
+        .act-row { display:grid; grid-template-columns:44px 1fr auto; align-items:baseline; gap:4px 10px; padding:5px 0; border-bottom:1px solid var(--sep); font-size:13px; }
+        .act-row:last-of-type { border-bottom:none; }
+        .act-date { color:var(--label3); font-size:11px; white-space:nowrap; }
+        .act-ticker { font-weight:600; font-size:13px; }
+        .act-detail { color:var(--label2); font-size:12px; grid-column:2; }
+        .act-total { font-size:13px; text-align:right; white-space:nowrap; }
+        .act-gl { font-size:11px; text-align:right; grid-column:3; white-space:nowrap; }
+        .act-summary { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:10px; padding:8px 10px; background:var(--surface2); border-radius:8px; font-size:12px; color:var(--label2); }
+        .act-buy-sum { border-left:2px solid var(--green); }
+        .act-sell-sum { border-left:2px solid var(--red); }
+        .act-sum-total { font-weight:500; color:var(--label); }
+        .act-sum-gl { font-weight:600; margin-left:auto; }
+
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
@@ -5655,12 +5676,108 @@ function renderPerfChart() {
         <circle id="perf-dot" cx="-999" cy="-999" r="4" fill="${lineColor}" stroke="var(--surface)" stroke-width="2" style="pointer-events:none"/>
     </svg>`;
 
+    // ── Activity data ──
+    // Buys: flatten holdings[].buys[], decorate with ticker/market/currency, filter by cutoffStr
+    const allBuys = holdings.flatMap(h =>
+        (h.buys || [])
+            .filter(b => b.date && b.date >= cutoffStr)
+            .map(b => ({ date: b.date, ticker: h.ticker, name: h.name, market: h.market || 'US', currency: h.currency || 'USD', shares: b.shares, price: b.price, total: b.shares * b.price }))
+    ).sort((a, b) => b.date.localeCompare(a.date));
+
+    // Sells: filter realized by sellDate >= cutoffStr
+    const allSells = realized
+        .filter(r => r.sellDate && r.sellDate >= cutoffStr)
+        .map(r => ({ date: r.sellDate, ticker: r.ticker, name: r.name, market: r.market || 'US', currency: r.currency || 'USD', shares: r.shares, price: r.sellPrice, total: r.shares * r.sellPrice, gainLoss: r.gainLoss }))
+        .sort((a, b) => b.date.localeCompare(a.date));
+
+    const markets = ['US', 'SG', 'UK'];
+    const mktLabel = { US: '🇺🇸 US Stocks', SG: '🇸🇬 SG Stocks', UK: '🇬🇧 UK Stocks' };
+    const mktCur = { US: 'USD', SG: 'SGD', UK: 'GBP' };
+    const mktSym = { USD: '$', SGD: 'S$', GBP: '£' };
+
+    const fmtNative = (val, cur) => {
+        const sym = mktSym[cur] || '$';
+        return `${sym}${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    };
+    const fmtShares = n => n % 1 === 0 ? n.toString() : n.toFixed(4).replace(/\.?0+$/, '');
+    const fmtDate = s => { const d = new Date(s + 'T00:00:00'); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
+
+    const activityCards = markets.map(mkt => {
+        const buys = allBuys.filter(b => b.market === mkt);
+        const sells = allSells.filter(s => s.market === mkt);
+        if (!buys.length && !sells.length) return '';
+        const nc = mktCur[mkt];
+
+        const buyTotalShares = buys.reduce((s, b) => s + b.shares, 0);
+        const buyTotalCost = buys.reduce((s, b) => s + b.total, 0);
+        const sellTotalShares = sells.reduce((s, b) => s + b.shares, 0);
+        const sellTotalProceeds = sells.reduce((s, b) => s + b.total, 0);
+        const sellTotalGL = sells.reduce((s, b) => s + (b.gainLoss || 0), 0);
+
+        const buyRows = buys.map(b => `
+            <div class="act-row">
+                <span class="act-date">${fmtDate(b.date)}</span>
+                <span class="act-ticker">${b.ticker}</span>
+                <span class="act-detail">+${fmtShares(b.shares)} shares @ ${fmtNative(b.price, nc)}</span>
+                <span class="act-total">${fmtNative(b.total, nc)}</span>
+            </div>`).join('');
+
+        const sellRows = sells.map(s => {
+            const glColor = s.gainLoss >= 0 ? 'var(--green)' : 'var(--red)';
+            const glSign = s.gainLoss >= 0 ? '+' : '';
+            return `<div class="act-row">
+                <span class="act-date">${fmtDate(s.date)}</span>
+                <span class="act-ticker">${s.ticker}</span>
+                <span class="act-detail">−${fmtShares(s.shares)} shares @ ${fmtNative(s.price, nc)}</span>
+                <span class="act-total">${fmtNative(s.total, nc)}</span>
+                <span class="act-gl" style="color:${glColor}">${glSign}${fmtNative(s.gainLoss, nc)}</span>
+            </div>`;
+        }).join('');
+
+        const buySummary = buys.length ? `<div class="act-summary act-buy-sum">
+            <span>Bought</span>
+            <span>${fmtShares(buyTotalShares)} shares</span>
+            <span class="act-sum-total">${fmtNative(buyTotalCost, nc)} total cost</span>
+        </div>` : '';
+
+        const sellSummary = sells.length ? `<div class="act-summary act-sell-sum">
+            <span>Sold</span>
+            <span>${fmtShares(sellTotalShares)} shares</span>
+            <span class="act-sum-total">${fmtNative(sellTotalProceeds, nc)} proceeds</span>
+            <span class="act-sum-gl" style="color:${sellTotalGL >= 0 ? 'var(--green)' : 'var(--red)'}">${sellTotalGL >= 0 ? '+' : ''}${fmtNative(sellTotalGL, nc)} P&L</span>
+        </div>` : '';
+
+        const buySection = buys.length ? `
+            <div class="act-section-label act-buy-label">Buys</div>
+            ${buyRows}
+            ${buySummary}` : '';
+
+        const sellSection = sells.length ? `
+            <div class="act-section-label act-sell-label" style="margin-top:${buys.length ? 16 : 0}px">Sells</div>
+            ${sellRows}
+            ${sellSummary}` : '';
+
+        return `<div class="card act-card">
+            <div class="act-market-header">${mktLabel[mkt]}</div>
+            ${buySection}${sellSection}
+        </div>`;
+    }).filter(Boolean).join('');
+
+    const activityHtml = activityCards
+        ? `<div class="act-section-title">Activity in this period</div>
+           <div class="act-grid">${activityCards}</div>`
+        : `<div class="act-section-title">Activity in this period</div>
+           <div class="card"><div class="perf-empty" style="padding:32px 20px">
+               <p style="color:var(--label3);font-size:14px">No buys or sells recorded in this period.</p>
+           </div></div>`;
+
     el.innerHTML = `<div class="chart-range-chips">${rangeChips}</div>
     ${metaHtml}
     <div class="perf-chart-wrap">
         ${svg}
         <div class="perf-tooltip" id="perf-tooltip"></div>
-    </div>`;
+    </div>
+    ${activityHtml}`;
 
     // Hover interaction
     const svgEl = document.getElementById('perf-svg');
@@ -5674,7 +5791,6 @@ function renderPerfChart() {
         const scaleX = svgW / rect.width;
         const mx = (e.clientX - rect.left) * scaleX;
 
-        // Find closest point
         let best = 0, bestDist = Infinity;
         dpts.forEach((p, i) => {
             const d = Math.abs(p.x - mx);
@@ -5684,10 +5800,8 @@ function renderPerfChart() {
         dot.setAttribute('cx', p.x);
         dot.setAttribute('cy', p.y);
 
-        const val = displayCur === 'SGD' ? p.totalUSD / fxSGDUSD : p.totalUSD;
-        const gain = displayCur === 'SGD' ? p.gainUSD / fxSGDUSD : p.gainUSD;
-        const gainSign = gain >= 0 ? '+' : '';
-        const gainColor = gain >= 0 ? 'var(--green)' : 'var(--red)';
+        const gainSign = p.gainUSD >= 0 ? '+' : '';
+        const gainColor = p.gainUSD >= 0 ? 'var(--green)' : 'var(--red)';
         const d = new Date(p.month + 'T00:00:00');
         const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 
@@ -5696,7 +5810,6 @@ function renderPerfChart() {
             <div class="tt-val">${dmoney(p.totalUSD)}</div>
             <div class="tt-gain" style="color:${gainColor}">${gainSign}${dmoney(p.gainUSD)} total gain</div>`;
 
-        // Position tooltip: prefer left of cursor, flip right if near edge
         const tipW = 200;
         const relX = e.clientX - rect.left;
         const left = relX + tipW + 16 > rect.width ? relX - tipW - 8 : relX + 16;
