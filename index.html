@@ -3785,21 +3785,19 @@ function renderDca() {
                 <span style="font-size:11px;color:var(--label2)">%</span>
             </div>
         </td>
-        <td class="r" style="padding:8px 14px"><button class="row-btn" onclick="planContribution('${x.r.id}', ${x.amtUSD})">→ Plan</button></td>
     </tr>`;
     }).join('');
 
     const footerRow = `<tr style="border-top:2px solid var(--sep)">
         <td style="padding:10px 14px">${isManual ? `<button class="row-btn" onclick="resetManualAlloc()">↺ Reset to auto</button>` : ''}</td>
         <td class="r" colspan="2" style="padding:10px 14px;font-size:12px;color:${remainingColor};font-weight:600">${remainingLabel}</td>
-        <td></td>
     </tr>`;
 
     const allocHtml = `<div class="card" style="margin-bottom:20px">
         <div class="card-header"><h2>This Month's ${money(dcaSettings.amount, dcaSettings.currency)}</h2>
             <span class="count-badge">${isManual ? 'custom split' : hasGoals ? 'toward your goals' : 'by current weights'}</span></div>
         <div style="padding:0 22px 6px;font-size:12px;color:var(--label2)">${isManual ? 'Manually allocated — edit any amount or % to adjust. Editing one field updates the other.' : hasGoals ? 'Split to move you toward your Allocation Goals (set in Insights).' : 'No goals set — splitting by current weights. Set Allocation Goals in Insights for smarter splits.'}</div>
-        ${displayList.length ? `<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th>Holding</th><th class="r">Amount</th><th class="r">Share</th><th class="r">Plan</th></tr></thead><tbody>${allocRows}${footerRow}</tbody></table>`
+        ${displayList.length ? `<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th>Holding</th><th class="r">Amount</th><th class="r">Share</th></tr></thead><tbody>${allocRows}${footerRow}</tbody></table>`
             : `<div class="empty" style="padding:30px 20px"><p>Add holdings to see a suggested split.</p></div>`}
     </div>`;
 
