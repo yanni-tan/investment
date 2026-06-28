@@ -810,9 +810,10 @@
     "amount": 10000,
     "currency": "SGD",
     "manualAlloc": {
-      "10ojt3lst0whmqtox4v4": 0.7
+      "10ojt3lst0whmqtox4v4": 0.7,
+      "mbjf9qaas7amqtoy4mo": 0.2
     }
   },
   "srsAllocLog": [],
-  "updatedAt": "2026-06-28T18:31:07.388Z"
+  "updatedAt": "2026-06-28T18:31:12.238Z"
 }
