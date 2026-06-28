@@ -3636,10 +3636,10 @@ function renderInsights() {
 // ── Monthly Plan (DCA): contribution amount, allocation, projection, tracker ──
 const DCA_KEY = 'portfolio_dca';
 const CONTRIB_KEY = 'portfolio_contributions';
-let dcaSettings = { amount: 1000, currency: 'SGD', rate: 7 };
+let dcaSettings = { amount: 1000, currency: 'SGD', rate: 7, manualAlloc: null };
 let contribLog = [];
 function loadDca() {
-    try { const d = JSON.parse(localStorage.getItem(DCA_KEY)); if (d) dcaSettings = { amount: 1000, currency: 'SGD', rate: 7, ...d }; } catch {}
+    try { const d = JSON.parse(localStorage.getItem(DCA_KEY)); if (d) dcaSettings = { amount: 1000, currency: 'SGD', rate: 7, manualAlloc: null, ...d }; } catch {}
     try { contribLog = JSON.parse(localStorage.getItem(CONTRIB_KEY)) || []; } catch { contribLog = []; }
 }
 function saveDca() { localStorage.setItem(DCA_KEY, JSON.stringify(dcaSettings)); syncSave(); }
@@ -3653,9 +3653,8 @@ function setDca(field, val) {
 function toCur(usd, cur) { return cur === 'SGD' ? usd / fxSGDUSD : cur === 'GBP' ? usd / fxGBPUSD : usd; }
 const cmoney = (usd) => money(toCur(usd, dcaSettings.currency), dcaSettings.currency);
 
-// Split this month's contribution across holdings to move toward Allocation Goals
-// (falls back to current weights if no goals set). Returns [{r, amtUSD}] sorted desc.
-function monthlyAllocation() {
+// Auto-allocation: split monthly contribution toward goals / current weights. Returns [{r, amtUSD}].
+function monthlyAllocationAuto() {
     const amountUSD = toUSD(dcaSettings.amount, dcaSettings.currency);
     const rows = holdings.map(enrich);
     const total = rows.reduce((s, r) => s + toUSD(r.value ?? r.costBasis, r.currency), 0);
@@ -3677,6 +3676,19 @@ function monthlyAllocation() {
     const list = gaps.map(g => ({ r: g.r, amtUSD: gapSum > 0 ? amountUSD * g.gap / gapSum : amountUSD * g.w }))
         .filter(x => x.amtUSD > 0.5).sort((a, b) => b.amtUSD - a.amtUSD);
     return { list, hasGoals };
+}
+
+// Split this month's contribution — uses manual overrides if set, else auto.
+function monthlyAllocation() {
+    const amountUSD = toUSD(dcaSettings.amount, dcaSettings.currency);
+    if (dcaSettings.manualAlloc !== null) {
+        const rows = holdings.map(enrich);
+        const list = rows.map(r => ({
+            r, amtUSD: amountUSD * (dcaSettings.manualAlloc[r.id] ?? 0)
+        })).sort((a, b) => b.amtUSD - a.amtUSD);
+        return { list, hasGoals: false, isManual: true };
+    }
+    return monthlyAllocationAuto();
 }
 
 // Future value: current portfolio compounded + monthly contributions (annuity).
@@ -3714,7 +3726,7 @@ function renderDca() {
     const el = document.getElementById('dca-body');
     if (!el) return;
     const { list, hasGoals } = monthlyAllocation();
-
+    const amountUSD = toUSD(dcaSettings.amount, dcaSettings.currency);
     const year = new Date().getFullYear().toString();
     const investedThisYearUSD = contribLog.filter(c => c.month.startsWith(year))
         .reduce((s, c) => s + toUSD(c.amount, c.currency), 0);
@@ -3740,17 +3752,54 @@ function renderDca() {
     </div>`;
 
     // Allocator
-    const allocRows = list.map(x => `<tr>
+    const isManual = dcaSettings.manualAlloc !== null;
+    const displayList = isManual
+        ? holdings.map(enrich).map(r => ({ r, amtUSD: amountUSD * (dcaSettings.manualAlloc[r.id] ?? 0) }))
+            .sort((a, b) => b.amtUSD - a.amtUSD)
+        : list;
+    const totalAllocUSD = displayList.reduce((s, x) => s + x.amtUSD, 0);
+    const remainingUSD = amountUSD - totalAllocUSD;
+    const remainingCur = toCur(Math.abs(remainingUSD), dcaSettings.currency);
+    const remainingColor = Math.abs(remainingUSD) < 0.01 ? 'var(--green)' : remainingUSD > 0 ? 'var(--label2)' : 'var(--red)';
+    const remainingLabel = Math.abs(remainingUSD) < 0.01
+        ? '✓ Fully allocated'
+        : remainingUSD > 0
+            ? `${money(remainingCur, dcaSettings.currency)} unallocated`
+            : `${money(remainingCur, dcaSettings.currency)} over-allocated`;
+
+    const allocRows = displayList.map(x => {
+        const pctVal = amountUSD > 0 ? (x.amtUSD / amountUSD * 100).toFixed(1) : '0.0';
+        const amtVal = toCur(x.amtUSD, dcaSettings.currency).toFixed(2);
+        const inputStyle = 'padding:3px 6px;border-radius:6px;border:1.5px solid var(--sep);background:var(--surface2);color:var(--label);font-size:12px;text-align:right';
+        return `<tr>
         <td style="padding:11px 14px"><b>${x.r.ticker}</b><div style="font-size:11px;color:var(--label2)">${x.r.name}</div></td>
-        <td class="r" style="padding:11px 14px;font-weight:600">${cmoney(x.amtUSD)}</td>
-        <td class="r" style="padding:11px 14px">${(x.amtUSD / toUSD(dcaSettings.amount, dcaSettings.currency) * 100).toFixed(0)}%</td>
-        <td class="r" style="padding:11px 14px"><button class="row-btn" onclick="planContribution('${x.r.id}', ${x.amtUSD})">→ Plan</button></td>
-    </tr>`).join('');
+        <td class="r" style="padding:8px 14px">
+            <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px">
+                <input type="number" min="0" step="10" value="${amtVal}" onchange="setManualAlloc('${x.r.id}','amt',this.value)" style="width:78px;${inputStyle}">
+                <span style="font-size:11px;color:var(--label2)">${dcaSettings.currency}</span>
+            </div>
+        </td>
+        <td class="r" style="padding:8px 14px">
+            <div style="display:flex;align-items:center;justify-content:flex-end;gap:2px">
+                <input type="number" min="0" max="100" step="1" value="${pctVal}" onchange="setManualAlloc('${x.r.id}','pct',this.value)" style="width:50px;${inputStyle}">
+                <span style="font-size:11px;color:var(--label2)">%</span>
+            </div>
+        </td>
+        <td class="r" style="padding:8px 14px"><button class="row-btn" onclick="planContribution('${x.r.id}', ${x.amtUSD})">→ Plan</button></td>
+    </tr>`;
+    }).join('');
+
+    const footerRow = `<tr style="border-top:2px solid var(--sep)">
+        <td style="padding:10px 14px">${isManual ? `<button class="row-btn" onclick="resetManualAlloc()">↺ Reset to auto</button>` : ''}</td>
+        <td class="r" colspan="2" style="padding:10px 14px;font-size:12px;color:${remainingColor};font-weight:600">${remainingLabel}</td>
+        <td></td>
+    </tr>`;
+
     const allocHtml = `<div class="card" style="margin-bottom:20px">
         <div class="card-header"><h2>This Month's ${money(dcaSettings.amount, dcaSettings.currency)}</h2>
-            <span class="count-badge">${hasGoals ? 'toward your goals' : 'by current weights'}</span></div>
-        <div style="padding:0 22px 6px;font-size:12px;color:var(--label2)">${hasGoals ? 'Split to move you toward your Allocation Goals (set in Insights).' : 'No goals set — splitting by current weights. Set Allocation Goals in Insights for smarter splits.'}</div>
-        ${list.length ? `<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th>Holding</th><th class="r">Add</th><th class="r">Share</th><th class="r">Plan</th></tr></thead><tbody>${allocRows}</tbody></table>`
+            <span class="count-badge">${isManual ? 'custom split' : hasGoals ? 'toward your goals' : 'by current weights'}</span></div>
+        <div style="padding:0 22px 6px;font-size:12px;color:var(--label2)">${isManual ? 'Manually allocated — edit any amount or % to adjust. Editing one field updates the other.' : hasGoals ? 'Split to move you toward your Allocation Goals (set in Insights).' : 'No goals set — splitting by current weights. Set Allocation Goals in Insights for smarter splits.'}</div>
+        ${displayList.length ? `<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th>Holding</th><th class="r">Amount</th><th class="r">Share</th><th class="r">Plan</th></tr></thead><tbody>${allocRows}${footerRow}</tbody></table>`
             : `<div class="empty" style="padding:30px 20px"><p>Add holdings to see a suggested split.</p></div>`}
     </div>`;
 
@@ -3800,6 +3849,24 @@ function planContribution(holdingId, amtUSD) {
     saveWatchlist();
     toast(`Buy ${r.ticker} → Planning`);
 }
+
+// Manually override a holding's allocation (field: 'pct' or 'amt').
+function setManualAlloc(id, field, rawVal) {
+    const amountUSD = toUSD(dcaSettings.amount, dcaSettings.currency);
+    if (!amountUSD) return;
+    const val = parseFloat(rawVal);
+    if (isNaN(val) || val < 0) return;
+    if (dcaSettings.manualAlloc === null) {
+        const { list: autoList } = monthlyAllocationAuto();
+        dcaSettings.manualAlloc = {};
+        autoList.forEach(x => { dcaSettings.manualAlloc[x.r.id] = x.amtUSD / amountUSD; });
+    }
+    if (field === 'pct') dcaSettings.manualAlloc[id] = val / 100;
+    else dcaSettings.manualAlloc[id] = toUSD(val, dcaSettings.currency) / amountUSD;
+    saveDca(); renderDca();
+}
+
+function resetManualAlloc() { dcaSettings.manualAlloc = null; saveDca(); renderDca(); }
 
 function openWatchModal(id = null) {
     watchEditId = id;
