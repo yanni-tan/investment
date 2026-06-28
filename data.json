@@ -782,9 +782,9 @@
     "currency": "SGD",
     "rate": 7,
     "manualAlloc": {
-      "a5ai6mouvtemqtorv8l": 1
+      "a5ai6mouvtemqtorv8l": 0.5
     }
   },
   "contribLog": [],
-  "updatedAt": "2026-06-28T17:50:58.241Z"
+  "updatedAt": "2026-06-28T17:51:02.001Z"
 }
