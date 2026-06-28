@@ -343,10 +343,10 @@
       "id": "w859fl0q37hmqpju4e3",
       "ticker": "VWRA",
       "action": "Buy",
-      "name": "VWRA",
+      "name": "Vanguard FTSE All-World UCITS",
       "targetPrice": "",
-      "qty": "1",
-      "notes": "use amazon gains to cover vwra",
+      "qty": 1,
+      "notes": "Monthly DCA ~S$172.27",
       "account": "Cash"
     },
     {
@@ -483,6 +483,31 @@
     },
     {
       "month": "2026-06-27",
+      "gainUSD": 5116.025099999995,
+      "totalUSD": 28492.897599999997,
+      "byMkt": {
+        "US": 12789.590000000002,
+        "SG": 12041.8276,
+        "UK": 0,
+        "TW": 812,
+        "Netherlands": 812,
+        "EU": 785.4399999999999,
+        "Global": 785.4399999999999,
+        "JP": 466.59999999999997
+      },
+      "costByMkt": {
+        "US": 9361.853333333333,
+        "SG": 11154.852499999999,
+        "UK": 0,
+        "TW": 601.6266666666667,
+        "Netherlands": 601.6266666666667,
+        "EU": 595.8066666666666,
+        "Global": 595.8066666666666,
+        "JP": 465.3
+      }
+    },
+    {
+      "month": "2026-06-28",
       "gainUSD": 5116.025099999995,
       "totalUSD": 28492.897599999997,
       "byMkt": {
@@ -742,5 +767,11 @@
       ]
     }
   },
-  "updatedAt": "2026-06-27T18:04:28.075Z"
+  "dcaSettings": {
+    "amount": 1000,
+    "currency": "SGD",
+    "rate": 7
+  },
+  "contribLog": [],
+  "updatedAt": "2026-06-28T17:02:08.130Z"
 }
