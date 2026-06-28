@@ -3639,6 +3639,136 @@ const CONTRIB_KEY = 'portfolio_contributions';
 let dcaSettings = { amount: 1000, currency: 'SGD', rate: 7, manualAlloc: null };
 let contribLog = [];
 function loadDca() {
+
+// ── SRS Planner state ──
+const SRS_ALLOC_KEY = 'srs_alloc';
+const SRS_ALLOC_LOG_KEY = 'srs_alloc_log';
+let srsAllocSettings = { amount: 1000, currency: 'SGD', manualAlloc: null };
+let srsAllocLog = [];
+function loadSrsAlloc() {
+    try { const d = JSON.parse(localStorage.getItem(SRS_ALLOC_KEY)); if (d) srsAllocSettings = { amount: 1000, currency: 'SGD', manualAlloc: null, ...d }; } catch {}
+    try { srsAllocLog = JSON.parse(localStorage.getItem(SRS_ALLOC_LOG_KEY)) || []; } catch { srsAllocLog = []; }
+}
+function saveSrsAlloc() { localStorage.setItem(SRS_ALLOC_KEY, JSON.stringify(srsAllocSettings)); syncSave(); }
+function saveSrsAllocLog() { localStorage.setItem(SRS_ALLOC_LOG_KEY, JSON.stringify(srsAllocLog)); syncSave(); }
+function setSrsAlloc(field, val) {
+    if (field === 'currency') srsAllocSettings.currency = val;
+    else { const p = parseFloat(val); if (!isNaN(p) && p >= 0) srsAllocSettings[field] = p; }
+    saveSrsAlloc(); renderSrs();
+}
+function srsMonthlyAllocation() {
+    const amountUSD = toUSD(srsAllocSettings.amount, srsAllocSettings.currency);
+    const alloc = srsAllocSettings.manualAlloc || {};
+    const rows = holdings.map(enrich).filter(r => (r.account || 'Cash') === 'SRS');
+    return { list: rows.map(r => ({ r, amtUSD: amountUSD * (alloc[r.id] ?? 0) })).sort((a, b) => b.amtUSD - a.amtUSD) };
+}
+function setManualAllocSrs(id, field, rawVal) {
+    const amountUSD = toUSD(srsAllocSettings.amount, srsAllocSettings.currency);
+    if (!amountUSD) return;
+    const val = parseFloat(rawVal);
+    if (isNaN(val) || val < 0) return;
+    if (srsAllocSettings.manualAlloc == null) srsAllocSettings.manualAlloc = {};
+    if (field === 'pct') srsAllocSettings.manualAlloc[id] = val / 100;
+    else srsAllocSettings.manualAlloc[id] = toUSD(val, srsAllocSettings.currency) / amountUSD;
+    saveSrsAlloc(); renderSrs();
+}
+function resetManualAllocSrs() { srsAllocSettings.manualAlloc = null; saveSrsAlloc(); renderSrs(); }
+function commitSrsPlan() {
+    const month = new Date().toISOString().slice(0, 7);
+    if (srsAllocLog.some(c => c.month === month)) { toast('Already committed this month'); return; }
+    const alloc = srsAllocSettings.manualAlloc || {};
+    const amountUSD = toUSD(srsAllocSettings.amount, srsAllocSettings.currency);
+    const rows = holdings.map(enrich).filter(r => (r.account || 'Cash') === 'SRS');
+    const allocation = rows
+        .filter(r => (alloc[r.id] ?? 0) > 0)
+        .map(r => ({
+            ticker: r.ticker, name: r.name,
+            amount: parseFloat(toCur(amountUSD * (alloc[r.id] ?? 0), srsAllocSettings.currency).toFixed(2)),
+            currency: srsAllocSettings.currency
+        }));
+    srsAllocLog.push({ id: uid(), month, amount: srsAllocSettings.amount, currency: srsAllocSettings.currency, allocation });
+    saveSrsAllocLog(); renderSrs(); toast('SRS plan committed ✓');
+}
+function delSrsAllocLog(id) { srsAllocLog = srsAllocLog.filter(c => c.id !== id); saveSrsAllocLog(); renderSrs(); }
+function renderSrsPlanner() {
+    const amountUSD = toUSD(srsAllocSettings.amount, srsAllocSettings.currency);
+    const thisMonthKey = new Date().toISOString().slice(0, 7);
+    const loggedThisMonth = srsAllocLog.some(c => c.month === thisMonthKey);
+    const { list } = srsMonthlyAllocation();
+    const totalAllocUSD = list.reduce((s, x) => s + x.amtUSD, 0);
+    const remainingUSD = amountUSD - totalAllocUSD;
+    const remainingCur = toCur(Math.abs(remainingUSD), srsAllocSettings.currency);
+    const remainingColor = Math.abs(remainingUSD) < 0.01 ? 'var(--green)' : remainingUSD > 0 ? 'var(--label2)' : 'var(--red)';
+    const remainingLabel = Math.abs(remainingUSD) < 0.01
+        ? '✓ Fully allocated'
+        : remainingUSD > 0 ? `${money(remainingCur, srsAllocSettings.currency)} unallocated`
+        : `${money(remainingCur, srsAllocSettings.currency)} over-allocated`;
+    const inputStyle = 'padding:3px 6px;border-radius:6px;border:1.5px solid var(--sep);background:var(--surface2);color:var(--label);font-size:12px;text-align:right';
+    const allocRows = list.map(x => {
+        const pctVal = amountUSD > 0 && x.amtUSD > 0 ? (x.amtUSD / amountUSD * 100).toFixed(1) : '';
+        const amtVal = x.amtUSD > 0 ? toCur(x.amtUSD, srsAllocSettings.currency).toFixed(2) : '';
+        return `<tr>
+            <td style="padding:11px 14px"><b>${x.r.ticker}</b><div style="font-size:11px;color:var(--label2)">${x.r.name}</div></td>
+            <td style="padding:11px 14px"><span class="mkt-pill" style="background:var(--surface2,rgba(127,127,127,0.12));color:var(--label2)">${x.r.type}</span></td>
+            <td style="padding:11px 14px"><div style="display:flex;flex-wrap:wrap;gap:3px">${getMarkets(x.r).map(mktPill).join('')}</div></td>
+            <td class="r" style="padding:8px 14px">
+                <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px">
+                    <input type="number" min="0" step="10" value="${amtVal}" placeholder="0" onchange="setManualAllocSrs('${x.r.id}','amt',this.value)" style="width:78px;${inputStyle}">
+                    <span style="font-size:11px;color:var(--label2)">${srsAllocSettings.currency}</span>
+                </div>
+            </td>
+            <td class="r" style="padding:8px 14px">
+                <div style="display:flex;align-items:center;justify-content:flex-end;gap:2px">
+                    <input type="number" min="0" max="100" step="1" value="${pctVal}" placeholder="0" onchange="setManualAllocSrs('${x.r.id}','pct',this.value)" style="width:50px;${inputStyle}">
+                    <span style="font-size:11px;color:var(--label2)">%</span>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+    const footerRow = `<tr style="border-top:2px solid var(--sep)">
+        <td colspan="3" style="padding:10px 14px"><button class="row-btn" onclick="resetManualAllocSrs()">↺ Clear all</button></td>
+        <td class="r" colspan="2" style="padding:10px 14px;font-size:12px;color:${remainingColor};font-weight:600">${remainingLabel}</td>
+    </tr>`;
+    const planCard = `<div class="card" style="margin-top:20px">
+        <div class="card-header">
+            <div>
+                <h2>SRS Monthly Plan</h2>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+                    <input type="number" min="0" step="100" value="${srsAllocSettings.amount}" onchange="setSrsAlloc('amount',this.value)" style="width:80px;${inputStyle}">
+                    <select onchange="setSrsAlloc('currency',this.value)" style="padding:3px 4px;border-radius:6px;border:1.5px solid var(--sep);background:var(--surface2);color:var(--label);font-size:12px">
+                        <option ${srsAllocSettings.currency==='SGD'?'selected':''}>SGD</option>
+                        <option ${srsAllocSettings.currency==='USD'?'selected':''}>USD</option>
+                        <option ${srsAllocSettings.currency==='GBP'?'selected':''}>GBP</option>
+                    </select>
+                    <span style="font-size:12px;color:var(--label2)">/ mo</span>
+                </div>
+            </div>
+            <button class="btn btn-primary" style="padding:6px 14px;font-size:13px" onclick="commitSrsPlan()" ${loggedThisMonth ? 'disabled style="padding:6px 14px;font-size:13px;opacity:0.5"' : ''}>${loggedThisMonth ? '✓ Committed' : 'Commit this month'}</button>
+        </div>
+        <div style="padding:0 22px 6px;font-size:12px;color:var(--label2)">Enter the amount or % you want to invest in each SRS holding this month.</div>
+        ${list.length ? `<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th>Holding</th><th>Type</th><th>Market</th><th class="r">Amount</th><th class="r">Share</th></tr></thead><tbody>${allocRows}${footerRow}</tbody></table>`
+            : `<div class="empty" style="padding:30px 20px"><p>Add SRS holdings to plan your allocation.</p></div>`}
+    </div>`;
+    const fmtMonth = m => { const [y, mo] = m.split('-'); return new Date(y, mo-1, 1).toLocaleDateString('en-US', {month:'short', year:'numeric'}); };
+    const logged = [...srsAllocLog].sort((a, b) => b.month.localeCompare(a.month));
+    const logRows = logged.map(c => {
+        const breakdown = c.allocation?.length
+            ? `<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:4px">${c.allocation.map(a =>
+                `<span style="font-size:11px;padding:2px 7px;border-radius:5px;background:var(--surface2);color:var(--label2)"><b>${a.ticker}</b> ${money(a.amount, a.currency)}</span>`
+              ).join('')}</div>` : '';
+        return `<tr>
+            <td style="padding:11px 14px">${fmtMonth(c.month)}</td>
+            <td style="padding:11px 14px"><div style="font-weight:600;text-align:right">${money(c.amount, c.currency)}</div>${breakdown}</td>
+            <td class="r" style="padding:11px 14px;white-space:nowrap"><button class="row-btn del" onclick="delSrsAllocLog('${c.id}')">×</button></td>
+        </tr>`;
+    }).join('');
+    const logCard = `<div class="card" style="margin-top:20px">
+        <div class="card-header"><h2>SRS Allocation Log</h2></div>
+        ${logged.length ? `<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th>Month</th><th class="r">Amount</th><th></th></tr></thead><tbody>${logRows}</tbody></table>`
+            : `<div class="empty" style="padding:30px 20px"><p>No SRS allocations committed yet.</p></div>`}
+    </div>`;
+    return planCard + logCard;
+}
     try { const d = JSON.parse(localStorage.getItem(DCA_KEY)); if (d) dcaSettings = { amount: 1000, currency: 'SGD', rate: 7, manualAlloc: null, ...d }; } catch {}
     try { contribLog = JSON.parse(localStorage.getItem(CONTRIB_KEY)) || []; } catch { contribLog = []; }
 }
@@ -4068,6 +4198,14 @@ async function syncLoad() {
             contribLog = payload.contribLog;
             localStorage.setItem(CONTRIB_KEY, JSON.stringify(contribLog));
         }
+        if (payload.srsAllocSettings && typeof payload.srsAllocSettings === 'object') {
+            srsAllocSettings = { amount: 1000, currency: 'SGD', manualAlloc: null, ...payload.srsAllocSettings };
+            localStorage.setItem(SRS_ALLOC_KEY, JSON.stringify(srsAllocSettings));
+        }
+        if (Array.isArray(payload.srsAllocLog)) {
+            srsAllocLog = payload.srsAllocLog;
+            localStorage.setItem(SRS_ALLOC_LOG_KEY, JSON.stringify(srsAllocLog));
+        }
         setSyncStatus('synced', 'Synced');
         return true;
     } catch (e) {
@@ -4102,6 +4240,8 @@ async function syncSaveNow() {
             insightSettings,
             dcaSettings,
             contribLog,
+            srsAllocSettings,
+            srsAllocLog,
             updatedAt: new Date().toISOString(),
         };
         const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
@@ -5125,6 +5265,7 @@ function renderSrs() {
     }
     html += `</div>`;
 
+    html += renderSrsPlanner();
     el.innerHTML = html;
 }
 
@@ -5291,6 +5432,7 @@ function init() {
     loadTargets();
     loadInsightSettings();
     loadDca();
+    loadSrsAlloc();
     setGreeting();
     render();
     fetchPrices();
