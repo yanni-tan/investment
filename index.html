@@ -3700,10 +3700,28 @@ function projectFV(years) {
 }
 
 function logThisMonth() {
-    const month = new Date().toISOString().slice(0, 7); // YYYY-MM
+    const month = new Date().toISOString().slice(0, 7);
     if (contribLog.some(c => c.month === month)) { toast('This month is already logged'); return; }
     contribLog.push({ id: uid(), month, amount: dcaSettings.amount, currency: dcaSettings.currency });
     saveContribs(); renderDca(); toast('Contribution logged');
+}
+
+function commitPlan() {
+    const month = new Date().toISOString().slice(0, 7);
+    if (contribLog.some(c => c.month === month)) { toast('Already committed this month'); return; }
+    const alloc = dcaSettings.manualAlloc || {};
+    const amountUSD = toUSD(dcaSettings.amount, dcaSettings.currency);
+    const rows = holdings.map(enrich).filter(r => (r.account || 'Cash') !== 'SRS');
+    const allocation = rows
+        .filter(r => (alloc[r.id] ?? 0) > 0)
+        .map(r => ({
+            ticker: r.ticker,
+            name: r.name,
+            amount: parseFloat(toCur(amountUSD * (alloc[r.id] ?? 0), dcaSettings.currency).toFixed(2)),
+            currency: dcaSettings.currency
+        }));
+    contribLog.push({ id: uid(), month, amount: dcaSettings.amount, currency: dcaSettings.currency, allocation });
+    saveContribs(); renderDca(); toast('Plan committed ✓');
 }
 function delContrib(id) { contribLog = contribLog.filter(c => c.id !== id); saveContribs(); renderDca(); }
 
@@ -3724,6 +3742,8 @@ function renderDca() {
     if (!el) return;
     const { list } = monthlyAllocation();
     const amountUSD = toUSD(dcaSettings.amount, dcaSettings.currency);
+    const thisMonthKey = new Date().toISOString().slice(0, 7);
+    const loggedThisMonth = contribLog.some(c => c.month === thisMonthKey);
     const year = new Date().getFullYear().toString();
     const investedThisYearUSD = contribLog.filter(c => c.month.startsWith(year))
         .reduce((s, c) => s + toUSD(c.amount, c.currency), 0);
@@ -3794,7 +3814,10 @@ function renderDca() {
     </tr>`;
 
     const allocHtml = `<div class="card" style="margin-bottom:20px">
-        <div class="card-header"><h2>This Month's ${money(dcaSettings.amount, dcaSettings.currency)}</h2></div>
+        <div class="card-header">
+            <h2>This Month's ${money(dcaSettings.amount, dcaSettings.currency)}</h2>
+            <button class="btn btn-primary" style="padding:6px 14px;font-size:13px" onclick="commitPlan()" ${loggedThisMonth ? 'disabled style="padding:6px 14px;font-size:13px;opacity:0.5"' : ''}>${loggedThisMonth ? '✓ Committed' : 'Commit this month'}</button>
+        </div>
         <div style="padding:0 22px 6px;font-size:12px;color:var(--label2)">Enter the amount or % you want to invest in each holding this month.</div>
         ${displayList.length ? `<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th>Holding</th><th class="r">Amount</th><th class="r">Share</th></tr></thead><tbody>${allocRows}${footerRow}</tbody></table>`
             : `<div class="empty" style="padding:30px 20px"><p>Add holdings to see a suggested split.</p></div>`}
@@ -3816,18 +3839,24 @@ function renderDca() {
     // Tracker
     const logged = [...contribLog].sort((a, b) => b.month.localeCompare(a.month));
     const fmtMonth = m => { const [y, mo] = m.split('-'); return new Date(y, mo - 1, 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }); };
-    const logRows = logged.map(c => `<tr>
+    const logRows = logged.map(c => {
+        const breakdown = c.allocation && c.allocation.length
+            ? `<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:4px">${c.allocation.map(a =>
+                `<span style="font-size:11px;padding:2px 7px;border-radius:5px;background:var(--surface2);color:var(--label2)"><b>${a.ticker}</b> ${money(a.amount, a.currency)}</span>`
+              ).join('')}</div>` : '';
+        return `<tr>
         <td style="padding:11px 14px">${fmtMonth(c.month)}</td>
-        <td class="r" style="padding:11px 14px;font-weight:600">${money(c.amount, c.currency)}</td>
-        <td class="r" style="padding:11px 14px"><button class="row-btn del" onclick="delContrib('${c.id}')">×</button></td>
-    </tr>`).join('');
-    const thisMonthKey = new Date().toISOString().slice(0, 7);
-    const loggedThisMonth = contribLog.some(c => c.month === thisMonthKey);
+        <td style="padding:11px 14px">
+            <div style="font-weight:600;text-align:right">${money(c.amount, c.currency)}</div>
+            ${breakdown}
+        </td>
+        <td class="r" style="padding:11px 14px;white-space:nowrap"><button class="row-btn del" onclick="delContrib('${c.id}')">×</button></td>
+    </tr>`;
+    }).join('');
     const trackHtml = `<div class="card">
-        <div class="card-header"><h2>Contribution Log</h2>
-            <button class="btn btn-primary" style="padding:6px 14px;font-size:13px" onclick="logThisMonth()" ${loggedThisMonth ? 'disabled style="padding:6px 14px;font-size:13px;opacity:0.5"' : ''}>${loggedThisMonth ? '✓ Logged this month' : '+ Log this month'}</button></div>
-        ${logged.length ? `<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th>Month</th><th class="r">Amount</th><th class="r"></th></tr></thead><tbody>${logRows}</tbody></table>`
-            : `<div class="empty" style="padding:30px 20px"><p>No contributions logged yet. Tap "Log this month" after you invest.</p></div>`}
+        <div class="card-header"><h2>Contribution Log</h2></div>
+        ${logged.length ? `<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th>Month</th><th class="r">Amount</th><th></th></tr></thead><tbody>${logRows}</tbody></table>`
+            : `<div class="empty" style="padding:30px 20px"><p>No contributions committed yet. Fill in your allocation above and tap "Commit this month".</p></div>`}
     </div>`;
 
     el.innerHTML = kpis + allocHtml + projHtml + trackHtml;
