@@ -3765,7 +3765,14 @@ function renderDca() {
         const amtVal = x.amtUSD > 0 ? toCur(x.amtUSD, dcaSettings.currency).toFixed(2) : '';
         const inputStyle = 'padding:3px 6px;border-radius:6px;border:1.5px solid var(--sep);background:var(--surface2);color:var(--label);font-size:12px;text-align:right';
         return `<tr>
-        <td style="padding:11px 14px"><b>${x.r.ticker}</b><div style="font-size:11px;color:var(--label2)">${x.r.name}</div></td>
+        <td style="padding:11px 14px">
+            <b>${x.r.ticker}</b>
+            <div style="font-size:11px;color:var(--label2);margin-bottom:4px">${x.r.name}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">
+                <span class="mkt-pill" style="background:var(--surface2,rgba(127,127,127,0.12));color:var(--label2)">${x.r.type}</span>
+                ${getMarkets(x.r).map(mktPill).join('')}
+            </div>
+        </td>
         <td class="r" style="padding:8px 14px">
             <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px">
                 <input type="number" min="0" step="10" value="${amtVal}" placeholder="0" onchange="setManualAlloc('${x.r.id}','amt',this.value)" style="width:78px;${inputStyle}">
