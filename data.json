@@ -131,7 +131,7 @@
       "shares": 5,
       "avgCost": 328.8,
       "notes": "Conviction bet on AI and digital advertising",
-      "manualPrice": 336.15,
+      "manualPrice": 350,
       "markets": [
         "US"
       ],
@@ -837,5 +837,5 @@
     }
   },
   "srsAllocLog": [],
-  "updatedAt": "2026-06-29T17:14:53.975Z"
+  "updatedAt": "2026-06-29T17:14:59.786Z"
 }
