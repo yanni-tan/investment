@@ -157,7 +157,7 @@
       "shares": 100,
       "avgCost": 57.53,
       "notes": "",
-      "manualPrice": 66,
+      "manualPrice": 66.03,
       "markets": [
         "SG"
       ],
@@ -837,5 +837,5 @@
     }
   },
   "srsAllocLog": [],
-  "updatedAt": "2026-06-29T17:13:41.995Z"
+  "updatedAt": "2026-06-29T17:13:48.868Z"
 }
