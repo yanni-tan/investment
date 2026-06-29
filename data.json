@@ -329,22 +329,27 @@
     },
     {
       "id": "dadg239ttl4mqy4hnee",
-      "ticker": "A35",
-      "market": "SG",
+      "ticker": "BOND",
+      "market": "Global",
       "markets": [
-        "SG"
+        "Global"
       ],
-      "name": "Singapore Bond Index Fund",
+      "name": "Amundi Core Global Aggregate Bond SGD-Hedged",
       "type": "Index Fund",
-      "sector": "",
-      "sectors": [],
+      "sector": "Government Bonds",
+      "sectors": [
+        "Government Bonds",
+        "Corporate Bonds",
+        "Securitized Bonds (MBS, ABS)"
+      ],
       "currency": "SGD",
       "account": "SRS",
       "domicile": "Singapore",
-      "tracks": "",
+      "tracks": "10,000+ Bonds",
       "shares": 0,
       "avgCost": 0,
-      "notes": ""
+      "notes": "",
+      "manualPrice": null
     }
   ],
   "watchlist": [
@@ -559,6 +564,43 @@
         "Global": 595.8066666666666,
         "JP": 465.3
       }
+    },
+    {
+      "month": "2026-06-29",
+      "gainUSD": 5116.025099999995,
+      "totalUSD": 28492.897599999997,
+      "byMkt": {
+        "US": 12789.590000000002,
+        "SG": 12041.8276,
+        "UK": 0,
+        "TW": 812,
+        "Netherlands": 812,
+        "EU": 785.4399999999999,
+        "Global": 785.4399999999999,
+        "JP": 466.59999999999997
+      },
+      "costByMkt": {
+        "US": 9361.853333333333,
+        "SG": 11154.852499999999,
+        "UK": 0,
+        "TW": 601.6266666666667,
+        "Netherlands": 601.6266666666667,
+        "EU": 595.8066666666666,
+        "Global": 595.8066666666666,
+        "JP": 465.3
+      },
+      "byMktCash": {
+        "US": 12789.590000000002,
+        "SG": 6982.1257000000005,
+        "UK": 0,
+        "TW": 812,
+        "Netherlands": 812,
+        "EU": 785.4399999999999,
+        "Global": 785.4399999999999,
+        "JP": 466.59999999999997
+      },
+      "srsUSD": 7681.188900000001,
+      "esppUSD": 30406.743219999997
     }
   ],
   "dividends": [
@@ -816,5 +858,5 @@
     }
   },
   "srsAllocLog": [],
-  "updatedAt": "2026-06-28T18:31:20.312Z"
+  "updatedAt": "2026-06-29T07:31:19.015Z"
 }
