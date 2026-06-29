@@ -821,7 +821,7 @@
     "rate": 7,
     "manualAlloc": {
       "a5ai6mouvtemqtorv8l": 0.45,
-      "05sj4wbsax6rmqs6vjtb": 3
+      "05sj4wbsax6rmqs6vjtb": 0.3
     }
   },
   "contribLog": [],
@@ -835,5 +835,5 @@
     }
   },
   "srsAllocLog": [],
-  "updatedAt": "2026-06-29T10:18:59.615Z"
+  "updatedAt": "2026-06-29T10:19:02.020Z"
 }
