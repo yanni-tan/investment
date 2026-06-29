@@ -544,11 +544,11 @@
     },
     {
       "month": "2026-06-29",
-      "gainUSD": 5116.025099999995,
-      "totalUSD": 28492.897599999997,
+      "gainUSD": 5167.471999999998,
+      "totalUSD": 23430.486999999997,
       "byMkt": {
         "US": 12789.590000000002,
-        "SG": 12041.8276,
+        "SG": 6979.417,
         "UK": 0,
         "TW": 812,
         "Netherlands": 812,
@@ -558,7 +558,7 @@
       },
       "costByMkt": {
         "US": 9361.853333333333,
-        "SG": 11154.852499999999,
+        "SG": 6040.995000000001,
         "UK": 0,
         "TW": 601.6266666666667,
         "Netherlands": 601.6266666666667,
@@ -568,7 +568,7 @@
       },
       "byMktCash": {
         "US": 12789.590000000002,
-        "SG": 6982.1257000000005,
+        "SG": 6979.417,
         "UK": 0,
         "TW": 812,
         "Netherlands": 812,
@@ -576,7 +576,7 @@
         "Global": 785.4399999999999,
         "JP": 466.59999999999997
       },
-      "srsUSD": 7681.188900000001,
+      "srsUSD": 7730,
       "esppUSD": 30406.743219999997
     }
   ],
@@ -646,19 +646,6 @@
       "sellDate": "2026-06-26",
       "gainLoss": 95,
       "disposition": "Reinvested in another stock"
-    },
-    {
-      "id": "9hban0sq5ihmqyzvprp",
-      "ticker": "D05.SI",
-      "name": "DBS Group Holdings Ltd",
-      "market": "SG",
-      "currency": "SGD",
-      "shares": 100,
-      "buyAvg": 66.1,
-      "sellPrice": 65.87,
-      "sellDate": "2026-06-29",
-      "gainLoss": -22.999999999998977,
-      "disposition": "Topped up SRS"
     }
   ],
   "espp": {
@@ -848,5 +835,5 @@
     }
   },
   "srsAllocLog": [],
-  "updatedAt": "2026-06-29T09:07:48.627Z"
+  "updatedAt": "2026-06-29T09:08:48.365Z"
 }
