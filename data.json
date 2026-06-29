@@ -230,7 +230,7 @@
       "shares": 10,
       "avgCost": 186.12,
       "notes": "Global core and diversification",
-      "manualPrice": 186.64,
+      "manualPrice": 6,
       "markets": [
         "US",
         "JP",
@@ -837,5 +837,5 @@
     }
   },
   "srsAllocLog": [],
-  "updatedAt": "2026-06-29T17:15:16.036Z"
+  "updatedAt": "2026-06-29T17:15:24.173Z"
 }
