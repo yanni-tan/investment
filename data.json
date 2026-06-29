@@ -98,30 +98,6 @@
       "tracks": "Individual Stock"
     },
     {
-      "id": "ohv9vplhy6lmqovoz97",
-      "ticker": "AMZN",
-      "market": "US",
-      "name": "Amazon.com INC",
-      "type": "Stock",
-      "currency": "USD",
-      "shares": 4,
-      "avgCost": 235.88,
-      "notes": "",
-      "manualPrice": 231.9,
-      "markets": [
-        "US"
-      ],
-      "sectors": [
-        "Consumer",
-        "AI Infrastructure",
-        "Cloud Computing"
-      ],
-      "sector": "Consumer",
-      "account": "Cash",
-      "domicile": "",
-      "tracks": "Individual Stock"
-    },
-    {
       "id": "9h2pd5ui8lqmqovpxnd",
       "ticker": "GOOGL",
       "market": "US",
@@ -646,6 +622,19 @@
       "sellDate": "2026-06-26",
       "gainLoss": 95,
       "disposition": "Reinvested in another stock"
+    },
+    {
+      "id": "02zs6go9q486mqzhbz4j",
+      "ticker": "AMZN",
+      "name": "Amazon.com INC",
+      "market": "US",
+      "currency": "USD",
+      "shares": 4,
+      "buyAvg": 235.88,
+      "sellPrice": 236.5,
+      "sellDate": "2026-06-29",
+      "gainLoss": 2.480000000000018,
+      "disposition": ""
     }
   ],
   "espp": {
@@ -837,5 +826,5 @@
     }
   },
   "srsAllocLog": [],
-  "updatedAt": "2026-06-29T17:15:29.182Z"
+  "updatedAt": "2026-06-29T17:16:20.721Z"
 }
