@@ -10,7 +10,7 @@
       "shares": 4,
       "avgCost": 405,
       "notes": "High-risk, cyclical semiconductor bet",
-      "manualPrice": 1133.5,
+      "manualPrice": 1126,
       "markets": [
         "US"
       ],
@@ -544,11 +544,11 @@
     },
     {
       "month": "2026-06-29",
-      "gainUSD": 5212.422699999999,
-      "totalUSD": 23480.908199999998,
+      "gainUSD": 5216.2912,
+      "totalUSD": 23484.7767,
       "byMkt": {
         "US": 12789.590000000002,
-        "SG": 7029.8382,
+        "SG": 7033.706700000001,
         "UK": 0,
         "TW": 812,
         "Netherlands": 812,
@@ -568,7 +568,7 @@
       },
       "byMktCash": {
         "US": 12789.590000000002,
-        "SG": 7029.8382,
+        "SG": 7033.706700000001,
         "UK": 0,
         "TW": 812,
         "Netherlands": 812,
@@ -837,5 +837,5 @@
     }
   },
   "srsAllocLog": [],
-  "updatedAt": "2026-06-29T17:13:48.868Z"
+  "updatedAt": "2026-06-29T17:14:25.782Z"
 }
