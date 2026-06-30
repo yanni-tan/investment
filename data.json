@@ -58,7 +58,7 @@
       "shares": 3,
       "avgCost": 265.28,
       "notes": "Aggressive growth and AI exposure",
-      "manualPrice": 297,
+      "manualPrice": 288.53,
       "sector": "Tech",
       "account": "Cash",
       "markets": [
@@ -863,5 +863,5 @@
     }
   },
   "srsAllocLog": [],
-  "updatedAt": "2026-06-30T15:13:21.538Z"
+  "updatedAt": "2026-06-30T15:13:26.477Z"
 }
