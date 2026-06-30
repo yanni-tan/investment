@@ -82,7 +82,7 @@
       "shares": 4,
       "avgCost": 97.88,
       "notes": "Speculative AI infrastructure growth bet",
-      "manualPrice": 258,
+      "manualPrice": 288.53,
       "markets": [
         "US",
         "EU",
@@ -863,5 +863,5 @@
     }
   },
   "srsAllocLog": [],
-  "updatedAt": "2026-06-30T15:13:43.982Z"
+  "updatedAt": "2026-06-30T15:13:53.896Z"
 }
