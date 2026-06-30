@@ -204,7 +204,7 @@
       "currency": "USD",
       "account": "Cash",
       "shares": 10,
-      "avgCost": 186.12,
+      "avgCost": 186.1,
       "notes": "Global core and diversification",
       "manualPrice": 188.26,
       "markets": [
@@ -557,7 +557,7 @@
     },
     {
       "month": "2026-06-30",
-      "gainUSD": 5818.362800000003,
+      "gainUSD": 5843.362800000003,
       "totalUSD": 23136.294800000003,
       "byMkt": {
         "US": 12188.793333333333,
@@ -570,7 +570,7 @@
         "JP": 470.65
       },
       "costByMkt": {
-        "US": 8418.333333333332,
+        "US": 8393.333333333332,
         "SG": 6039.432000000001,
         "UK": 0,
         "TW": 601.6266666666667,
@@ -871,5 +871,5 @@
     }
   },
   "srsAllocLog": [],
-  "updatedAt": "2026-06-30T15:21:58.894Z"
+  "updatedAt": "2026-06-30T15:23:04.330Z"
 }
