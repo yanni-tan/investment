@@ -10,7 +10,7 @@
       "shares": 4,
       "avgCost": 405,
       "notes": "High-risk, cyclical semiconductor bet",
-      "manualPrice": 1126,
+      "manualPrice": 1147,
       "markets": [
         "US"
       ],
@@ -863,5 +863,5 @@
     }
   },
   "srsAllocLog": [],
-  "updatedAt": "2026-06-30T14:42:26.442Z"
+  "updatedAt": "2026-06-30T15:13:07.989Z"
 }
