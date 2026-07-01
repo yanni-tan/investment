@@ -2985,7 +2985,7 @@ document.getElementById('hform').addEventListener('submit', e => {
         toast('Holding added');
     }
 
-    save(); closeModal(); fetchPrices();
+    save(); closeModal(); render(); fetchPrices();
 });
 
 document.getElementById('f-type').addEventListener('change', syncTypeUI);
